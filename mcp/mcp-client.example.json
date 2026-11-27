@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "blender-live": {
+      "command": "uv",
+      "args": ["run", "--script", "/absolute/path/to/blender-character-skill/mcp/blender-live/server.py"],
+      "env": {
+        "BLENDER_EXE": "/absolute/path/to/blender"
+      }
+    }
+  }
+}

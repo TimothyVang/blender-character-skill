@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.superpowers/
+.scratch/
+# course material is never committed: video, captions, transcripts, frames
+/references/
+video-courses/
+*.mp4
+*.m4a
+*.webm
+*.vtt
+*.info.json
+blender_exe.txt

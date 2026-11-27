@@ -1,0 +1,407 @@
+# 03 Sculpt the face
+
+Course source: chapter 04 "Sculpting the Face of Your Character", 01:36:09 to 02:28:05.
+(The course records in Blender 5.0.1; everything below was checked against 4.5.16.)
+
+## Goal
+
+The head blockout has become a readable face: planes of the head, nose, eye sockets with eyeballs, eyelids that
+wrap the eyeballs, a mouth that wraps the teeth, ears with a rim and inner forms, and placeholder brows and lashes.
+Every feature sits on the proportion lines below and the head outline matches the concept in each view that has a
+reference picture.
+
+## Starting state
+
+- From stage 02: `BLK_head` (one closed mesh, cranium plus jaw wedge), `BLK_neck`, and `BLK_ears` (one ear with a
+  `Mirror` modifier), each built from a round cube and parented to `CHARACTER`. This stage adds `BLK_nose` (joined
+  into `BLK_head` in step 9) and `BLK_eye` (one eyeball with a `Mirror` modifier).
+- Origins at the world centre line (the course only moves blockout parts in Edit Mode so that X symmetry keeps
+  working). Check `object_info`: location X must be 0 for `BLK_head`.
+- Concept pictures placed with `reference_setup`, plus face close-ups if you have them. The course keeps a board
+  of face references open the whole time (front, three-quarter, a line drawing, a photo) [01:49:36].
+- Axes used below: the character faces -Y, up is +Z, left/right is X. `H` = head height (top of skull to bottom of
+  jaw), `W` = head width, both read from `mesh_report(object="BLK_head")` bounds.
+
+## Proportion rules the course states
+
+Measure these before any stroke. All are stated on the slides at [01:37:16] to [01:42:40].
+
+| Landmark | Rule | Timestamp |
+|---|---|---|
+| Eye line | Halfway between top of head and bottom of jaw. First landmark; everything else hangs off it. | 01:37:19 |
+| Brow line, nose base | Pick a hairline. Hairline to jaw in three equal parts: upper cut = brow line, lower cut = bottom of nose. | 01:38:10 |
+| Ear | Sits between brow line and nose base. | 01:39:00 |
+| Back of skull | At brow-line height on the back, the skull turns in and runs into the neck. | 01:39:15 |
+| Side depth | Outer eye corner to front of eye = 1 unit; front of eye to nose bridge = 1 unit; bridge to nose tip = 1 unit. Stops a flat face. | 01:39:48 |
+| Mouth | Halfway between nose base and jaw bottom is the BOTTOM of the lower lip. | 01:40:55 |
+| Eye spacing | Gap between the eyes = one eye width (eye, gap, eye are three equal spans). | 01:41:31 |
+| Mouth width | Mouth corners never go wider than the centre of each eye (the pupil). | 01:42:06 |
+
+Form rules: the head is a cranium with a jaw wedge attached [01:42:57]. The planes to sculpt are forehead, temples
+(both sides), eye line, brow line, side of the face, chin; the nose is added as a separate block, not a plane
+[01:43:50]. Eyes sit in sockets, never on a flat face [01:44:49]. Lids wrap the ball and have three edges: the
+rim touching the ball, the lid fold, and the edge where the lid meets the face [01:45:29]. The nose starts as a
+rounded triangular block [01:46:41]. Lips wrap the teeth, so build a mound before cutting a mouth [01:47:27]. The
+ear is a wedge from the front and from above; its detail is a question-mark rim plus a Y inside [01:48:32].
+
+## Helpers (paste into the `exec_python` call that uses them)
+
+```python
+# verified in 4.5.16 background
+import bpy, bmesh, math, numpy as np
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
+C, D = bpy.context, bpy.data
+
+def surface_point(ob, origin, direction):           # world-space ray onto the mesh
+    bvh = BVHTree.FromObject(ob, C.evaluated_depsgraph_get()); inv = ob.matrix_world.inverted()
+    hit = bvh.ray_cast(inv @ Vector(origin), (inv.to_3x3() @ Vector(direction)).normalized())
+    return None if hit[0] is None else tuple(ob.matrix_world @ hit[0])
+
+def face_pt(ob, x, z):                              # the point on the FRONT of the face at side x, height z
+    return surface_point(ob, (x, -1e3, z), (0, 1, 0))
+
+def face_landmarks(ob, hairline_frac=0.88):         # hairline_frac is a choice; read it off the concept
+    zs = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]; top, chin = max(zs), min(zs)
+    hair = chin + (top - chin) * hairline_frac; third = (hair - chin) / 3; nose = chin + third
+    return {"top": top, "chin": chin, "eye_line": (top + chin) / 2, "hairline": hair,
+            "brow_line": chin + 2 * third, "nose_base": nose, "lip_bottom": (chin + nose) / 2}
+
+def flatten(ob, center, radius, strength=0.7, only_above=False):   # stand-in for Scrape/Fill
+    me = ob.data; n = len(me.vertices)
+    co = np.empty(n * 3, np.float32); me.vertices.foreach_get("co", co); co = co.reshape(n, 3).astype(np.float64)
+    c = np.array(ob.matrix_world.inverted() @ Vector(center)); r = radius / max(ob.matrix_world.to_scale())
+    d = np.linalg.norm(co - c, axis=1); sel = d < r
+    if sel.sum() < 3: return 0
+    w = (1 - (d[sel] / r) ** 2) ** 2
+    mean = (co[sel] * w[:, None]).sum(0) / w.sum()
+    nrm = np.linalg.svd((co[sel] - mean) * np.sqrt(w)[:, None], full_matrices=False)[2][2]
+    if np.dot(nrm, mean - co.mean(0)) < 0: nrm = -nrm
+    dist = (co[sel] - mean) @ nrm
+    if only_above: dist = np.maximum(dist, 0)                       # scrape only, do not fill hollows
+    co[sel] -= nrm * (dist * w * strength)[:, None]
+    me.vertices.foreach_set("co", co.astype(np.float32).ravel()); me.update(); return int(sel.sum())
+
+def mask_where(ob, rule):                           # stand-in for Lasso Mask; rule(world_pos, world_normal) -> bool
+    me = ob.data; a = me.attributes.get(".sculpt_mask") or me.attributes.new(".sculpt_mask", "FLOAT", "POINT")
+    mw = ob.matrix_world; rot = mw.to_3x3()
+    vals = [1.0 if rule(mw @ v.co, (rot @ v.normal).normalized()) else 0.0 for v in me.vertices]
+    a.data.foreach_set("value", vals); me.update(); return int(sum(vals))
+
+def quad_ball(name, radius=1.0, levels=3, location=(0, 0, 0)):     # built-in stand-in for the round cube
+    me = D.meshes.new(name); bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=2.0)
+    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2 ** levels - 1, use_grid_fill=True)
+    for v in bm.verts: v.co = v.co.normalized() * radius
+    bm.to_mesh(me); bm.free()
+    ob = D.objects.new(name, me); C.scene.collection.objects.link(ob); ob.location = location; return ob
+
+def join_and_fuse(objs, target, voxel):                            # Ctrl+J then voxel remesh; target must be in objs
+    dg = C.evaluated_depsgraph_get()
+    for o in objs:                                                 # bakes Mirror etc. and unlinks shared data
+        if o.modifiers or o.data.users > 1:
+            m = D.meshes.new_from_object(o.evaluated_get(dg)); o.modifiers.clear(); o.data = m
+    with C.temp_override(active_object=target, object=target, selected_objects=objs, selected_editable_objects=objs):
+        bpy.ops.object.join()
+    target.data.remesh_voxel_size = voxel
+    with C.temp_override(active_object=target, object=target, selected_objects=[target]):
+        bpy.ops.object.voxel_remesh()
+    return len(target.data.vertices)
+```
+
+Every new object you make (`quad_ball`, the eyeball, later the fingers and toes) gets
+`ob.parent = D.objects["CHARACTER"]` right after it is made, so the whole-character checks include it.
+`join_and_fuse` keeps the target's name and parent.
+
+## How course brushes map to `sculpt_strokes`
+
+Course brush sizes are in screen pixels, so they do not convert; radii below are given against `H`. Strengths are
+read from the brush panel in the video. The `blender-live` brushes move vertices by a known amount, which helps you
+choose arguments: `draw` lifts the centre by `0.5 * radius * strength`, `clay_strips` by `0.3 * radius * strength`
+with a flatter top, `crease` cuts `0.5 * radius * strength` deep and pinches, `grab` moves the centre by exactly
+`(last point - first point) * strength` fading to nothing at `radius`.
+
+| Course brush (strength seen) | Job in this chapter | `sculpt_strokes` |
+|---|---|---|
+| `Grab` (0.400) | Every proportion and silhouette change. Big radius for big forms. | `grab`, `strength` 1.0, give the real displacement |
+| `Smooth` (hold Shift) | After every remesh, and after every build-up stroke | `smooth`, `strength` 0.3 to 0.6 |
+| `Crease Polish` (0.250, `Pinch` 0.500) | Marking lines: jaw break, eye line, brow, mouth line, lid edges, nostril, ear rim | `crease` for a groove; `crease` with `"subtract": true` for a sharp raised edge |
+| `Scrape/Fill` (0.700) | Flat planes: temple, side of face, underside of lid | `flatten(...)` helper above |
+| `Clay Strips` (0.500) | Adding mass: nose-to-brow blend, mouth mound, cheeks, ear Y | `clay_strips`, `strength` 0.5 |
+| `Draw` (0.500) | Lid ridges; with Ctrl, digging nostrils | `draw`; `"subtract": true` to dig |
+| `Inflate` | Lower lip | `inflate` |
+| `Lasso Mask`, `Front Faces Only` | Protecting all but the ear bowl | `mask_where(...)` or `sculpt_mask` box |
+
+Use `"snap": true` on build-up and crease strokes so points land on the surface. On `grab` and `snake_hook`, snap
+moves the whole path so its first point is on the surface and keeps its length. After any call check
+`moved_verts`: 0 means the stroke missed.
+
+## Order of work
+
+Begin with `sculpt_begin(object="BLK_head", symmetry="X")`. With X symmetry on, give points on the +X side only; a
+stroke that crosses X=0 stays symmetric.
+
+1. **Add resolution, then smooth everything** [01:50:18]. The blockout is too coarse to hold planes. Course:
+   voxel size `0.04` to `0.05`, `Ctrl+R`, then Smooth over the whole head. Live:
+   `sculpt_remesh(object="BLK_head", voxel_size=H/50)`, then several `smooth` strokes with radius `0.3*H` covering the
+   head. Look: one capture; no faceting, cranium and jaw still read as two masses.
+
+2. **Re-mark the cranium/jaw break** [01:51:04]. It gives the jaw wedge a clear start. Course: `Crease Polish`
+   along the back edge of the jaw, from under the ear position down toward the chin. Live:
+   `{"brush":"crease","points":[side point under the ear, jaw angle, halfway to chin],"radius":0.05*H,"strength":0.4,"snap":true}`.
+
+3. **Eye line** [01:51:21]. The foundation landmark. Compute `eye_line` with `face_landmarks`. Course: a
+   `Crease Polish` band across the front at that height, stopping near the temple, not carried round the back;
+   then `Grab` the middle of the band inward so the sockets sit behind where the nose will be [01:52:10]. Live:
+   `{"brush":"crease","points":[face_pt(0,eye), face_pt(0.2*W,eye), face_pt(0.38*W,eye)],"radius":0.06*H,"strength":0.5,"snap":true}`
+   then `{"brush":"grab","points":[face_pt(0.2*W,eye), same point moved +0.04*H in Y],"radius":0.2*H}`.
+   Check from `LEFT`: a clear step in at half height.
+
+4. **Brow line** [01:52:37]. Course: Smooth the area above the eye line first (that alone starts a brow shelf),
+   find the brow height by the thirds rule, then `Crease Polish` along it [01:53:39]. Live: `smooth` at
+   `brow_line`, then a `crease` stroke like step 3 at `z = brow_line`, radius `0.04*H`. The band between the two
+   lines is now the eye plane.
+
+5. **Temples** [01:53:52]. Course: `Scrape/Fill` the side of the head flat above the eye line, Smooth it, and
+   re-cut the eye line if the scrape softened it. Live: `flatten(head, surface_point(head,(1e3,cy,brow+0.1*H),(-1,0,0)), 0.25*H, 0.7)`
+   for the +X side and the mirrored call for -X (the helper has no symmetry), then repeat the step 3 crease.
+
+6. **Side of the face and chin** [01:54:35]. Course: `Scrape/Fill` the cheek side below the eye line into one
+   plane running to the jaw; a short `Crease Polish` mark under the lower lip area for the chin [01:54:52]. Live:
+   `flatten` centred at a side point at `z = nose_base`, radius `0.25*H`; `crease` across `face_pt(0..0.1*W, chin + 0.12*H)`.
+   Keep it this simple; the course says it deliberately uses fewer planes than anatomy charts show [01:55:48].
+
+7. **First reference check** [01:55:04]. Compare front and side with the concept before adding parts. The course
+   finds its cheeks too narrow and pulls them out with `Grab`, and pulls the brow in at the side. Live:
+   `turnaround_sheet(object="CHARACTER", references={...})`, then `grab` with radius `0.3*H` for each difference.
+
+8. **Nose as its own block** [01:55:48]. Course: new round cube, scaled down in Edit Mode, placed between eye line
+   and `nose_base`, rotated so it leans with the profile. In Sculpt Mode with X symmetry: `Grab` its back into the
+   face, pull the tip down and out, and make it a triangle seen from below [01:56:39]; mark nostrils with `Draw`
+   held to subtract [01:57:22]. Live: make the block `BLK_nose` with `quad_ball` (helpers above), parented to `CHARACTER`,
+   radius about `0.07*H`, at `face_pt(0, (eye+nose_base)/2)`; shape with `grab`; nostrils
+   `{"brush":"draw","subtract":true,"points":[under-tip point at x=0.03*H],"radius":0.02*H,"strength":0.6}`.
+   Side-depth rule: tip, bridge and eye front are one unit apart each.
+
+9. **Join nose and head, remesh finer, blend** [01:57:45]. Course: select nose then head, `Ctrl+J`, voxel `0.03`,
+   `Ctrl+R`. Then `Clay Strips` from the bridge up toward the brow and on both flanks so the nose grows out of the
+   face, Smooth, and re-cut the brow line [01:58:11]. Live: `join_and_fuse([D.objects["BLK_nose"], head], head, H/65)`
+   (helpers above) with `head = D.objects["BLK_head"]`;
+   `{"brush":"clay_strips","points":[face_pt(0.02*W, eye), face_pt(0.06*W, brow)],"radius":0.05*H,"strength":0.5,"snap":true}`
+   and a `smooth` over the same path. `mesh_report`: `loose_parts` must be 1.
+
+10. **Eyeballs before lids** [01:59:04]. Lids are sculpted against a real ball. Course: UV sphere, rotate 90
+    degrees on X (pole faces forward), scale, place at the eye line, push forward until it shows, Shade Smooth,
+    `Mirror` modifier with `Mirror Object` = the head; then set the gap from the reference (the course character
+    has wide-set eyes) [02:00:14]. Live:
+
+    ```python
+    # verified in 4.5.16 background
+    def add_eyes(head, center, radius):
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=radius, location=center,
+                                             rotation=(math.radians(90), 0, 0))
+        eye = C.active_object; eye.name = "BLK_eye"; eye.parent = D.objects["CHARACTER"]
+        for p in eye.data.polygons: p.use_smooth = True
+        m = eye.modifiers.new("Mirror", "MIRROR"); m.mirror_object = head; m.use_axis[0] = True
+        return eye
+    ```
+    Start from eye width = `W/5` only as a first guess (mine); the stated rule is gap = one eye width.
+
+11. **Sockets** [02:00:28]. Course: `Grab` the surface around each ball backward so the ball sits in a hollow,
+    Smooth; then tilt the eye shape to the concept (outer corner higher than inner for this character) [02:00:55].
+    Live: `{"brush":"grab","points":[face_pt(ex, eye), that point +0.03*H in Y],"radius":0.12*H}`.
+
+12. **Lid ridges** [02:01:10]. Course: remesh at `0.02`, Smooth all, then `Draw` a ridge over the top of the ball
+    for the upper lid and under it for the lower lid, each followed by `Grab` to match the concept's eye shape.
+    Live: `sculpt_remesh(object="BLK_head", voxel_size=H/100)`; upper lid
+    `{"brush":"draw","points":[inner corner, top of ball, outer corner],"radius":0.03*H,"strength":0.5,"snap":true}`,
+    lower lid the same along the bottom of the ball. Get the three points by ray casting just above and below the
+    ball. The course then smooths its upper lid nearly away because the concept has almost no lid fold [02:02:52];
+    do what your concept shows.
+
+13. **The three lid edges** [02:03:20]. Course, upper lid: `Crease Polish` to sharpen the rim that touches the
+    ball; `Scrape/Fill` the underside of the lid flat; `Grab` the lid ends backward so the lid wraps the ball
+    instead of lying flat; then the same on the lower lid [02:04:15]; last, `Crease Polish` the edge where lid
+    meets face [02:04:55]. Live: rim `{"brush":"crease","subtract":true,...,"radius":0.015*H,"strength":0.4}` along
+    the lid path; `flatten` on the lid underside with radius `0.03*H`; `grab` the inner and outer corners by
+    `+0.02*H` in Y; transition edge `{"brush":"crease",...,"radius":0.025*H,"strength":0.3}` one lid-thickness
+    outside the rim. Look from `TOP` and three-quarter: lid ends must curve back round the ball.
+
+14. **Second nose pass, brows, chin** [02:05:30]. With eyes in, the course sees its nose is too big: `Grab` it
+    smaller and narrower from the front, give the bridge a concave curve into the forehead in profile, pull the
+    wings out, `Crease Polish` round each nostril wing, round the underside, Smooth [02:05:37 to 02:06:42]. Then
+    the brow shape gets a `Crease Polish` pass to the concept's brow arc and the chin a crease plus `Grab`
+    [02:06:42 to 02:07:22].
+
+15. **Mouth mound first** [02:07:35]. The mouth area is flat until you add the teeth volume. Course: broad
+    `Clay Strips` over the whole muzzle between nose base and chin, Smooth, check in profile and front. Live:
+    `{"brush":"clay_strips","points":[face_pt(-0.1*W..0.1*W, lip_bottom + 0.06*H)],"radius":0.1*H,"strength":0.5,"snap":true}`, then `smooth`.
+
+16. **Mouth corners, line, lips** [02:08:26]. Course order: (a) mark each corner with `Crease Polish`, no wider
+    than the eye centre; (b) `Grab` the corners backward so the mouth wraps [02:09:10]; (c) `Crease Polish` a line
+    from each corner to the middle [02:09:28]; (d) if the whole mouth is too high or low, move it with `Grab` now
+    [02:09:55]; (e) upper lip: `Crease Polish` its upper border, `Grab` it forward so it overhangs the lower lip
+    [02:10:10]; (f) lower lip: `Inflate` just under the line, Smooth the corners, `Crease Polish` the groove under
+    the lip [02:10:52]. Live for (c):
+    `{"brush":"crease","points":[face_pt(0, mz), face_pt(ex*0.5, mz), face_pt(ex*0.9, mz)],"radius":0.02*H,"strength":0.5,"snap":true}`
+    with `mz` about `lip_bottom + 0.05*H` (mine; the stated rule only fixes the lip bottom). For (f):
+    `{"brush":"inflate","points":[face_pt(0, mz-0.03*H), face_pt(ex*0.4, mz-0.025*H)],"radius":0.04*H,"strength":0.4}`.
+
+17. **Whole-face pass** [02:11:40]. Eyes, nose and mouth now exist, so judge them together against the concept:
+    jaw shape and length with `Grab`, cheek mass with `Clay Strips` plus Smooth, lip corners up or down.
+
+18. **Finer remesh and sharpen** [02:12:44]. Course: voxel about `0.012`, then `Crease Polish` again on the mouth
+    line and corners, round the nostrils, `Draw` (subtract) to dig the nostril holes, an edge on the wing; then
+    fill the old eye-line groove on the forehead side with `Clay Strips` and Smooth, since it was only a guide
+    [02:14:15]. Live: `sculpt_remesh(object="BLK_head", voxel_size=H/165)`; repeat the step 13 and 16 creases at
+    two-thirds of their earlier radius.
+
+19. **Iris colour, then lids again** [02:14:35]. A dark iris tells you where the character looks and exposes lid
+    errors. Course: select the pole vertex of the eyeball, grow the selection, paint those faces dark in Vertex
+    Paint, set viewport shading colour to `Attribute`, rotate the eyeballs to aim them, then refine the lid edges
+    [02:15:40]. Live (4.5 calls the shading option `VERTEX`):
+
+    ```python
+    # verified in 4.5.16 background (the shading line needs a 3D viewport, so it is: not verified)
+    col = eye.data.color_attributes.new("Col", "FLOAT_COLOR", "POINT"); mw = eye.matrix_world
+    front = min((mw @ v.co).y for v in eye.data.vertices); r = eye.dimensions.x / 2
+    for v in eye.data.vertices:
+        col.data[v.index].color = (0.02, 0.02, 0.02, 1) if (mw @ v.co).y < front + r * 0.25 else (0.9, 0.9, 0.9, 1)
+    # for a in C.screen.areas: if a.type == "VIEW_3D": a.spaces.active.shading.color_type = "VERTEX"
+    ```
+
+20. **Placeholder brows and lashes** [02:16:49]. They are stand-ins to judge the face; real hair replaces them in
+    the hair stage. Course: a plane turned upright, with face-project snapping on, extruded along the brow line as
+    a thin strip; `Mirror` (object = head) and `Solidify` (`Thickness` -0.01 m, `Offset` -1.0); Shade Smooth;
+    vertex colour dark grey, value about 0.25, not black, so the form still shades [02:18:37]. Lashes: a second
+    strip in the same object following the upper lid rim, normals recalculated [02:19:25]. Live:
+
+    ```python
+    # verified in 4.5.16 background
+    def surface_strip(name, head, path, width, thickness=0.01):
+        bvh = BVHTree.FromObject(head, C.evaluated_depsgraph_get()); inv = head.matrix_world.inverted(); mw = head.matrix_world
+        verts = []
+        for p in path:
+            for dz in (-width / 2, width / 2):
+                loc, nor, _, _ = bvh.find_nearest(inv @ (Vector(p) + Vector((0, 0, dz))))
+                verts.append(tuple(mw @ (loc + nor * 0.002)))
+        me = D.meshes.new(name); me.from_pydata(verts, [], [(2*i, 2*i+2, 2*i+3, 2*i+1) for i in range(len(path) - 1)])
+        ob = D.objects.new(name, me); C.scene.collection.objects.link(ob)
+        ob.modifiers.new("Mirror", "MIRROR").mirror_object = head
+        s = ob.modifiers.new("Solidify", "SOLIDIFY"); s.thickness = -thickness; s.offset = -1.0
+        ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+        for d in ca.data: d.color = (0.25, 0.25, 0.25, 1)
+        return ob
+    ```
+    Scale `thickness` to your head: the course's -0.01 is on a head roughly 2 units tall (see Gaps).
+
+21. **Ears** [02:20:47]. In the course the ear stays a separate object through this chapter. Order: Smooth the ear
+    blockout and place it between brow line and nose base; remesh at `0.02`, Smooth [02:21:19]; mask a bean-shaped
+    bowl on the outer face only (`Lasso Mask` with `Front Faces Only` so the back of the ear is not caught)
+    [02:21:46]; invert the mask; `Grab` with a very large radius to push the bowl inward and slightly down
+    [02:22:50]; clear the mask, remesh, Smooth; `Crease Polish` the inner edge of the rim (the question mark) and
+    sharpen the rim's outer edge [02:23:17]; `Clay Strips` two short ridges for the two arms of the Y, Smooth, then
+    crease beside them [02:24:30]; remesh at `0.008`, Smooth, final crease pass [02:25:25]. Live:
+
+    ```python
+    # verified in 4.5.16 background (mask_where from the helper block; ear on the +X side)
+    c = Vector(ear_center); rx, rz = 0.25 * ear_w, 0.3 * ear_h              # bowl size: my starting values
+    mask_where(ear, lambda p, n: not (n.x > 0.3 and ((p.y - c.y) / rx) ** 2 + ((p.z - c.z) / rz) ** 2 < 1))
+    ```
+    This masks everything except the outward-facing bowl (the mask-then-invert of the course in one step). Then
+    `{"brush":"grab","points":[ear_center, ear_center moved -0.3*ear_depth in X],"radius":ear_h,"strength":1.0}`,
+    `sculpt_mask(object="BLK_ears", op="clear")`, `sculpt_remesh`, `smooth`. If the ear is mirrored by a modifier, use
+    `symmetry=""` and sculpt the real side only.
+
+22. **Final comparison** [02:26:21]. Course: study the concept against the sculpt feature by feature, and come
+    back after a break because fresh eyes find errors. For you: run the exit check, then run it again after the
+    next stage and fix what the second look shows.
+
+## Settings the course uses
+
+| Setting | Value | Where | Timestamp |
+|---|---|---|---|
+| Voxel size, head planes | 0.04 to 0.05 | Sculpt Mode remesh (`R` to size, `Ctrl+R` to apply) | 01:50:18 |
+| Voxel size after joining nose | 0.03 | same | 01:58:11 |
+| Voxel size for eyelids | 0.02 | same | 02:01:21 |
+| Voxel size for final face detail | about 0.012 | same | 02:12:55 |
+| Voxel size, ear first pass / detail | 0.02 / 0.008 | ear object | 02:21:19 / 02:25:28 |
+| Symmetry | X on, for head and nose | Sculpt Mode header | 01:56:39 |
+| `Grab` strength | 0.400 | brush panel | 01:50:36 |
+| `Crease Polish` strength / pinch | 0.250 / 0.500 | brush panel | 01:51:20 |
+| `Scrape/Fill` strength | 0.700 | brush panel | 01:54:14 |
+| `Clay Strips` strength | 0.500 | brush panel | 01:58:52 |
+| `Draw` strength | 0.500 | brush panel | 02:02:00 |
+| Eyeball | UV sphere, rotated 90 degrees on X, Shade Smooth | Object Mode | 01:59:06 |
+| `Mirror` on eyes, brows | axis X, `Mirror Object` = head | modifier | 02:00:00 |
+| `Solidify` on brows/lashes | `Thickness` -0.01 m, `Offset` -1.0 | modifier | 02:18:14 |
+| Brow/lash vertex colour | value about 0.25, not black | Vertex Paint | 02:18:37 |
+| `Front Faces Only` | on, for the ear bowl mask | Lasso Mask tool settings | 02:22:18 |
+| Viewport focal length | 150 (set in stage 02) so faces are not distorted | N panel, View | 00:34:05 |
+
+## Mistakes the course warns about
+
+- Eyes on a flat surface. Cut the eye line and push the sockets back before adding lids [01:44:49].
+- Flat profile. Check the three equal side-depth units: eye corner, eye front, nose bridge, nose tip [01:39:48].
+- Flat lids. Lid ends must curve back round the ball; lids radiate from the ball's centre [01:45:16].
+- Cutting lips into a flat muzzle. Build the mound first [01:47:42].
+- Mouth wider than the eye centres [01:42:18].
+- Carrying the eye line round the back of the head; stop near the temple [01:52:00].
+- Scraping the temple so far that the eye line is lost; re-cut it [01:54:16].
+- Black brows: the form disappears. Use dark grey [02:18:40].
+- Lasso mask catching the back of the ear when `Front Faces Only` is off [02:22:12].
+- Over-detailing the planes; a simplified set is enough [01:55:48].
+- Skipping the reference. Nose and ear shape vary too much to invent [01:47:10], [01:49:10].
+
+## What changes for a different character
+
+- General: the proportion table, the order (planes, nose block, eyeballs, sockets, lids, mouth mound, mouth,
+  finer remesh, ears), remesh-then-smooth before each finer pass, and building lids against a real eyeball.
+- Specific to the course character (a slim stylised young woman): wide-set eyes, a small nose with a concave
+  bridge, almost no upper lid fold, wide cheeks, a pointed chin, thin brows. Read each of these off your concept.
+- Stylised heads break the rules on purpose. Measure the concept first: if its eye line sits at 40% instead of
+  50%, use 40% and keep the other rules relative to it. The course says the eye-spacing rule in particular varies
+  with style [01:41:52].
+- Creatures: keep the method (planes, then features as separate blocks joined and remeshed), drop the human
+  ratios. A snout is the nose block and mouth mound made as one larger block; horns and crests are extra blocks,
+  or `snake_hook` pulls after a remesh.
+- Masks, helmets, hard-surface face parts: do not sculpt them into the head. Model them as separate objects in a
+  later stage; sculpt only what the concept shows as skin.
+- Closed or stylised dot eyes: still place the eyeball to shape the socket and lid, then hide it.
+
+## Exit check
+
+1. `mesh_report(object="BLK_head")`: `loose_parts` 1, `boundary_edges` 0, `non_manifold_edges` 0, `symmetry_error`
+   below 0.002 unless the concept is asymmetric (say so if it is). Any other result is failed.
+2. Landmark numbers, from ray casts and bounds, each within `0.02*H` of the rule or of the concept's own measured
+   ratio: eye centres on the eye line; nose base and brow on the thirds; lower-lip bottom at the halfway point;
+   mouth corner X not beyond eye centre X; gap between eyeballs equal to one eye width; ear top and bottom inside
+   brow line to nose base. Report each as a number with pass or fail.
+3. `turnaround_sheet(object="CHARACTER", references={...})` with the eyes, brows and ears visible. Look at `LEFT`: the
+   profile must show brow, eye, nose and lips at different depths. This is looking, not measuring.
+4. `outline_match(object="CHARACTER", references={...}, threshold=0.98)` for each view that has a real reference
+   picture. This is the stage result. A view below 0.98 is failed: fix with `grab` where the overlay is red (model
+   missing) or blue (model extra) and measure again. A view with no reference picture is `not_run`; report it as
+   "looked at, not measured", never as passed. While the head is bald and the concept has hair, the head's part of
+   the outline cannot match; say that is why the number is short, and do not paint the hair out of the reference
+   (a changed picture is no longer the reference). A head-only `outline_match(object="BLK_head", ...)` against a
+   head crop of a real picture is allowed as a diagnostic, never as the stage result.
+5. Save with `save_file` under a new numbered name (the course saves incrementally).
+
+## Gaps
+
+- **Add-ons**: `Extra Mesh Objects` (free, from Blender's extensions list) supplies the round cube used for the
+  nose block; the built-in route is `quad_ball` in the helpers above. `PureRef` (separate reference-board
+  program, pay-what-you-want) holds the references; the route here is `reference_setup` and `turnaround_sheet`.
+- **Scrape/Fill** has no `sculpt_strokes` brush. `flatten` above fits one plane per call; it does not follow a
+  dragged path and has no symmetry, so call it once per side.
+- **Lasso Mask** is replaced by a rule on position and normal. Free-form outlines need a rule you write yourself.
+- **Crease direction**: the brush panel shows `Crease Polish` set to `Subtract` in every frame checked, and the
+  narrator also holds Ctrl for some strokes. Whether a given stroke cut a groove or raised an edge was judged from
+  the resulting shape in the video, not from a setting.
+- **Brush sizes** in the video are screen pixels and depend on zoom. The radii given against `H` are mine.
+- **Scene scale**: the course never states the head size. Its voxel sizes fit a head about 2 units tall (the
+  round cube's default size), which is how the `H/50` to `H/165` ratios were derived. If your head is a different
+  size, use the ratios, not the course's numbers.
+- **Face-project snapping** for the brow strip is replaced by nearest-surface placement in `surface_strip`.
+- The exact hairline height is a free choice in the course ("an arbitrary point") [01:38:14].
