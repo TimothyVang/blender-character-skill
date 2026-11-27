@@ -468,7 +468,7 @@ def paint(mesh, group, test, weight=1.0, exclusive=True):
 
 A hard edge of weight 1 next to weight 0 creases when posed. Soften it: make the mesh active, select the region in
 Edit Mode, then `bpy.ops.object.vertex_group_smooth(group_select_mode='BONE_DEFORM', factor=0.5, repeat=3)` and
-`bpy.ops.object.vertex_group_normalize_all(lock_active=False)` (not verified).
+`bpy.ops.object.vertex_group_normalize_all(lock_active=False)` (verified in 4.5.16 background).
 
 ### 10. Corrective shape key on a driver: the closed eyelid [18:25:07 to 18:37:00]
 

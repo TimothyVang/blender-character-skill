@@ -5,8 +5,6 @@ their overlap reached the threshold. Anything that cannot be measured honestly r
 """
 from __future__ import annotations
 
-from collections import deque
-
 import numpy as np
 from PIL import Image
 
@@ -31,17 +29,71 @@ def check_request(references: dict, views: list | None, threshold: float) -> tup
 
 
 def _components(mask: np.ndarray) -> tuple[np.ndarray, int]:
-    """4-connected labels (0 = not in mask) and the label count."""
-    h, w = mask.shape
-    lab = np.zeros((h, w), np.int32); n = 0
-    for y0, x0 in zip(*np.nonzero(mask)):
-        if lab[y0, x0]: continue
-        n += 1; lab[y0, x0] = n; q = deque([(y0, x0)])
-        while q:
-            y, x = q.popleft()
-            for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
-                if 0 <= yy < h and 0 <= xx < w and mask[yy, xx] and not lab[yy, xx]:
-                    lab[yy, xx] = n; q.append((yy, xx))
+    """4-connected labels (0 = not in mask) and the label count via scanline-run Union-Find."""
+    mask_b = np.asarray(mask, dtype=bool)
+    h, w = mask_b.shape
+    lab = np.zeros((h, w), np.int32)
+    if h == 0 or w == 0 or not mask_b.any():
+        return lab, 0
+    padded = np.zeros((h, w + 2), dtype=np.uint8)
+    padded[:, 1:-1] = mask_b
+    mid = padded[:, 1:-1] == 1
+    starts_y, starts_x = np.nonzero(mid & (padded[:, :-2] == 0))
+    _, ends_x = np.nonzero(mid & (padded[:, 2:] == 0))
+    sy = starts_y.tolist()
+    sx = starts_x.tolist()
+    ex = (ends_x + 1).tolist()
+    n_runs = len(sy)
+    parent = list(range(n_runs))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    prev_y = -2
+    prev_lo = prev_hi = 0
+    cur_lo = 0
+    while cur_lo < n_runs:
+        y = sy[cur_lo]
+        cur_hi = cur_lo + 1
+        while cur_hi < n_runs and sy[cur_hi] == y:
+            cur_hi += 1
+        if y == prev_y + 1:
+            p, c = prev_lo, cur_lo
+            while p < prev_hi and c < cur_hi:
+                if ex[p] <= sx[c]:
+                    p += 1
+                elif ex[c] <= sx[p]:
+                    c += 1
+                else:
+                    ra, rb = find(p), find(c)
+                    if ra != rb:
+                        if ra < rb:
+                            parent[rb] = ra
+                        else:
+                            parent[ra] = rb
+                    if ex[p] < ex[c]:
+                        p += 1
+                    elif ex[c] < ex[p]:
+                        c += 1
+                    else:
+                        p += 1
+                        c += 1
+        prev_y, prev_lo, prev_hi = y, cur_lo, cur_hi
+        cur_lo = cur_hi
+
+    root_to_label: dict[int, int] = {}
+    n = 0
+    for i in range(n_runs):
+        r = find(i)
+        lbl = root_to_label.get(r)
+        if lbl is None:
+            n += 1
+            lbl = n
+            root_to_label[r] = lbl
+        lab[sy[i], sx[i]:ex[i]] = lbl
     return lab, n
 
 
@@ -88,19 +140,38 @@ def reference_mask(path: str) -> np.ndarray:
         patches = [inner[:k, :k], inner[:k, -k:], inner[-k:, :k], inner[-k:, -k:]]
         meds = [np.median(p.reshape(-1, 3), axis=0) for p in patches]
         flat = [p.reshape(-1, 3).std(axis=0).max() <= 18 for p in patches]
-        bg = None
+        bg_field = None
+        tol = 40.0
         for i, m in enumerate(meds):      # the background is the colour at least three flat corners agree on
             agree = [j for j in range(4) if flat[j] and np.linalg.norm(meds[j] - m) <= 30]
             if flat[i] and len(agree) >= 3:
-                bg = np.median(np.array([meds[j] for j in agree]), axis=0); break
-        if bg is None:
+                bg_field = np.median(np.array([meds[j] for j in agree]), axis=0)[None, None, :]
+                break
+        if bg_field is None and all(flat):
+            top_d = float(np.linalg.norm(meds[0] - meds[1]))
+            bot_d = float(np.linalg.norm(meds[2] - meds[3]))
+            vert_d = float(np.linalg.norm(0.5 * (meds[0] + meds[1]) - 0.5 * (meds[2] + meds[3])))
+            if top_d <= 25 and bot_d <= 25 and vert_d <= 90:
+                left_strip = np.median(rgb[:, band:band + k], axis=1)
+                right_strip = np.median(rgb[:, -band - k:-band], axis=1)
+                lr_diff = np.linalg.norm(left_strip - right_strip, axis=1)
+                if float(np.percentile(lr_diff, 95)) <= 20 and float(lr_diff.max()) <= 30:
+                    bg_field = (0.5 * (left_strip + right_strip))[:, None, :]
+                    tol = 22.0
+        if bg_field is None:
             raise ValueError(f"{path}: the background is not plain (corner colours differ); cut the subject out first")
-        bg_like = np.linalg.norm(rgb - bg, axis=2) <= 40
-        bg_like[:band, :] = bg_like[-band:, :] = True; bg_like[:, :band] = bg_like[:, -band:] = True
+        bg_like = np.linalg.norm(rgb - bg_field, axis=2) <= tol
+        unframed = (
+            bg_like[0].mean() >= 0.9 and bg_like[-1].mean() >= 0.9
+            and bg_like[:, 0].mean() >= 0.9 and bg_like[:, -1].mean() >= 0.9
+        )
+        if not unframed:
+            bg_like[:band, :] = bg_like[-band:, :] = True
+            bg_like[:, :band] = bg_like[:, -band:] = True
         lab, _ = _components(bg_like)
         border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
         candidate = ~np.isin(lab, border[border > 0])
-        b = band + 1
+        b = 0 if unframed else band + 1
         if candidate[b].any() or candidate[-b - 1].any() or candidate[:, b].any() or candidate[:, -b - 1].any():
             raise ValueError(f"{path}: the background is not plain, or the subject is cut off at the picture's edge; "
                              "give it a plain background with space around the subject")

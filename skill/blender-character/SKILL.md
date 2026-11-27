@@ -153,7 +153,7 @@ turnaround against the references, and reported as judged by eye.
 At the end of each stage, and at the end of the job, report as a list:
 
 - each view: measured overlap and `passed` / `failed`, or "looked at, not measured"
-- `mesh_report` numbers that matter for the stage (holes, loose parts, face count, symmetry)
+- `mesh_report` numbers that matter for the stage (holes, loose parts, face count, and symmetry: `symmetry_error`, `symmetry_p95_error`, `symmetry_max_error`)
 - what was saved and where
 - what is not done, and what was skipped or simplified, said plainly
 
@@ -164,7 +164,7 @@ summary of them.
 
 | Tool | Use |
 |------|-----|
-| `blender_status`, `blender_launch`, `open_file`, `save_file` | session and files |
+| `blender_status`, `blender_launch`, `open_file`, `save_file`, `set_frame` | session, files and timeline |
 | `exec_python` | anything `bpy` can do: primitives, modifiers, joins, bmesh, nodes, rigs |
 | `scene_tree`, `object_info`, `mesh_report` | read the scene and mesh health as numbers |
 | `reference_setup` | place concept pictures as `REF_<VIEW>` image empties |

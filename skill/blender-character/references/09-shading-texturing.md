@@ -599,8 +599,8 @@ this one: palette, pink iris, exact ramp stops, the Multiply 0.404 / eye-tuned O
 1. Counts from `exec_python`: every renderable mesh and curves object has a material in every slot; no object has
    a `MULTIRES` modifier; every used image has a `filepath_raw` and `is_dirty` false; every pointiness, normal and
    mask image has `colorspace_settings.name == "Non-Color"`; each normal map has red/green deviation above 0.
-2. `turnaround_sheet` of the whole character in material shading, looked at from every side: no part grey or
-   checkered, no seams in colour maps, no black patches from failed bakes.
+2. `viewport_capture(view=..., shading="MATERIAL")` of the whole character from `FRONT`, `BACK`, `LEFT`, and `RIGHT`
+   (`turnaround_sheet` uses fixed clay shading and does not show materials): no part grey or checkered, no seams in colour maps, no black patches from failed bakes.
 3. `outline_match(object="CHARACTER", threshold=0.98)` again on the whole character, because `Apply Base` in
    step 9 moves garment meshes. Under 0.98 is failed; a view with no reference picture is "looked at, not measured", never passed.
 4. Cycles `render_image` from the front against the concept through `compare_images`; state per part (skin, hair,

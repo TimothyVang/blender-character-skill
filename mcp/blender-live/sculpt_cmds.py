@@ -77,8 +77,9 @@ def _undo_push(message):
         win, area, region = view3d()
         with bpy.context.temp_override(window=win, area=area, region=region):
             bpy.ops.ed.undo_push(message=message)
-    except Exception:
-        pass
+        return True
+    except (RuntimeError, AttributeError):
+        return False
 
 
 @contextlib.contextmanager
@@ -170,12 +171,32 @@ def _densify(pts, step):
     return np.array(out)
 
 
-def _nearest(c, samples):
-    best = np.full(len(c), np.inf); idx = np.zeros(len(c), dtype=np.int64)
-    for i, s in enumerate(samples):
-        d = np.linalg.norm(c - s, axis=1)
-        m = d < best
-        best[m] = d[m]; idx[m] = i
+def _nearest(c, samples, v_chunk=2048, s_chunk=64):
+    c = np.asarray(c, dtype=np.float64)
+    samples = np.asarray(samples, dtype=np.float64)
+    n = len(c)
+    best = np.full(n, np.inf, dtype=np.float64)
+    idx = np.zeros(n, dtype=np.int64)
+    if n == 0 or len(samples) == 0:
+        return best, idx
+    m = len(samples)
+    for v0 in range(0, n, v_chunk):
+        v1 = min(v0 + v_chunk, n)
+        c_blk = c[v0:v1]
+        rows = np.arange(v1 - v0)
+        blk_best = np.full(v1 - v0, np.inf, dtype=np.float64)
+        blk_idx = np.zeros(v1 - v0, dtype=np.int64)
+        for s0 in range(0, m, s_chunk):
+            s1 = min(s0 + s_chunk, m)
+            diff = c_blk[:, None, :] - samples[s0:s1][None, :, :]
+            d2 = np.einsum("ijk,ijk->ij", diff, diff)
+            local_i = np.argmin(d2, axis=1)
+            local_d2 = d2[rows, local_i]
+            better = local_d2 < blk_best
+            blk_best[better] = local_d2[better]
+            blk_idx[better] = s0 + local_i[better]
+        best[v0:v1] = np.sqrt(blk_best)
+        idx[v0:v1] = blk_idx
     return best, idx
 
 
@@ -385,19 +406,23 @@ def _report(o, req):
     me.loops.foreach_get("edge_index", loop_edges)
     uses = np.bincount(loop_edges, minlength=len(me.edges)) if len(me.edges) else np.array([], dtype=np.int64)
     axis = AXES.get((req.get("axis") or "X").upper(), 0)
-    sym_err = None
+    sym_err = sym_p95 = sym_max = None
     if n:
         kd = KDTree(n)
         for i, c in enumerate(co): kd.insert(c, i)
         kd.balance()
-        step = max(1, n // 20000)
+        step = max(1, n // 100000)
         mirrored = co[::step].copy(); mirrored[:, axis] *= -1
         diag = float(np.linalg.norm(co.max(0) - co.min(0))) or 1.0
-        sym_err = round(float(np.mean([kd.find(m)[2] for m in mirrored])) / diag, 6)
+        dists = np.fromiter((kd.find(m)[2] for m in mirrored), dtype=np.float64, count=len(mirrored)) / diag
+        sym_err = round(float(dists.mean()), 6)
+        sym_p95 = round(float(np.percentile(dists, 95)), 6)
+        sym_max = round(float(dists.max()), 6)
     w = _world(o, co) if n else np.zeros((0, 3))
     return {"object": o.name, "verts": n, "faces": len(me.polygons), "edges": len(me.edges),
             "loose_parts": int(len(np.unique(labels))) if n else 0, "boundary_edges": int((uses == 1).sum()),
             "non_manifold_edges": int((uses > 2).sum()), "symmetry_error": sym_err,
+            "symmetry_p95_error": sym_p95, "symmetry_max_error": sym_max,
             "bounds_min": [round(float(v), 5) for v in w.min(0)] if n else None,
             "bounds_max": [round(float(v), 5) for v in w.max(0)] if n else None,
             "masked_verts": int((_mask(me) > 0.5).sum())}

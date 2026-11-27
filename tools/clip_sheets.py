@@ -10,10 +10,10 @@ plus `sheet`). Running it again only makes what is missing. Private study materi
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import subprocess
 import sys
-import tempfile
 import textwrap
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -40,12 +40,22 @@ def _font(size: int):
 
 
 def _frame(video: Path, t: float, ffmpeg_dir: str) -> Image.Image | None:
-    with tempfile.TemporaryDirectory() as td:
-        out = Path(td) / "f.png"
-        subprocess.run([str(Path(ffmpeg_dir) / "ffmpeg"), "-v", "error", "-ss", f"{t:.3f}", "-i", str(video),
-                        "-frames:v", "1", "-y", str(out)], capture_output=True)
-        if not out.exists(): return None
-        return Image.open(out).convert("RGB").copy()
+    try:
+        res = subprocess.run(
+            [str(Path(ffmpeg_dir) / "ffmpeg"), "-v", "error", "-ss", f"{t:.3f}", "-i", str(video),
+             "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"],
+            capture_output=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+    if res.returncode != 0 or not res.stdout:
+        return None
+    try:
+        with Image.open(io.BytesIO(res.stdout)) as im:
+            return im.convert("RGB")
+    except OSError:
+        return None
 
 
 def _sheet(video: Path, row: dict, dest: Path, ffmpeg_dir: str) -> bool:

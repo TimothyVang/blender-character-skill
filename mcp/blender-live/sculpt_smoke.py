@@ -34,8 +34,8 @@ import bpy
 a = next(a for w in bpy.context.window_manager.windows for a in w.screen.areas if a.type == 'VIEW_3D')
 r = a.spaces.active.region_3d
 result = [[round(v, 4) for v in r.view_rotation], r.view_perspective, round(r.view_distance, 3),
-          sorted(o.name for o in bpy.context.selected_objects), a.spaces.active.shading.light,
-          [o.name for o in bpy.context.view_layer.objects if o.hide_get()]]
+          round(a.spaces.active.clip_end, 3), sorted(o.name for o in bpy.context.selected_objects),
+          a.spaces.active.shading.light, [o.name for o in bpy.context.view_layer.objects if o.hide_get()]]
 """
 U32 = ctypes.windll.user32 if os.name == "nt" else None
 
@@ -59,7 +59,7 @@ async def main():
         listed = sorted(t.name for t in (await s.list_tools()).tools)
         checks["all_sculpt_tools_listed"] = all(t in listed for t in TOOLS)
 
-        async def run(name, args, img_name=None):
+        async def run_raw(name, args, img_name=None):
             res = await s.call_tool(name, args)
             meta = next((c.text for c in res.content if c.type == "text"), "")
             try: meta = json.loads(meta)
@@ -68,6 +68,10 @@ async def main():
             if img_name and imgs: open(os.path.join(out, img_name), "wb").write(base64.b64decode(imgs[0].data))
             report[f"{len(report):02d}_{name}"] = {"isError": res.isError, "meta": meta if not isinstance(meta, str) else meta[:800]}
             print(name, "error" if res.isError or (isinstance(meta, dict) and meta.get("status") == "error") else "ok", flush=True)
+            return meta, imgs, bool(res.isError)
+
+        async def run(name, args, img_name=None):
+            meta, imgs, _ = await run_raw(name, args, img_name)
             return meta, imgs
 
         async def py(code):
@@ -89,7 +93,11 @@ async def main():
         checks["grab_moves_vertices"] = g["moved_verts"] > 0 and 0.05 < g["max_move"] < 0.6
         rep, _ = await run("mesh_report", {"object": "SculptTest"})
         checks["symmetry_mirrors_the_stroke"] = rep["symmetry_error"] < 0.002 and rep["bounds_max"][0] > 1.2 and rep["bounds_min"][0] < -1.2
-
+        checks["mesh_report_symmetry_percentiles"] = (
+            isinstance(rep.get("symmetry_p95_error"), (int, float))
+            and isinstance(rep.get("symmetry_max_error"), (int, float))
+            and 0 <= rep["symmetry_error"] <= rep["symmetry_p95_error"] <= rep["symmetry_max_error"]
+        )
         await py(SPHERE); await run("sculpt_begin", {"object": "SculptTest", "symmetry": "X"})
         m, _ = await run("sculpt_strokes", {"object": "SculptTest", "strokes": [
             {"brush": "draw", "radius": 0.3, "strength": 1.0, "points": [[-0.3, -0.95, 0.0], [0.3, -0.95, 0.0]], "snap": True}]})
@@ -108,24 +116,37 @@ async def main():
                           "result = sum(near) / len(near)")
         checks["subtract_goes_inward"] = m["strokes"][0]["moved_verts"] > 0 and radius < 0.99
 
-        for brush in ("snake_hook", "inflate", "crease", "smooth"):
-            await py(SPHERE); await run("sculpt_begin", {"object": "SculptTest", "symmetry": ""})
+        brushes = ("snake_hook", "inflate", "crease", "smooth")
+        await py(
+            "import bpy\n"
+            "if bpy.context.mode != 'OBJECT': bpy.ops.object.mode_set(mode='OBJECT')\n"
+            "for o in list(bpy.data.objects):\n"
+            "    if o.name.startswith('SculptTest'): bpy.data.objects.remove(o, do_unlink=True)\n"
+            "for i, name in enumerate(('snake_hook', 'inflate', 'crease', 'smooth')):\n"
+            "    bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=64, radius=1.0, location=(i * 4.0, 0, 0))\n"
+            "    bpy.context.active_object.name = f'SculptTest_{name}'\n"
+            "result = 4"
+        )
+        brush_calls = []
+        for i, brush in enumerate(brushes):
+            ox = i * 4.0
             pre = []
-            if brush == "smooth":   # roughen first so there is something to smooth
-                pre = [{"brush": "crease", "radius": 0.2, "strength": 1.0, "points": [[0, -1, -0.3], [0, -1, 0.3]], "snap": True}]
-            pts = [[0, -1, 0], [0, -1.3, 0.1], [0, -1.6, 0.3]] if brush == "snake_hook" else [[0, -1, -0.3], [0, -1, 0.3]]
-            m, _ = await run("sculpt_strokes", {"object": "SculptTest", "strokes": pre + [
-                {"brush": brush, "radius": 0.25, "strength": 1.0, "points": pts, "snap": brush != "snake_hook"}]})
+            if brush == "smooth":
+                pre = [{"brush": "crease", "radius": 0.2, "strength": 1.0, "points": [[ox, -1, -0.3], [ox, -1, 0.3]], "snap": True}]
+            pts = [[ox, -1, 0], [ox, -1.3, 0.1], [ox, -1.6, 0.3]] if brush == "snake_hook" else [[ox, -1, -0.3], [ox, -1, 0.3]]
+            brush_calls.append(run("sculpt_strokes", {"object": f"SculptTest_{brush}", "symmetry": "", "strokes": pre + [
+                {"brush": brush, "radius": 0.25, "strength": 1.0, "points": pts, "snap": brush != "snake_hook"}]}))
+        brush_results = await asyncio.gather(*brush_calls)
+        for brush, (m, _) in zip(brushes, brush_results):
             checks[f"{brush}_moves_vertices"] = m["strokes"][-1]["moved_verts"] > 0 and m["strokes"][-1]["max_move"] < 1.0
-
         await py(SPHERE); await run("sculpt_begin", {"object": "SculptTest", "symmetry": ""})
         await grab("")
         m, _ = await run("sculpt_remesh", {"object": "SculptTest", "voxel_size": 0.05})
         rep, _ = await run("mesh_report", {"object": "SculptTest"})
         checks["remesh_changes_vertex_count"] = m.get("verts_after", 0) > 0 and m["verts_after"] != m["verts_before"] \
             and rep["boundary_edges"] == 0 and rep["loose_parts"] == 1
-        m, _ = await run("sculpt_remesh", {"object": "SculptTest", "voxel_size": 0.0001})
-        checks["remesh_refuses_freezing_sizes"] = m.get("status") == "error" and "too small" in m.get("detail", "")
+        m, _, remesh_err = await run_raw("sculpt_remesh", {"object": "SculptTest", "voxel_size": 0.0001})
+        checks["remesh_refuses_freezing_sizes"] = remesh_err and m.get("status") == "error" and "too small" in m.get("detail", "")
 
         await py(SPHERE); await run("sculpt_begin", {"object": "SculptTest", "symmetry": ""})
         m, _ = await run("sculpt_mask", {"object": "SculptTest", "op": "box", "min": [0.001, -2, -2], "max": [2, 2, 2]})
@@ -137,8 +158,8 @@ async def main():
 
         m, _ = await run("sculpt_strokes", {"object": "SculptTest", "strokes": [{"brush": "nope", "radius": 0.2, "points": [[1, 0, 0]]}]})
         checks["unknown_brush_is_an_error"] = m.get("status") == "error" and "nope" in m.get("detail", "")
-        m, _ = await run("sculpt_begin", {"object": "NoSuchObject"})
-        checks["unknown_object_is_an_error"] = m.get("status") == "error" and "NoSuchObject" in m.get("detail", "")
+        m, _, unknown_err = await run_raw("sculpt_begin", {"object": "NoSuchObject"})
+        checks["unknown_object_is_an_error"] = unknown_err and m.get("status") == "error" and "NoSuchObject" in m.get("detail", "")
 
         if U32:
             pid = await py("import os\nresult = os.getpid()")
@@ -173,6 +194,22 @@ async def main():
             refcell = full.crop((256, 20, 512, 256)); rp = list(refcell.getdata())
             checks["turnaround_shows_reference_cell"] = sum(1 for p in rp if p[0] > 200 and p[1] < 60) / len(rp) > 0.2
         checks["turnaround_restores_view"] = before == after
+        orig_clip = await py(
+            "import bpy\n"
+            "a = next(a for w in bpy.context.window_manager.windows for a in w.screen.areas if a.type == 'VIEW_3D')\n"
+            "keep = a.spaces.active.clip_end\n"
+            "a.spaces.active.clip_end = 500.0\n"
+            "result = keep"
+        )
+        await run("viewport_capture", {"view": "FRONT", "shading": "SOLID"})
+        after_clip = await py(
+            "import bpy\n"
+            "a = next(a for w in bpy.context.window_manager.windows for a in w.screen.areas if a.type == 'VIEW_3D')\n"
+            "got = a.spaces.active.clip_end\n"
+            f"a.spaces.active.clip_end = {float(orig_clip)!r}\n"
+            "result = got"
+        )
+        checks["capture_restores_clip_end"] = abs(after_clip - 500.0) < 1e-3
 
         from PIL import ImageDraw
         circle = os.path.join(out, "ref_circle.png"); im = Image.new("RGB", (600, 600), (30, 30, 30))
@@ -283,8 +320,9 @@ async def main():
         await py("import bpy\nfor n in ('SculptTest', 'SculptTest3'): bpy.data.objects[n].parent = None\n"
                  "bpy.data.objects.remove(bpy.data.objects['SmokeRoot'])")
 
-        m, _ = await run("sculpt_mask", {"object": "SculptTest", "op": "box"})
-        checks["box_mask_without_bounds_is_refused"] = m.get("status") == "error" and "min and max" in m.get("detail", "")
+        m, _, mask_err = await run_raw("sculpt_mask", {"object": "SculptTest", "op": "box"})
+        checks["box_mask_without_bounds_is_refused"] = mask_err and m.get("status") == "error" and "min and max" in m.get("detail", "")
+        checks["bridge_errors_set_is_error"] = bool(remesh_err and unknown_err and mask_err)
 
     json.dump({"tools": listed, "checks": checks, "calls": report}, open(os.path.join(out, "sculpt_smoke.json"), "w"), indent=1)
     bad = [k for k, v in checks.items() if not v]

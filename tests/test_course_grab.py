@@ -127,3 +127,73 @@ def test_rerun_is_idempotent(short_clip):
     assert (short_clip / "index.json").read_text() == first
     assert len(list((short_clip / "frames").rglob("*.jpg"))) == n and n > 0
     assert (short_clip / "chapters" / "01-full.md").read_text().count("pull out this area right here") == 1
+
+
+def test_video_id_raises_runtime_error_on_ytdlp_failure(monkeypatch):
+    def fail_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 1, stdout="", stderr="ERROR: video unavailable")
+
+    monkeypatch.setattr(cg.subprocess, "run", fail_run)
+    with pytest.raises(RuntimeError, match="video unavailable"):
+        cg._video_id("https://example.com/watch-something-custom")
+
+    def empty_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 0, stdout="   \n", stderr="")
+
+    monkeypatch.setattr(cg.subprocess, "run", empty_run)
+    with pytest.raises(RuntimeError, match="failed to resolve video id"):
+        cg._video_id("https://example.com/watch-something-custom")
+
+
+def test_split_by_chapter_assigns_gap_lines_to_previous_started_chapter():
+    ch = [
+        {"n": 1, "slug": "a", "title": "A", "start": 0.0, "end": 30.0},
+        {"n": 2, "slug": "b", "title": "B", "start": 40.0, "end": 80.0},
+        {"n": 3, "slug": "c", "title": "C", "start": 90.0, "end": 120.0},
+    ]
+    lines = [(-1.0, "pre"), (10.0, "in1"), (35.0, "gap12"), (85.0, "gap23"), (130.0, "post")]
+    by = cg.split_by_chapter(lines, ch)
+    assert [s for _, s in by[1]] == ["pre", "in1", "gap12"]
+    assert [s for _, s in by[2]] == ["gap23"]
+    assert [s for _, s in by[3]] == ["post"]
+
+
+def test_frame_times_and_process_reject_small_floor_and_gap(tmp_path):
+    ch = {"n": 1, "slug": "a", "title": "A", "start": 0.0, "end": 20.0}
+    with pytest.raises(ValueError, match="floor_s"):
+        cg.frame_times(ch, [], [], floor_s=1.5)
+    with pytest.raises(ValueError, match="min_gap_s"):
+        cg.frame_times(ch, [], [], floor_s=10.0, min_gap_s=0.5)
+    with pytest.raises(ValueError, match="floor_s"):
+        cg.process_video_dir(tmp_path, "vid", ffmpeg_dir=None, floor_s=1.0)
+
+
+def test_scene_times_failure_raises_and_does_not_cache(tmp_path, monkeypatch):
+    d = tmp_path / "v"
+    d.mkdir()
+    (d / "v.info.json").write_text('{"id": "v", "duration": 20, "chapters": null}')
+    (d / "v.en.vtt").write_text("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nhello.\n")
+    (d / "v.mp4").write_bytes(b"not-a-real-mp4")
+
+    def bad_ffmpeg(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 1, stdout="", stderr="Invalid data found")
+
+    monkeypatch.setattr(cg.subprocess, "run", bad_ffmpeg)
+    with pytest.raises(RuntimeError, match="Invalid data found"):
+        cg.process_video_dir(d, "v", ffmpeg_dir=".", floor_s=10.0)
+    assert not (d / "frames" / "01-full" / "_scenes.json").exists()
+
+
+def test_missing_duration_probes_ffprobe_and_fails_when_unreadable(short_clip, tmp_path):
+    (short_clip / "clip.info.json").write_text('{"id": "clip", "duration": 0, "chapters": null}')
+    assert cg.process_video_dir(short_clip, "clip", ffmpeg_dir=FFMPEG, workers=2) == 0
+    idx = cg.json.loads((short_clip / "index.json").read_text())
+    assert idx["chapters"][0]["end"] >= 19.0
+    assert len(idx["chapters"][0]["frames"]) > 0
+
+    bad = tmp_path / "bad"
+    bad.mkdir()
+    (bad / "bad.info.json").write_text('{"id": "bad", "duration": 0, "chapters": null}')
+    (bad / "bad.en.vtt").write_text("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nhello.\n")
+    with pytest.raises(RuntimeError, match="duration"):
+        cg.process_video_dir(bad, "bad", ffmpeg_dir=FFMPEG)
