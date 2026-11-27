@@ -181,8 +181,8 @@ created filled with the blockout colour, saved at once into a `textures` folder,
 painted by hand in Texture Paint for about an hour of time-lapse. From the frames: warmer red on cheeks, nose tip,
 lips, ears, knuckles and knees; darker tone in creases and under the chin; lighter tone on raised forms; the printed
 motif on the shirt. Habits shown: a saved palette per part; face-selection masking to keep paint on one region
-[15:23:51]; small brushes, because big ones stall; edges softened by repainting at low strength [15:24:50]. A
-`Hue/Saturation/Value` node (Saturation 1.04, Value 1.1) sits between the skin map and `Base Color` in the time-lapse.
+[15:23:51]; a soft paint brush resized for the target; and a Blur brush tried for edges, though the artist says it
+works poorly [15:24:50]. A `Hue/Saturation/Value` node (Saturation 1.04, Value 1.1) sits between the skin map and `Base Color` in the time-lapse.
 `blender-live` has no paint brush. The workable route: paint a colour attribute on vertices with numpy, then bake
 it to the image with `bake_emit` (step 8). It does soft tonal work well and cannot do sharp motifs.
 
@@ -299,12 +299,13 @@ islands the mean colour is near (0.5, 0.5, 1.0) and the standard deviation of re
 
 ### 10. Cloth and leather [16:32:01 to 16:58:06]
 One tree for shirt, skirt and boots; only images and factors change.
-- Colour: `colour map -> Mix(Multiply).A`, `pointiness map -> .B`, Factor about 0.3 on the shirt (by eye elsewhere).
-  Then `-> Mix(Overlay).A` with a PBR set's base colour in `.B`, Factor 0.3 on shirt and skirt, 0.2 on boots, `-> Base
-  Color`. The painted colour stays in charge; the PBR colour only adds weave.
-- The PBR set comes from Poly Haven (a fabric for shirt and skirt, `brown_leather` for boots) at 2K, tried on a test
-  sphere, then its nodes are copied into the character's material [16:33:06]. Its roughness and metallic maps feed
-  `Roughness` and `Metallic`; its displacement is deleted. `Mapping` scale sets the weave size (about 3.6 on the skirt).
+- Colour: `colour map -> Mix(Multiply).A`, `pointiness map -> .B`, Factor 0.404 on the shirt at one adjustment;
+  then `-> Mix(Overlay).A` with a PBR set's base colour in `.B`, adjusted by eye `-> Base Color`.
+  The painted colour stays in charge; the PBR colour only adds surface variation.
+- The PBR set comes from Poly Haven: `terienka` is shown for the shirt and `brown_leather` is tested before
+  selecting the skirt [16:34:45, 16:39:28]; choose maps appropriate to each surface, trying them on a test sphere
+  before copying nodes into the character's material. The leather asset screen shows 4K maps. Roughness and
+  metallic maps feed their corresponding inputs when present; displacement is deleted. `Mapping` sets texture scale.
 - Normals: the course adds the baked map's colour and the PBR normal map's colour with `Vector Math (Add)`, then
   `Vector Math (Normalize)`, into one `Normal Map` node `-> Principled.Normal` [16:37:22]. That is not a correct
   blend: two flat texels (0.5, 0.5, 1.0) become (0.41, 0.41, 0.82), which the `Normal Map` node reads as a tilted
@@ -344,15 +345,16 @@ Gums: the same nodes, gum colour, slightly higher scale. Build with the helpers 
 
 ### 12. Skin [17:04:09 to 17:24:00]
 Layers, each previewed alone before the next is added:
-1. `skin colour map -> Mix(Multiply).A`, `skin pointiness map -> .B`, Factor by eye [17:06:00].
+1. `skin colour map -> Mix(Multiply).A`, `skin pointiness map -> .B`, Factor 0.265 on one visible adjustment [17:06:34].
 2. Tattoos and marks go on their own image created with alpha 0 and are mixed over the base with that image's
    `Alpha` as Factor, so the base map is never damaged [17:06:45]. The course mutes it after the demonstration.
 3. Edge tint: `Layer Weight.Facing` (`Blend` 0.13) `-> Color Ramp` (B-Spline: white at 0, black at 0.12, another
    black stop further right) soft-lit over the colour at Factor about 0.6 [17:08:52].
-4. Variation 1: `Noise Texture` on UVs at a very high scale `-> Color Ramp` (black near 0.52, white near 0.93) is the
+4. Variation 1: `Noise Texture` on mapped UVs `-> Color Ramp` (black near 0.52, white near 0.93) is the
    Factor of a `Mix` between the colour (A) and the colour through `Hue/Saturation/Value` with saturation up and
-   value down (B) [17:11:35]. Variation 2: the same with a `Voronoi Texture` (scale about 190) and a reversed ramp
-   (light grey at 0, black near 0.3); A is the result of variation 1, B the same HSV copy [17:14:32].
+   value down (B) [17:11:35]. One screen shows Mapping scale 4.4 and Noise scale 425.7 [17:12:31].
+   Variation 2: the same with a `Voronoi Texture` (scale 193 on screen) and a reversed ramp
+   (light grey at 0, black near 0.3); A is the result of variation 1, B the same HSV copy [17:16:27].
 5. Lips must not mottle. A colour attribute `color variation mask` (face corner, byte colour), white everywhere and
    black on the lips and inside the mouth, is the Factor of a `Mix` (A black, B the ramp) placed between each
    variation ramp and the Factor it drives [17:16:39]. An image texture can serve as the mask instead.
@@ -398,6 +400,161 @@ Make the mask first: `face_mask(body, "color variation mask", lambda c: <lip reg
 reads as black and switches variation off. Check a Cycles close-up of the face: no chalky white patches, thin parts
 like ears slightly red, lips smooth and glossier than cheeks.
 
+## How the artist works on screen
+
+The timestamps identify sampled frames, not every movement between them. Pixel brush sizes describe the displayed
+view; measure the actual part before choosing a world-space radius. The scripted alternatives below are adaptations,
+not claims that the artist used code.
+
+### 1. Name and tidy
+- **Screen:** The Outliner holds the character parts while Batch Rename applies find/replace and a prefix.
+  Hair objects then get individual modifier and vertex-group inspection [qy-wwP-b9HY-12-143722, 14:37:25;
+  qy-wwP-b9HY-12-143943, 14:39:45; qy-wwP-b9HY-12-144219, 14:42:22].
+- Old vertex groups are removed per object, rather than indiscriminately clearing every group
+  [qy-wwP-b9HY-12-144318, 14:43:20].
+- **Reader:** Use `scene_tree` and `exec_python` to inspect dependencies before deleting groups.
+  Preserve the SKILL.md object names and the group that drives the hair.
+
+### 2. Make the scene light
+- **Screen:** In a hair modifier the artist pastes a driver onto Viewport Amount, then checks other hair sections
+  and the head from an angle [qy-wwP-b9HY-12-144543, 14:45:45].
+- The checker material is replaced on selected objects; scalp visibility is adjusted while the groom remains visible
+  [qy-wwP-b9HY-12-144659, 14:47:01; qy-wwP-b9HY-12-144730, 14:47:31].
+- **Reader:** Set the named Geometry Nodes interface input on each hair modifier, or drive it from the main hair;
+  check both viewport and render visibility before removing a checker.
+
+### 3. Render engine
+- **Screen:** A rendered-view check is followed by Cycles and GPU Compute in Render Properties
+  [qy-wwP-b9HY-12-151755, 15:18:02]. Pointiness is later previewed in Cycles, not material preview
+  [qy-wwP-b9HY-12-162435, 16:24:38].
+- **Reader:** Set the engine and device in `exec_python`, then use `render_image(engine="CYCLES")`;
+  a noisy first viewport pass is not a finished render.
+
+### 4. Material blockout
+- **Screen:** The artist splits the workspace so an Image Editor with colour reference sits beside the model;
+  material properties and the character stay visible together [qy-wwP-b9HY-12-144819, 14:48:20].
+- The view turns toward the ponytail to assign its band, then closes in on the mouth and eyes
+  [qy-wwP-b9HY-12-145213, 14:52:15; qy-wwP-b9HY-12-145428, 14:54:29].
+- The mouth close-up shows gum roughness 0.229 and tooth roughness 0.044 at one adjustment, not universal values.
+  The central eye faces are selected in Edit Mode for the separate pupil region
+  [qy-wwP-b9HY-12-145721, 14:57:22].
+- **Reader:** Assign named materials and per-face slots through `bpy`; compare each part with the supplied palette
+  using `viewport_capture`. Keep eye and mouth object names required by the skill.
+
+### 5. Hair, brows and lashes
+- **Screen:** A side view of the ponytail is compared to the concept. Curves Info Intercept is previewed in
+  grayscale before a ramp and colour are added [qy-wwP-b9HY-12-145834, 14:58:36;
+  qy-wwP-b9HY-12-145926, 14:59:29].
+- The artist swaps the regular and hair shaders at the output, then switches preview mode to compare them.
+  Separate output targets are visible for brows [qy-wwP-b9HY-12-150203, 15:02:05;
+  qy-wwP-b9HY-12-150354, 15:03:56].
+- Hair settings visible in the shader are Chiang, Direct Coloring, roughness 0.300, radial roughness 0.300 and
+  IOR 1.550 [qy-wwP-b9HY-12-150420, 15:04:21].
+- **Reader:** Use `build_hair` for both output targets, assign it to the groom, then compare a Cycles close-up
+  with a material preview; the preview shader is an approximation.
+
+### 6. Eyes
+- **Screen:** An isolated eye, UV editor and shader editor are shown together. The artist adjusts a spherical
+  gradient's dark boundaries, adds a lighter iris stop and changes the ramp to Ease
+  [qy-wwP-b9HY-12-150533, 15:05:34; qy-wwP-b9HY-12-150738, 15:07:40].
+- A linear mask initially cuts the iris diagonally; the UV orientation is inspected before the darker upper region
+  is judged [qy-wwP-b9HY-12-150953, 15:09:55; qy-wwP-b9HY-12-151009, 15:10:10].
+- Radial striations and the upper shadow are combined before the colour reaches Principled
+  [qy-wwP-b9HY-12-151152, 15:11:54]. The pupil shader is removed in a sampled frame; that frame alone
+  does not establish its final shader [qy-wwP-b9HY-12-151221, 15:12:23].
+- A separate sphere becomes the transparent cornea; its shadow visibility is unchecked before the Eevee check
+  [qy-wwP-b9HY-12-151415, 15:14:17; qy-wwP-b9HY-12-151514, 15:15:16].
+- **Reader:** Use `build_iris` and `build_cornea`, inspect the UV orientation and render a close-up;
+  fit the sphere by eye, without treating the example scale as a course measurement.
+
+### 7. Colour maps
+- **Screen:** A new blank image is made from the Image Texture node; the starting width and height fields show
+  1024 before editing, while narration specifies a 4K target [qy-wwP-b9HY-12-151934, 15:19:36].
+- In Texture Paint a skin palette is assembled beside the UV editor. Paint Soft, Mix and Strength 1.0 are visible;
+  radius changes with the feature [qy-wwP-b9HY-12-152216, 15:22:19].
+- After a test the Fill brush restores the map, and face selection isolates an area
+  [qy-wwP-b9HY-12-152336, 15:23:38]. Blur is tried at 64–130 px, but reported as unsatisfactory
+  [qy-wwP-b9HY-12-152448, 15:24:50].
+- In the accelerated painting, the artist moves among close views of lips, feet, nose, ear and hands, resizes
+  frequently, orbits, and sometimes maximises the UV editor [qy-wwP-b9HY-12-152707, 15:27;
+  qy-wwP-b9HY-12-153226, 15:32; qy-wwP-b9HY-12-155714, 15:57].
+- Leg and knee passes show lower strengths before the artist returns to other areas; colour is checked on the
+  rendered character after the pass [qy-wwP-b9HY-12-162221, 16:22:21].
+- **Reader:** `paint_points` with mirrored, soft object-space dabs and `bake_emit` reproduces broad tint only.
+  Use feature-relative radii, inspect front and side, and report sharp prints and hand-painted detail as missing.
+
+### 8. Pointiness maps
+- **Screen:** Geometry outputs are previewed one by one on the shirt, then Pointiness receives a Color Ramp;
+  the rendered close-up makes folds visible as the stops move
+  [qy-wwP-b9HY-12-162435, 16:24:38; qy-wwP-b9HY-12-162456, 16:25:05].
+- With the target image node active, the Bake panel shows Emission, Image Textures, Clear Image and a
+  16 px Adjacent Faces margin [qy-wwP-b9HY-12-162724, 16:27:24].
+- The baked shirt islands are inspected in the Image Editor. On the skirt, a first result misses islands;
+  a later bake fills them and the image is saved [qy-wwP-b9HY-12-164106, 16:41:07;
+  qy-wwP-b9HY-12-164155, 16:42:03].
+- For straps sharing the image, the later object is baked without clearing the existing result
+  [qy-wwP-b9HY-12-164438, 16:44:48].
+- **Reader:** `bake_emit` with `pointiness`, a Non-Color target and an active target node on each material;
+  inspect every UV island and save. Use `clear=False` only for subsequent contributors.
+
+### 9. Normal bake and cloth fit
+- **Screen:** The normal bake panel shows Tangent and +X/+Y/+Z; the saved purple image is connected through
+  a Normal Map node before Multires is removed [qy-wwP-b9HY-12-163018, 16:30:19;
+  qy-wwP-b9HY-12-163109, 16:31:09].
+- The artist adds Subdivision at viewport 1/render 2, then uses Grab around the sleeve where cloth meets skin.
+  Radius changes from 494 px to about 390 px; strength is 0.4
+  [qy-wwP-b9HY-12-163134, 16:31:36; qy-wwP-b9HY-12-163149, 16:31:49].
+- A rainbow boot bake with Mirror enabled is rejected; a later attempt starts with Clear Image enabled
+  before adding the separate straps [qy-wwP-b9HY-12-165042, 16:50:44;
+  qy-wwP-b9HY-12-165140, 16:51:48].
+- **Reader:** Use `bake_multires_normal`, inspect and save the image, then `multires_to_subsurf`.
+  For penetration, `sculpt_strokes` with a grab radius measured against the sleeve width is an approximation;
+  inspect from two views and remeasure the whole-character outline.
+
+### 10. Cloth and leather
+- **Screen:** The shirt's colour and pointiness are mixed with Multiply; the factor is adjusted while the
+  garment stays visible [qy-wwP-b9HY-12-163213, 16:32:15; qy-wwP-b9HY-12-163227, 16:32:27].
+- A library fabric is tested, and its nodes are copied into the shirt material rather than replacing the
+  whole material. A second Mix is set to Overlay and tuned
+  [qy-wwP-b9HY-12-163444, 16:34:45; qy-wwP-b9HY-12-163558, 16:35:59].
+- The skirt is selected after a brown leather test sphere; subsequent close views assess skirt and boot bakes
+  [qy-wwP-b9HY-12-163926, 16:39:28; qy-wwP-b9HY-12-164722, 16:47:24].
+- The artist combines normal branches with Vector Add and Normalize
+  [qy-wwP-b9HY-12-165712, 16:57:20]; the corrected alternative is explained in step 10 above.
+- **Reader:** Load licensed PBR images with `bpy` and use `build_cloth`; keep the painted map dominant,
+  tune tiling in a close Cycles render, and preserve a flat normal when combining normal maps.
+
+### 11. Teeth, gums and tongue
+- **Screen:** The jaw (`Mouth`) is isolated. A ramped Voronoi feeds Bump and is previewed alone before reconnecting;
+  a separate noise/Voronoi Multiply controls roughness
+  [qy-wwP-b9HY-12-165758, 16:58:16; qy-wwP-b9HY-12-165902, 16:59:14;
+  qy-wwP-b9HY-12-170221, 17:02:23].
+- The tongue close-up shows Voronoi scale 561.5 and inverted bump at distance 0.001 while strength is reduced;
+  the full mouth is checked again [qy-wwP-b9HY-12-170301, 17:03:02;
+  qy-wwP-b9HY-12-170351, 17:03:53].
+- **Reader:** Build the node tree described in step 11 with `exec_python`; tune against a close render rather
+  than transferring the texture scale to an unrelated UV layout.
+
+### 12. Skin
+- **Screen:** Pointiness is previewed and mixed with the painted skin; a visible Multiply adjustment reads
+  0.265 [qy-wwP-b9HY-12-170421, 17:04:27; qy-wwP-b9HY-12-170632, 17:06:34].
+- A transparent image is previewed, temporary bright marks are painted on an arm, and its alpha is used for
+  an overlay which is subsequently muted [qy-wwP-b9HY-12-170725, 17:07:27;
+  qy-wwP-b9HY-12-170738, 17:07:45; qy-wwP-b9HY-12-170837, 17:08:38].
+- Facing and a B-Spline ramp build the edge tint; Blend 0.130 and a ramp stop at 0.120 are visible
+  [qy-wwP-b9HY-12-170955, 17:09:57].
+- The artist alternates a face close-up with a broader check while adjusting noise and ramp;
+  Mapping scale 4.4 and Noise scale 425.7 are visible at one point
+  [qy-wwP-b9HY-12-171230, 17:12:31].
+- A second variation is examined around the mouth and a colour attribute is named for masking it
+  [qy-wwP-b9HY-12-171625, 17:16:27; qy-wwP-b9HY-12-171726, 17:17:27].
+- Roughness is compared between face and lips; bump is previewed as false colour and reduced before reconnecting
+  [qy-wwP-b9HY-12-172146, 17:21:47; qy-wwP-b9HY-12-172223, 17:22:24].
+- Finally the artist checks subsurface in Cycles, then looks at front and back. One screen shows scale 0.01 m,
+  weight 0.504 and radius 1/0.2/0.1 [qy-wwP-b9HY-12-172353, 17:23:55].
+- **Reader:** Create the face-corner mask with `face_mask`, use `build_skin`, and compare Cycles close-ups
+  with the reference. Procedural pores and script-painted colour are approximations, not recovered paint strokes.
+
 ## Settings the course uses
 | Setting | Value | Where | Time |
 |---|---|---|---|
@@ -408,7 +565,7 @@ like ears slightly red, lips smooth and glossier than cheeks.
 | Bake, pointiness | Emission, Image Textures, margin 16 px; Clear Image off for a 2nd object | Bake panel | 16:27:12, 16:44:45 |
 | Bake, normal | Normal, Tangent, +X +Y +Z, Bake from Multires off | Bake panel | 16:30:22 |
 | After the bake | `Subdivision`, viewport 1, render 2 | modifiers | 16:31:20 |
-| Cloth colour mixes | Multiply pointiness about 0.3; Overlay PBR colour 0.3 (boots 0.2) | `Mix` | 16:32:27, 16:36:08 |
+| Cloth colour mixes | Multiply shirt 0.404 at one adjustment; Overlay tuned by eye | `Mix` | 16:32:27, 16:35:59 |
 | Teeth; iris | `Coat Weight` 1.0; `Roughness` 1.0 and `Specular IOR Level` 0.0 | Principled | 14:54:40, 15:12:05 |
 | Cornea | `Roughness` 0.0, `Transmission Weight` 1.0, object shadow off | Principled, Visibility | 15:14:28 |
 | Cornea in EEVEE | ray tracing on, Raytraced Transmission on, Thickness 0.0 | render, material | 15:15:27 |
@@ -430,7 +587,7 @@ like ears slightly red, lips smooth and glossier than cheeks.
 General: the three passes, the naming, pointiness times colour, baking `Multires` to a tangent normal map, a mask
 for where variation applies, two outputs for hair, eyeball plus separate cornea, and fitting subsurface scale to
 the character's real size (0.01 suits this roughly human-sized stylized girl; judge yours by render). Specific to
-this one: palette, pink iris, exact ramp stops, the 0.3 and 0.2 factors, fabric choices. The list below is my advice.
+this one: palette, pink iris, exact ramp stops, the Multiply 0.404 / eye-tuned Overlay factors, fabric choices. The list below is my advice.
 - Fur or feathers: `build_hair` still applies; for markings feed the colour from a map sampled on the scalp UVs.
 - Scales or rough creature skin: keep the skin layering, drive bump from Voronoi, raise `Roughness`, lower subsurface.
 - Hard-surface parts (armour, weapons, buckles): no subsurface, `Metallic` 1 for bare metal; use pointiness to
@@ -460,9 +617,10 @@ Failed: any count in item 1 off, a measured outline view under 0.98, or a nameab
   add-on: paid, but the textures are free CC0 downloads from the site, so the built-in route is to download a set,
   `bpy.data.images.load` it, and pass it to `build_cloth(pbr=...)`. BlenderKit (free tier) and Ucupaint (free,
   layered painting) are named but not used.
-- The fabric asset used on shirt and skirt is only spoken and the caption is unreadable; boots use `brown_leather`.
-- Values not given or not readable, where I supplied my own: skin pointiness factor, skin noise scale, the HSV
-  shifts for skin variation, cornea size, iris noise scale, third stop of the edge-tint ramp.
+- The shirt fabric asset is shown as `terienka`; `brown_leather` is tested before the skirt. Exact final asset
+  choices for all other pieces are not established by the sampled frames.
+- Values not established as final include the HSV shifts, cornea size, iris noise scale, and third edge-tint stop.
+  One observed skin pointiness factor is 0.265; one noise setup shows Mapping 4.4 and Noise 425.7.
 - `Conform Base` (5.0) against `Apply Base` (4.5): I could not check how they differ.
 - Not verified: the viewport options Scene Lights and Scene World (they need a 3D viewport), and the look of the
   iris on a real eye. Steps 1, 3, 4 and 11 have no code block here; their property and node names were run in 4.5.16.

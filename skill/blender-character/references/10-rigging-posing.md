@@ -33,6 +33,8 @@ Posing a subdivided, haired character is slow. The course turns on `Render Prope
 `Max Subdivision` 0 while rigging and posing, and lowers the hair `Viewport Amount` (0.02) [18:17:19, 18:48:41]:
 `bpy.context.scene.render.use_simplify = True; bpy.context.scene.render.simplify_subdivision = 0`.
 Turn Simplify off again before any render.
+On screen he also right-clicks the `Use Simplify` checkbox and adds it to Quick Favorites, so `Q` toggles it in the
+viewport while posing [18:17:35 to 18:17:50].
 
 ### 2. Add the Rigify human metarig [17:32:17, 17:43:10]
 
@@ -282,7 +284,8 @@ Selected`, then `Selection to Cursor` on the joint) [17:52:38], generates, and s
 control curls the fingers sideways [18:07:25]. Its fix has three parts, all done by `fit_metarig` above:
 
 - Roll: every finger bone has its X axis across the finger and its Z axis toward the palm side [18:08:17].
-- Flatten: scale the chain to zero across its own X and Z so the joints lie on one straight line [18:10:27].
+- Flatten: set the transform orientation to `Normal`, select a finger chain, and press `S Z 0 Enter` so the joints are
+  flattened into one plane [18:12:32]. (The narration says "x axis"; the frames show Z along the bone's normal.)
 - Then lift the middle joints a tiny amount toward the back of the hand, so the curl direction is unambiguous
   [18:12:44]. (Rigify's finger rig derives the hinge axis from the plane of this bend; with a perfectly straight
   chain it falls back on the roll.)
@@ -310,6 +313,10 @@ keep their weights (checked). Pose only `rig`, and only in Pose Mode; leave its 
 `metarig` once the rig is right. Bone names in `rig`: controls have plain names (`torso`, `chest`, `hips`, `head`,
 `neck`, `hand_ik.L`, `foot_ik.L`, `upper_arm_fk.L`, `f_index.01_master.L`, `jaw_master`, `eye_common`,
 `lid.T.L.002`); `DEF-` bones deform the mesh (171 of them); `MCH-` and `ORG-` are internals, hidden.
+
+After the first generation the Rigify panel button reads `Re-Generate Rig`; use it each time the metarig changes. The
+N panel Rigify tab of `rig` carries Rig Main Properties (Neck Follow 0.500, Head Follow 0, Torso Parent Root) and the
+Rig Layers buttons [18:07:08].
 
 ### 7. Bind the body with automatic weights [18:06:06]
 
@@ -443,6 +450,9 @@ The course finds two problems. Moving a brow control dragged the top of the head
 from the lid, restricted painting to selected faces to protect the lower lid, and blurred [18:21:46]. It calls
 weight painting a guessing game and, for the lids, switches to a shape key (step 10).
 
+The brush header reads Weight 1.000 and Strength 1.000 in every weight-paint clip; Size moves between 100 and 326 px
+with zoom, and the Options popover has `Mirror` X and `Auto Normalize` ticked [18:19:10 to 18:22:57].
+
 Without a brush, set weights by region: `paint(body, "DEF-spine.006", lambda p: p.z > brow_z + margin)`.
 
 ```python
@@ -545,8 +555,9 @@ loop cuts, smoothed, kept just outside the surface; mirrored for the other side)
 a `Surface Deform` modifier. The real part is also parented to the rig with empty groups that stay empty. Modifier
 order on the part: `Armature`, `SurfaceDeform`, then `Subdivision`. Bind with Simplify on (max subdivision 0);
 binding with subdivision active throws an error [18:55:10]. The proxy is shown as `Wire` and hidden from renders
-[18:54:05, 18:56:18]. Same recipe for the skirt [18:56:29]; the course says it will do the necklace the same way
-off-camera [19:01:42].
+[18:54:05, 18:56:18]. The skirt follows the same recipe and the video does show it, sped up four times [18:56:47 to
+18:57:47]; the necklace is only said to go the same way [19:01:46]. On screen the boot's stack reads `Mirror`,
+`Armature`, `SurfaceDeform`, `Subdivision`; the helper has `Mirror` then `Armature`.
 
 ```python
 # verified in 4.5.16 background
@@ -574,6 +585,8 @@ faces (torso under the shirt and skirt, keeping the shoulders), puts them in a v
 `Mask` modifier with that group and the invert button on, placed above `Subdivision`. Verified: `m =
 body.modifiers.new("Mask", "MASK"); m.vertex_group = "mask"; m.invert_vertex_group = True`. Turn it off
 (`m.show_viewport = False`) while posing the bare body.
+On screen the body stack reads `Armature`, `Mask`, `Subdivision`, and the bare body is shown by switching the Mask
+modifier's viewport icon off [19:02:28, 19:02:36].
 
 ### 14. Pose [17:34:28 to 17:41:46, 19:02:00 to 19:04:30]
 
@@ -599,6 +612,209 @@ asset gets a thumbnail (`Asset > Create Pose Asset` in the Asset Browser) [19:02
 `build_test_poses` does) on frames after the test range, for example 101 and 102, and record the frame numbers;
 `motion_preview(frames=[101, 102])` shows them.
 
+The Asset Browser is an editor switched on beside the viewport (library `Current File`, catalog `Unassigned`); a camera
+object appears in the outliner when the pose asset gets its thumbnail [19:02:49 to 19:04:22].
+
+## How the artist works on screen
+
+What the sheets of chapter 13 show, step by step (Blender 5.0.1 on screen; the reader works in 4.5.16). Clip ids are
+`qy-wwP-b9HY-13-HHMMSS`; times are video clock times. Values marked "read" are legible on screen; the rest were
+seen but not readable. Nothing here replaces the code above. "Reader" lines say what to call. Where I convert
+screen pixels to world units, the conversion is my own estimate.
+
+### Layout the artist works in (all steps)
+
+- One 3D viewport on the left, outliner (top right) and Properties editor (bottom right) as in the default
+  Layout workspace, plus the N panel when needed. Shading is Solid with the real textures shown, and `In Front` on
+  for the metarig and later the rig [qy-wwP-b9HY-13-174404 17:44:14, qy-wwP-b9HY-13-175224 17:52:26].
+- Views: front and right orthographic (Numpad 1, 3) for joint placement, with the grid in centimetres or
+  millimetres at high zoom; a perspective view for rolls and the face. X-ray (Alt Z) is toggled constantly so the
+  bone shows through the skin or hides behind it [qy-wwP-b9HY-13-175654 17:56:56, qy-wwP-b9HY-13-175735 17:57:39].
+- Local view (Slash) isolates the body and the rig; Shift H hides unselected bones [qy-wwP-b9HY-13-174458
+  17:45:08, qy-wwP-b9HY-13-175827 17:58:36].
+- Reader: `viewport_capture(view="FRONT")`, `view="RIGHT"`; the isolation is `hide_set(True)` on the other objects.
+
+### 1. Collections and a fast viewport
+
+- Outliner drag and drop: the artist drags every geometry and cloth collection into `CH_<name>_model`, leaves
+  `CH_<name>_rig` empty, then selects the rig collection before adding the metarig so it lands in it
+  [qy-wwP-b9HY-13-174239 17:42:41, qy-wwP-b9HY-13-174304 17:43:06]. `CH_<name>_rig_helpers` is created later and the
+  helper proxies are dragged into it [qy-wwP-b9HY-13-185007 18:50:19].
+- Simplify: in Render Properties the artist ticks `Simplify`, sets the Viewport `Max Subdivision` to 0 (read), and
+  right-clicks the checkbox to add it to Quick Favorites, so `Q` toggles it while posing [qy-wwP-b9HY-13-181733
+  18:17:35 to 18:17:50]. He turns it off to judge the finished lid shape and on again to bind Surface Deform
+  [qy-wwP-b9HY-13-182756 18:27:58, qy-wwP-b9HY-13-185505 18:55:18].
+  Reader: `bpy.data.collections.new(...)`, `scene.render.use_simplify = True`, `simplify_subdivision = 0`.
+
+### 2. The metarig
+
+- `Shift A > Armature > Rigify Meta-Rigs` offers `Human`, `Animals` and `Basic`; he picks Human with the rig
+  collection active [qy-wwP-b9HY-13-173245 17:32:46, qy-wwP-b9HY-13-174318 17:43:19]. A skeleton with a gold face
+  block appears, far too big, around the character.
+- The N panel Item tab for the metarig shows location 0, rotation 0, scale 1 and dimensions of about 1.58 by 0.285 by
+  1.98 m (read); the artist keeps these and works in Edit Mode only [qy-wwP-b9HY-13-174330 17:43:42].
+- Reader: `add_metarig(collection_name)` (step 2); `check_metarig(meta)["object_scale_is_1"]` must stay True.
+
+### 3 and 4. Measuring and fitting the metarig
+
+- Order on screen: scale and move the whole skeleton to height (S, G Y, G Z), pelvis, spine in the side view, leg,
+  foot, heel, shoulder, arm, hand, fingers, face, eyes. Mirror is on: the tool options show `X-Axis Mirror` and the
+  header shows an X toggle [qy-wwP-b9HY-13-174542 17:45:48].
+- Spine and pelvis: he selects the spine bones with `L` (linked) in the right view and drags joints along Y so the
+  chain follows the back; the pelvis bone is moved forward by a few millimetres, header showing the move
+  [qy-wwP-b9HY-13-174558 17:46:05, qy-wwP-b9HY-13-174635 17:46:40 to 17:46:47]. Reader: `move_joint(ebs, "spine", "tail", along(t))`.
+- Leg and foot: the knee joint goes to the middle of the knee, the foot bone to the ankle, the toe bone to the ball
+  of the foot, all in the right view with `G` or `G Y` [qy-wwP-b9HY-13-174703 17:47:05 to 17:47:18]. Heel: the
+  `heel.02` bone lies on the floor line at the back of the sole; in the front view he presses `S X` to widen it to the
+  shoe width, after switching the pivot pie (period key: Median Point, Active Element, Bounding Box Center, 3D Cursor,
+  Individual Origins) [qy-wwP-b9HY-13-174734 17:47:36 to 17:47:54, qy-wwP-b9HY-13-174747 17:47:50]. Reader: `P["heel"] +/- (w, 0, 0)` with `heel_half_width`.
+- Shoulder and clavicle: moved in the front view along the collarbone, then in Y in a 3/4 view so the bone sits back
+  in the shoulder [qy-wwP-b9HY-13-175026 17:50:27 to 17:50:35].
+- Hand: the palm bones go to the middle of the palm; each finger joint is snapped exactly to the middle of its
+  knuckle ring: select the loop in the body's Edit Mode, `Shift S > Cursor to Selected`, back to the metarig,
+  select the joint, `Shift S > Selection to Cursor` (the header says "Snap Selection to Cursor") [qy-wwP-b9HY-13-175238 17:52:49,
+  qy-wwP-b9HY-13-175251 17:52:53 to 17:53:03]. Reader: `band(body, ...)["centre"]` then `move_joint`.
+- Face: with the face bones shown he moves forehead, temple and ear bones first. Snapping is set from the header
+  popover: Snap To `Face Project` (Face Nearest sits beside it); Affect shows Move, Rotate and Scale all on
+  [qy-wwP-b9HY-13-175548 17:55:56 to 17:55:59]. Lip, chin, cheek and nose bones are moved with `G`, cancelling with
+  `Esc` when the result is wrong. Whole joints are moved by box-selecting the joint (all ends) in side view; this is
+  the "very important" disconnected-bones warning [qy-wwP-b9HY-13-175654 17:56:56, qy-wwP-b9HY-13-175907 17:59:10 to 17:59:23].
+  Reader: `snap_face_to_surface(meta, body)` then `move_joint` per lid, lip and brow point.
+- Chin and jaw: moved in side view in several `G` passes; snapping is turned back on only for the bones along the
+  side of the face [qy-wwP-b9HY-13-175939 17:59:41 to 17:59:51]. `jaw_master` is set by the transcript to the hinge.
+- Eye: the head and tail of `eye.L` are each snapped to the cursor placed at the eyeball centre (`Shift S`), then
+  snapping is turned off and the tail is moved straight forward in Y and a little in X [qy-wwP-b9HY-13-180233
+  18:02:34 to 18:02:43, qy-wwP-b9HY-13-180245 18:02:47 to 18:02:50]. Reader: `ebs["eye.L"].head/.tail = P["eye"], P["eye"] + V((0, -r, 0))`.
+
+### 5. Fingers
+
+- First test, on the generated rig: in Pose Mode he scales `f_index.01_master.L` with `S` (header scale about
+  0.69 to 0.88, read) and the fingers curl sideways instead of toward the palm [qy-wwP-b9HY-13-180720 18:07:22 to
+  18:07:33, qy-wwP-b9HY-13-180734 18:07:36 to 18:07:45]. Reader: scale the master to 0.6 and compare the
+  tip direction with `hand_back`.
+- Fix, in Edit Mode on the metarig: he selects a finger bone and reads Head, Tail and Roll in the N panel (rolls
+  like -142 and -135 degrees are legible), then rolls bones with `Ctrl R` one by one until the axes agree
+  [qy-wwP-b9HY-13-180807 18:08:08, qy-wwP-b9HY-13-180927 18:09:29 to 18:09:40]. Transform orientation is
+  `Normal`: `S Z 0 Enter` flattens each chain along its normal Z, `R X` turns the thumb about its normal X (header
+  reads a few degrees) [qy-wwP-b9HY-13-181231 18:12:32 to 18:12:42]. Finally he lifts the middle joints a little
+  with `G Z` so there is a bend [qy-wwP-b9HY-13-181244 18:12:55, qy-wwP-b9HY-13-181333 18:13:36 to 18:13:41].
+- He regenerates (the Rigify panel now reads `Re-Generate Rig`) and repeats the scale test; this time the fingers
+  close into a fist when the master is scaled in Y (about 0.45 to 0.49) after a small `R X` [qy-wwP-b9HY-13-181517 18:15:18 to 18:15:25]. Reader: `fit_metarig(meta, L)` (all three fixes) then the finger curl test in step 5.
+
+### 6. Generate and the rig panel
+
+- Object Data properties of the metarig: the Rigify panel first shows a note that it uses the old face rig, with
+  `Upgrade Face Rig` and `Generate Rig`; after upgrading only `Generate Rig` remains, and a status line reports
+  success. The new `rig` has big circle controls around the feet [qy-wwP-b9HY-13-180405 18:04:10, qy-wwP-b9HY-13-180419 18:04:24,
+  qy-wwP-b9HY-13-180445 18:04:58 to 18:05:03].
+- With `rig` selected the N panel has a Rigify tab with Rig Main Properties (Neck Follow 0.500, Head Follow 0, Torso
+  Parent Root, all read) and Rig Layers buttons: Face, (Primary), (Secondary), Torso, (Tweak), Fingers, (Detail),
+  Arm.L/R (IK, FK, Tweak), Leg.L/R, Root. He leaves them on but says they can be turned off to reduce clutter
+  [qy-wwP-b9HY-13-180706 18:07:08 to 18:07:18]. Reader: `generate_rig(meta)`; hide groups with `rig.data.collections_all[n].is_visible`.
+- Pose reset: `Alt R`, `Alt G`, `Alt S` clear rotation, location and scale of the selected bones; transform
+  orientation is changed from Normal to `Local` for posing [qy-wwP-b9HY-13-181406 18:14:08, qy-wwP-b9HY-13-181424
+  18:14:35]. Reader: `reset_pose(rig)`.
+
+### 7. Binding the body
+
+- Select the body then the rig, `Ctrl P > With Automatic Weights` [qy-wwP-b9HY-13-180554 18:05:56]. The video then
+  moves limb controls to test; nothing is measured. Reader: `bind([body], rig)`; `weight_report` must show 0 unweighted vertices.
+
+### 9. Weight painting
+
+- Weight Paint on the body, vertex groups panel searched by name (`lid`, `brow`, `spine`). The header reads
+  Weight 1.000 and Strength 1.000 throughout; Size (radius) changes between 100, 118, 182, 320 and 326 px as he
+  zooms [qy-wwP-b9HY-13-181909 18:19:10, qy-wwP-b9HY-13-182132 18:21:44, qy-wwP-b9HY-13-182240 18:22:53]. Options
+  popover: `Mirror` X on, `Auto Normalize` ticked [qy-wwP-b9HY-13-181909 18:19:10 to 18:19:17].
+- Order: paint the head group `DEF-spine.006` over the skull above the brows (red cap on blue) so a brow control stops
+  moving the scalp [qy-wwP-b9HY-13-182132 18:21:44]; then compare the `DEF-lid.T.L` groups, undo with `Ctrl Z`, and
+  cycle the heat map between lid and brow groups [qy-wwP-b9HY-13-182240 18:22:43 to 18:22:57, qy-wwP-b9HY-13-182453
+  18:24:55]. The artist moves on to the shape key because he wants a specific lid shape.
+- On a 1.7 m character a 118 px brush on a head filling a third of the viewport covers roughly 5 to 8 cm: my estimate.
+  Reader: `paint(body, "DEF-spine.006", lambda p: p.z > brow_z + margin)`; soften with `vertex_group_smooth`.
+
+### 10. Corrective eyelid key and driver
+
+- Find the value: in Pose Mode he moves `lid.T.L.002` in local Y until the lid is shut (header shows about 0.027 m
+  of travel), opens the N panel, reads -0.02367 and types -0.024 (read) [qy-wwP-b9HY-13-182520 18:25:33, qy-wwP-b9HY-13-182554
+  18:25:56 to 18:26:06]. Rig Main Properties for the lid shows `Eyelids Follow` 1.000.
+- Key: Object Data > Shape Keys > plus (adds `Basis`), plus again for `eye_close`, Value 1.000, Range 0 to 1
+  [qy-wwP-b9HY-13-182621 18:26:23 to 18:26:37]. Sculpt Mode, `Grab` brush, header Size 354 px then 392 and 460 px,
+  Strength 0.400, `F` to resize, `G` to nudge the lid edge, lower lid untouched [qy-wwP-b9HY-13-182743 18:27:44
+  to 18:27:55]. Reader: write `kb.data[i].co` for the lid vertices (the reader has no Grab brush).
+- Driver: right-click the Value field > `Add Driver`; the popover starts as Scripted Expression, he changes it to
+  `Averaged Value`, fills the variable with the rig object, the bone and `Y Location` (the default is X Location,
+  World Space; the later popover reads `Local Space`) [qy-wwP-b9HY-13-183023 18:30:25 to 18:30:40,
+  qy-wwP-b9HY-13-183652 18:36:54]. The Drivers Editor opens as a floating window: active key frame -0.024 and value
+  1.0, interpolation switched to Linear [qy-wwP-b9HY-13-183243 18:32:44]. Reader: `drive_key(...)` (step 10; I read
+  the bone's Y in `TRANSFORM_SPACE`).
+- Test: moving the lid control with `G Y` leaves the key off until the recorded distance, then it is fully on
+  [qy-wwP-b9HY-13-183322 18:33:23 to 18:33:33]. Both eyes close together at first [qy-wwP-b9HY-13-183350 18:33:51].
+- Split: vertex groups `left_side` and `right_side`; the centre loop of the body is set to 0.500 with Auto Normalize
+  on, shown as a red-blue weight view [qy-wwP-b9HY-13-183530 18:35:32, 18:35:37]. Key renamed `eye_close_L`, its
+  `Vertex Group` field set to `left_side`; `Duplicate Shape Key` gives the right key, with `right_side` and the
+  driver bone changed to `lid.T.R.002` [qy-wwP-b9HY-13-183601 18:36:03 to 18:36:14, qy-wwP-b9HY-13-183652 18:36:54].
+
+### 11. Eyes, teeth, tongue, hair, shirt
+
+- Eyes: select the eyeball and cornea objects, then the rig, `Ctrl P > With Empty Groups` [qy-wwP-b9HY-13-183742
+  18:37:53]. In Edit Mode he searches `eye` in the groups list, picks `DEF-eye.L`, checks Weight 1.000, selects all,
+  `Assign`; same for the right eye [qy-wwP-b9HY-13-183902 18:39:05 to 18:39:19]. Reader: `bind(..., "ARMATURE_NAME")`, `assign_all(mesh, "DEF-eye.L")`.
+- Teeth: in the jaw object (`Mouth`) he works in the right orthographic view, mm grid, X-ray on. `Ctrl L` selects the upper
+  teeth island, group `DEF-teeth.T`, Assign at weight 1.000; `Ctrl I` inverts the selection for the lower teeth,
+  `DEF-teeth.B` [qy-wwP-b9HY-13-184104 18:41:06 to 18:41:15, qy-wwP-b9HY-13-184117 18:41:18 to 18:41:29].
+- Tongue: in Weight Paint, `Weights > Assign Automatic from Bones` (its tooltip says it weights to the selected
+  bones only) with the tongue bones selected [qy-wwP-b9HY-13-184239 18:42:40]. Reader: blend the three tongue groups linearly.
+- Scalps: he selects the scalp meshes (brow, hair, lashes, ponytail) plus the rig, `Ctrl P > With Empty Groups`, and
+  assigns the main hair scalp to the head group in Edit Mode [qy-wwP-b9HY-13-184431 18:44:33 to 18:44:44]. The
+  curves' Surface field names the scalp, which is why the scalp, not the curve, is parented [qy-wwP-b9HY-13-184353
+  18:44:05]. Reader: `assign_all(scalp, "DEF-spine.006")`.
+- Transfer: body active, scalp selected, `Weights > Transfer Weights` in Weight Paint; the redo panel reads Data Type
+  `Vertex Group(s)`, Create Data on, Object Transform on, Vertex Mapping `Nearest Face Interpolated`, source layers
+  `By Name` [qy-wwP-b9HY-13-184548 18:45:49 to 18:46:00]. Lashes and brows then close with the lid
+  [qy-wwP-b9HY-13-184640 18:46:44 to 18:46:51]. The same recipe is used for the shirt: `With Empty Groups`, then
+  transfer from the body (transcript; the frames only show the finished test) [qy-wwP-b9HY-13-184823 18:48:25].
+  Reader: `copy_weights(body, scalp)` and `copy_weights(body, shirt)`.
+
+### 12. Boots and skirt: helper proxies
+
+- Boot helper: a cube is added (far larger than the character), renamed with `F2` after pasting the shoe's name,
+  and dragged into `CH_..._rig_helpers` [qy-wwP-b9HY-13-184950 18:49:52 to 18:50:19]. It is shaped with
+  `Ctrl R` loop cuts, then `Grab` in Sculpt Mode (Size 322 to 482 px, Strength 0.400 read) and a smooth pass until it
+  hugs the boot just outside, kept clear of the boot surface [qy-wwP-b9HY-13-185234 18:52:36 to 18:52:50].
+- Binding: the helper (modifiers `Mirror`, `Armature`) is parented to the rig with automatic weights
+  [qy-wwP-b9HY-13-185357 18:53:59 to 18:54:07]. The real boot's stack reads `Mirror`, `Armature`, `SurfaceDeform`,
+  `Subdivision`. In the SurfaceDeform panel the Target is the helper; Interpolation Falloff 4.000 and Strength 1.00
+  are the defaults (read), then Bind [qy-wwP-b9HY-13-185505 18:55:07 to 18:55:18, qy-wwP-b9HY-13-185519 18:55:21].
+  Simplify is on before binding.
+- Test and hide: foot IK control moved and rotated; helper hidden via the outliner eye and camera icons, display as
+  Wire [qy-wwP-b9HY-13-185603 18:56:05, qy-wwP-b9HY-13-185618 18:56:20 to 18:56:27]. The artist says automatic weights
+  would not give this result.
+- Skirt helper: shown at 4x speed. A cube is scaled and moved in the front view (`S`, `G Z`, X-ray) into a flat
+  skirt, rotated around, loop-cut and shaped to hug the pleats; it carries a `Mirror` modifier; then `Ctrl P > With
+  Automatic Weights` to the rig [qy-wwP-b9HY-13-185645 18:56:47 to 18:57:01, qy-wwP-b9HY-13-185728 18:57:31 to 18:57:47].
+  Hips control rotated about 17 to 22 degrees (read) shows the skirt swing; clipping remains when a leg is raised
+  [qy-wwP-b9HY-13-185827 18:58:29 to 18:58:41, qy-wwP-b9HY-13-185843 18:58:45 to 18:58:58]; the fix is to unbind,
+  push the skirt out, rebind. The necklace is not shown; only said to be the same [qy-wwP-b9HY-13-190136 19:01:46].
+  Reader: `follow_helper(part, helper, rig)`.
+
+### 13. Hide skin under clothes
+
+- The body stack reads `Armature`, `Mask`, `Subdivision` (Catmull-Clark, Levels Viewport 1, Render 2 read)
+  [qy-wwP-b9HY-13-190211 19:02:28, qy-wwP-b9HY-13-185926 18:59:31]. Selecting the faces and the group are not on the sheets
+  I read. To see the bare body he switches the Mask modifier's viewport icon off [qy-wwP-b9HY-13-190231 19:02:36].
+  Reader: `body.modifiers["Mask"].show_viewport = False`.
+
+### 14. Pose
+
+- He poses the bare body first, with the helper collections hidden, using `G`, `R` and `Z` on foot, hips and chest
+  controls; the rig's circle controls stay visible [qy-wwP-b9HY-13-190211 19:02:14 to 19:02:23].
+- Pose asset: an editor next to the 3D viewport is switched to the Asset Browser (editor type menu), library
+  `Current File`, catalog `Unassigned` [qy-wwP-b9HY-13-190244 19:02:49 to 19:02:55]. Creating the asset adds a thumbnail
+  with the pose name and a camera appears in the outliner [qy-wwP-b9HY-13-190403 19:04:05 to 19:04:18,
+  qy-wwP-b9HY-13-190420 19:04:22]. At least two poses are asked for. Reader: key two poses on frames 101 and 102
+  as in step 14 and capture each with `viewport_capture(frame=...)`.
+
 ## Settings the course uses
 
 | Setting | Value | Where | Time |
@@ -616,6 +832,10 @@ asset gets a thumbnail (`Asset > Create Pose Asset` in the Asset Browser) [19:02
 | Hair in viewport | `Viewport Amount` 0.02 | hair modifier input | 18:48:41 |
 | Surface Deform | falloff 4.0, strength 1.0 (defaults), bound with Simplify on | modifier | 18:55:25 |
 | Helper display | `Display As: Wire`, hidden in renders | Object > Viewport Display | 18:54:05 |
+| Shape-key sculpt | `Grab`, Size 354 to 460 px, Strength 0.400 | Sculpt Mode header | 18:27:44 |
+| Weight-paint header | Weight 1.000, Strength 1.000, Size 100 to 326 px | Weight Paint header | 18:19:10 to 18:25:05 |
+| Finger rig edit | orientation `Normal`, `S Z 0`, `Ctrl R` roll | Edit Mode | 18:09:29, 18:12:32 |
+| Helper sculpt | `Grab`, Size 322 to 482 px, Strength 0.400 | Sculpt Mode header | 18:52:46 |
 
 ## Mistakes the course warns about
 
@@ -689,7 +909,8 @@ My notes, not from the course; a later pass will work these out.
   lip and brow points need individual measured corrections, and nobody can measure "looks right" for a blink.
 - `Assign Automatic from Bones` for the tongue needs Weight Paint mode with bones selected; not scripted here.
 - Pose assets and their thumbnails need the Asset Browser UI; keyed frames stand in for them.
-- The skirt helper and the necklace helper are modelled off-camera [18:56:50, 19:01:42]; the course shows only the
-  result. The final cleaned-up poses are also made off-camera [19:22:00].
+- The necklace helper is only mentioned, not shown [19:01:46]; the skirt helper is shown (sped up), see step 12.
+  The final cleaned-up poses are made off-camera [19:22:00]. How the body faces for the `Mask` group are chosen
+  [18:59:30] was not on the sheets I read.
 - The course does not test the rig beyond trying controls; the test poses and all pass limits are mine.
 - Checked on a simple test figure, not on a full character with face geometry; expect to adjust landmarks.

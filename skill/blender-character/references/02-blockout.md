@@ -35,8 +35,8 @@ every new part, go back and adjust the parts it touches, as the course does thro
 Course: deletes everything, installs the free "Extra Mesh Objects" extension (Edit > Preferences > Get Extensions)
 and adds its `Round Cube` with default settings [00:32:10 to 00:32:38]. A round cube is a sphere built from a cube:
 all quads, no poles, 8 quads along each cube edge (counted in the wireframe at [00:42:30]). Then the Sculpting
-workspace, viewport focal length `150` so the view is nearly flat [00:34:14], a second small viewport with gizmos
-and overlays off to watch the whole figure [00:34:26], the Grab brush, and X symmetry on [00:37:31].
+workspace, viewport focal length `150` so the view is nearly flat [00:34:14], a narrow second viewport on the left
+that keeps the whole figure in view with a reference panel under it [00:37:20], the Grab brush, and X symmetry on [00:37:31].
 
 blender-live: the extension is not in the reader's Blender (`bpy.ops.mesh.primitive_round_cube_add` does not exist
 there); `round_cube()` builds the same mesh (386 vertices) and parents it to `CHARACTER`, an empty at the origin that
@@ -170,7 +170,7 @@ exec_python: scale_parts(["BLK_upper_leg", "BLK_lower_leg", "BLK_foot"], scale=(
 
 ### 6. Arms [01:15:12 to 01:24:35]
 
-Pose: arms held out and down, about 45 degrees from the body (read from the frame at [01:20:20]), clear of the
+Pose: arms held out and down, about 55 degrees away from vertical (measured by eye on the front views at [01:18:32] and [01:20:08]; the first reading of 45 was too low), clear of the
 torso so the rig can deform them, with a slight forward bend at the elbow so the rig knows which way it folds
 [01:17:13, 01:19:25]. This is the pose even when the concept shows another.
 - First a `Line Project` cut on each side of the upper torso makes a flat face where the arm attaches [01:15:12].
@@ -180,14 +180,14 @@ torso so the rig can deform them, with a slight forward bend at the elbow so the
 - Lower arm: a duplicate of the upper arm moved down the arm. Its far half is scaled down so it tapers to the wrist;
   it is turned a little about Z for the elbow bend [01:19:25]; ring by ring it is made widest just below the elbow
   and narrow at the wrist; 3 loop cuts go into each of the three stretches between those rings [01:20:46]; one
-  `Line Project` cut flattens a side [01:23:40].
+  `Line Project` cut trims the wrist end flat so the hand can sit on it [01:23:40, frame at 01:23:45].
 - Both are scaled down together and the lower arm lengthened after a look at the reference [01:23:54].
 
 ```python
 arm = round_cube("BLK_upper_arm")             # verified in 4.5.16 background
 stretch_half(arm, length=4.0, cuts=8)         # along Z at radius 1: from Z=1 down to Z=-5
-place(arm, location=(shoulder_x, 0, shoulder_z), scale=(r,) * 3, rotation_deg=(0, -45, 0), pivot=(0, 0, 0))
-mirror_x(arm)                                 # -45 about Y swings the lower end out toward +X
+place(arm, location=(shoulder_x, 0, shoulder_z), scale=(r,) * 3, rotation_deg=(0, -55, 0), pivot=(0, 0, 0))
+mirror_x(arm)                                 # -55 about Y swings the lower end out toward +X
 ```
 
 `stretch_half` works along a world axis, so it comes before the rotation. Build `BLK_lower_arm` the same way with
@@ -234,6 +234,153 @@ the big forms are already right [00:25:59 to 00:26:28]. In practice the course k
 the face, body and clothes chapters, joining only small pieces locally (nose into head, fingers into hand), and fuses
 the body at the start of retopology (stage 06). Do the same: sculpt the `BLK_` parts in place, and leave
 `join_parts` for stage 06.
+
+## How the artist works on screen
+
+Studied from 120 sheets of chapter 03. The frames show Blender 5.0.1; the reader's Blender is 4.5.16, whose sculpt
+brushes carry the same names and header fields. Clip ids below drop the prefix `qy-wwP-b9HY-03-`: `[003718]` is
+`qy-wwP-b9HY-03-003718`; times are video times. The header's brush Size is the cursor circle's diameter in screen
+pixels, so it does not carry over; world radii below are conversions made for this file (ours), from the part's
+on-screen width, and stay approximate.
+
+### Habits that repeat in every step
+- One workspace (Sculpting), one object at a time. A narrow viewport on the left keeps the whole figure small with a
+  floating reference panel under it, while the main viewport is zoomed on the part being worked [003718 00:37:20].
+- Keys seen: `G` Grab brush [003731]; `F` then drag resizes the brush between almost every stroke (the key overlay
+  reads "F x6", "F x12") [004005 00:40:14]; hold `Shift` for Smooth [003953 00:40:00]; `Shift+C` Crease Polish
+  [003903 00:39:15]; `Shift+T` Scrape/Fill [004032 00:40:34]; `Alt+Q` switches the active part without leaving
+  Sculpt Mode, used constantly [005745 00:57:47]; `Ctrl+Tab` mode pie [004048 00:41:00]; `Alt+Z` X-ray [004304
+  00:43:06]; `Alt+M` clears a mask [011121 01:11:29]; numpad 1 and 3 for front and right orthographic, the gizmo for
+  bottom [010902 01:09:04]; `Ctrl+Z` freely when a stroke drags a neighbour [011022 01:10:31].
+- `Q` opens Quick Favorites. In Object and Edit Mode it holds Round Cube and Mirror [004106 00:41:11, 010404
+  01:04:10]; in Sculpt Mode it holds Line Project, Lasso Mask, Symmetrize, Relax Slide, Draw Sharp, Mirror, Skin.
+- Grab strength reads 0.400 in every Grab frame; only the size changes.
+- Rhythm for each part: add it in Object Mode, size, place and tilt it in Edit Mode (G, S, R with an axis letter),
+  Sculpt with Grab, hop to the neighbours with `Alt+Q` and nudge them, orbit with `Alt`-drag through front, side,
+  three-quarter and back. Every part gets a look from at least two views before the next is added.
+- Done means: the part overlaps its neighbours so no seam shows from the side [005745], the silhouette reads, and
+  the figure sits right against the reference panel [013109].
+- Brush radius in world units (ours): radius = 0.5 x Size_px x part_width / part_width_px_on_screen. The frames give
+  about 0.8 x the part width for the first rough pass on a bare ball [003731, 432 px on a ball about 270 px wide],
+  0.2 to 0.5 x for shaping [003953, 005138] and about 0.1 x for ear and crease work [004535, 122 px].
+
+### 0. Setup
+- `[003123 00:31:33]` splash over the default scene; Add > Mesh lists the extra objects once Extra Mesh Objects is
+  installed (Preferences > Get Extensions, search "extra") [003202, 003220 00:32:21]. Round Cube lands at 0 m,
+  scale 1, as a faceted ball about 8 quads along each cube edge [003220 00:32:32].
+- Sculpting workspace, sidebar (N) > View: Focal Length 50 mm typed over to 150, Clip Start 0.01 m, End 1000 m
+  [003405 00:34:07 to 00:34:13]. The ball visibly loses its perspective bulge [003414 00:34:16]. The Draw brush is
+  active at that moment (size 100 px, strength 0.500); Grab replaces it soon after.
+- Grab at 432 px, strength 0.400, then the X symmetry toggle in the header's X Y Z group [003731 00:37:32].
+- Silhouette check: Viewport Shading popover, Lighting MatCap, Object Color Custom with the colour dragged to black,
+  Specular Lighting off [003032 00:30:41]. The silhouette is shown in a second viewport beside the working one
+  [003108 00:31:10]. After the demo the colour goes back to near white [003032 00:30:45].
+- Reader: `exec_python` for the lens; `sculpt_begin(object=..., symmetry="X")` for centre-line parts and
+  `symmetry=""` for parts that already carry a `Mirror` modifier (so `sculpt_strokes` does not reflect and distort
+  the real half before the modifier copies it). The silhouette check is `outline_match` or `turnaround_sheet`; no
+  flat black render is stored.
+
+### 1. Head
+- Order seen: egg (bottom pulled down) [003814 00:38:15]; front orthographic through the minus Y gizmo button, Line
+  Project hovered for the side flats [003814 00:38:25]; side view jaw forward with Grab 304 px [003903 00:39:04];
+  Crease Polish 304 px strength 0.250 along the jaw line [003903 00:39:15]; back of the head smoothed with Shift,
+  then pulled back with Grab 252 to 338 px in short drags [003953, 004005]; Scrape/Fill size 514 px strength 0.700
+  cleaning the side plane [004032 00:40:34]; Grab 424 px for the final egg [004032 00:40:42].
+- Stroke: starts on the surface, one short drag per move, two or three per region; X symmetry on; Alt-drag between
+  strokes.
+- Done: from the side the back is not round and the jaw sits forward; the head is a tapered egg [004048 00:40:51].
+- Reader (radii ours): `grab` radius 0.8 x head width for the egg, 0.3 x for jaw and skull; `crease` radius 0.1 x
+  head width, strength 0.25; `slice_flat` for the side flats.
+
+### 2. Neck
+- New round cube, Edit Mode, lower half box-selected through the mesh with X-ray, extruded down about one ball
+  diameter [004226 00:42:27 to 00:42:38]. `G` and `S` `G` move it so the top ball sinks into the skull [004239].
+- Tilted in the side view with the lower end behind the upper end, by what looks like 10 to 20 degrees [004304
+  00:43:06]; the course had left it upright first and said that was wrong [004239 00:42:49].
+- In Sculpt Mode the capsule would not bend (no rings across it); back in Edit Mode `Ctrl+R` rings are added, Enter then
+  Esc keeps them centred [004318, 004341 00:43:43].
+- Grab 440 px, then 260 to 310 px, pulls the lower front toward the chest, the lower back toward the upper back, the
+  sides toward the shoulders, checked from below [004407 00:44:20]. Line Project trims the bottom flat [004510 00:45:12].
+- Reader: `stretch_half(neck, length=2.0, cuts=6)` and `place(... rotation_deg=(15,0,0), pivot=(0,0,0))` as above; grab
+  radius about 0.4 x neck width, moves of 0.01 to 0.03 H.
+
+### 3. Ears
+- Crease Polish 122 to 134 px strength 0.250 draws the jaw line up to the ear spot, then Shift smooth [004535].
+- New round cube scaled to about 0.4 of the head's width in front orthographic, moved to the side of the face, then
+  slid back in right orthographic [004624 00:46:26 to 00:46:36].
+- Symmetry popover: Mirror X Y Z toggles, Feather on, Symmetrize Direction `+X to -X`, Merge Distance 0.0005, then
+  Symmetrize [004804 00:48:12]. Then X symmetry on, Grab 134 to 420 px reshapes both ears [004816, 004830].
+- Edit Mode: `R` `Z` turns the ear about the vertical axis; `G` `X` and `G` `Z` nudge it [004850 00:48:51 to 00:48:54].
+  Back in Sculpt, `Alt+Q` to the head to fix the jaw [004902, 004915].
+- Reader: Mirror modifier plus `place`; the 20 degree swing is ours.
+
+### 4. Torso, three parts
+- Upper torso: Q > Round Cube, front orthographic `G` `Z` drops it under the neck, right orthographic `S` `Y` scales it
+  thin front to back, `G` places it [005020 00:50:22 to 00:50:33]. The tilt is not clear in the selected frames; the
+  step text above stays. Grab 394 px pulls the bottom down (rib cage) with the centre front lifted [005138 00:51:39];
+  Grab 344 to 456 px in side view pulls the back in [005151 00:51:52].
+- Middle part and pelvis are added the same way: ball, scale, tilt (the pelvis the opposite way), Grab 328 to 370 px
+  for hips down and out [005603 00:56:15, 005837 00:58:38]. Line Project is hovered for the trim [005401 00:54:05].
+- All three overlap: `Alt+Q` hops between them in side view and each end is pulled into its neighbour [005723
+  00:57:26, 005745 00:57:47]. All three are selected in Edit Mode and scaled on X then Y after a look at the reference
+  [005823 00:58:24].
+- Reader: `scale_parts([...], scale=(1.1, 1.05, 1))`, grab radius about 0.4 x torso width, `rotation_deg` as given.
+
+### 5. Legs and feet
+- Upper leg: ball scaled to about four times taller than wide in front orthographic, moved under the pelvis cut
+  [005927 00:59:29 to 00:59:41]; Add Modifier search "m" > Mirror, defaults axis X, Clipping off, Merge on 0.001 m
+  [005943 00:59:44]. Right view: rotated back and pushed into the hips [010103 01:01:05].
+- Lower leg: same recipe under the thigh [010324 01:03:26]. Grab 410 to 516 px narrows the bottom, Line Project slices
+  it [010404 01:04:06, 01:04:10]. The thigh bottom shows a step over the shin where the knee sits [010421 01:04:25].
+- Foot: ball in front view scaled down with `S`, right view `S` `Z` flattens it and `S` `Y` lengthens it, then Mirror via
+  Q [010828, 010843 01:08:30 to 01:09:00]. Bottom view Grab 370 to 404 px makes each foot a rounded rectangle [010902
+  01:09:12]. Side view Grab 282 px lifts the top back but drags the sole, `Ctrl+Z`, then Lasso Mask (`Ctrl`-drag) over
+  the lower part [011022 01:10:31, 011121 01:11:23] and Alt+M clears it [011121 01:11:29]. Heel smoothed with Shift
+  [011111 01:11:12]. The side profile is a wedge; the front shows the ankle narrower than the sole [011111, 011121].
+- Reader: `slice_flat` for the sole and ankle, `sculpt_mask` box then `grab`, `sculpt_mask(op="clear")`.
+
+### 6. Arms
+- Pose, read off the front views: the arm points about 55 degrees from vertical, 30 to 35 below horizontal [011830
+  01:18:32, 012007 01:20:08].
+- Upper arm: Edit Mode in front orthographic, ball at the shoulder, lower half selected and extruded with `E`, `A`
+  selects all, `R` rotates, `G` places [011659 01:17:01 to 01:17:11].
+- Lower arm: Shift+D in Object Mode, then Apply Object Transform [011830 01:18:34 to 01:18:55, 011853]. Edit Mode with
+  X-ray, far half box-selected, `S` scales the wrist end down, `Ctrl+R` rings with the count typed (3 per stretch;
+  header "Cuts: [3]") [012007 to 012046].
+- Upper arm rings: `Ctrl+R`, typed 6 then 8, Esc; eight rings result [012138 01:21:42 to 01:21:47].
+- Sculpt: Grab 226 to 420 px pulls the biceps end into a V pointing at the elbow, `Alt+Q` hopping to the lower arm
+  [012301 01:23:10 to 01:23:21]. Line Project trims the wrist end flat [012334 01:23:42, 01:23:45]. Both parts are
+  selected and scaled down, then the wrist end moved to lengthen the forearm [012347 01:24:00 to 01:24:15].
+- Reader: `stretch_half` + `place(rotation_deg=(0,-55,0))` for the upper arm and a second capsule for the forearm; a
+  few degrees about Z for the elbow bend (ours).
+
+### 7. Shoulders and hands
+- Shoulder: Q > Round Cube arrives at the head and `G` moves it to the joint [012435 01:24:48]; Mirror via Q in both
+  Object and Edit Mode [012517 01:25:26]. Grab 366 to 454 px pulls it out and down onto the arm [012543 01:25:46];
+  Scrape/Fill 302 to 344 px strength 0.700 flattens its front [012653 01:26:57]; Grab 310 to 338 px blends it into the
+  back [012617 01:26:24]. Crease Polish 100 to 112 px strength 0.250 draws the centre back line, then `Alt+Q` down the
+  torso parts [012733 01:27:40, 01:27:49].
+- Hand: Q round cube, Line Project from both sides makes a disc [012852 01:28:54], `S` slightly up, `R` to follow the
+  forearm [012852 01:29:04], `G` to the wrist [012906]. Grab 410 px shapes a rounded rectangle; Inflate/Deflate size
+  410 px strength 0.500 fattens the long edges [012953 01:30:00]. Mirror via Q [013034].
+- Reader: `slice_flat` twice, `place`, `inflate` with `"snap": true`, radius about 0.3 x hand width.
+
+### 8. Proportion pass
+- Object Mode, figure beside the reference panel, orbit with Shift+Alt only [013054, 013109].
+- Edits are Grab 376 to 490 px with `Alt+Q` across parts [013210], then groups selected in Edit Mode to scale and move
+  (the hand is refitted to the arm [013348 01:33:49 to 01:34:03]), then a last pass from the back with Grab 282 to
+  374 px and Crease Polish 116 to 218 px [013401, 013415].
+- Done means the figure reads right against the board from front, side and back. No numbers are read out.
+- Reader: the `outline_match` and `width_profile` loop above.
+
+### 9. Save
+- File > Save As: the Blender file browser, name field "Untitled.blend", Desktop folder chosen [013428 01:34:37 to
+  01:34:40]. The narrator says to save before the next chapter. No join, remesh or voxel step appears.
+- Reader: `save_file(filepath=...)`.
+
+### Still not visible in the frames
+- Which side of the foot is the vertical one (front view): not shown in any selected frame.
+- World sizes: no ruler, N-panel dimensions or grid values were read.
 
 ## Helper code
 
@@ -382,12 +529,17 @@ def join_parts(prefix="BLK_", name="Body", skip=()):
 | Primitive | `Round Cube`, default settings, one per part | Add > Mesh (Extra Mesh Objects) | 00:32:34 |
 | Viewport focal length | 150 | Sidebar (N) > View | 00:34:14 |
 | Symmetry | X on for centre parts; off on mirrored parts | Sculpt header | 00:37:38; frame 01:06:41 |
-| Brush strength | Grab 0.400; Scrape/Fill 0.700; Inflate 0.500 | Brush header (read from frames) | 00:49:28; 00:40:36; 01:30:05 |
+| Grab | strength 0.400 in every frame; size 432 px at first, later 250 to 560 px, changed with F between strokes | Brush header | 00:37:23; 01:09:12; 00:59:00 |
+| Scrape/Fill | strength 0.700, size 300 to 514 px | Brush header | 00:40:34; 01:27:00 |
+| Crease Polish | strength 0.250, size 100 to 304 px | Brush header | 00:39:15; 01:27:44 |
+| Inflate/Deflate | strength 0.500, size 410 px | Brush header | 01:30:00 |
+| Line Project | Limit to Segment off | Tool header | 00:45:12; 01:28:54 |
+| Quick Favorites (Q) | Object and Edit Mode: Round Cube, Mirror. Sculpt Mode: Line Project, Lasso Mask, Symmetrize, Relax Slide, Draw Sharp, Mirror, Skin | Q menu | 00:41:11; 01:04:10 |
 | Loop cuts | neck 6; upper arm 8; lower arm 3 in each of three stretches | Edit Mode, Ctrl+R | 00:43:28; 01:21:44; 01:20:46 |
 | Symmetrize | direction `+X to -X`, merge distance 0.0005 | Sculpt symmetry popover | 00:48:12 |
 | Mirror modifier | axis X, merge on at 0.001 m, clipping off (defaults) | Modifier panel | frame 01:06:41 |
 | Clip start | 0.1 | Sidebar (N) > View | 01:16:10 |
-| Silhouette check | Solid shading, object colour black, Specular Lighting off | Viewport Shading popover | 00:30:40 |
+| Silhouette check | Lighting MatCap, Object Color Custom set to black, Specular Lighting off | Viewport Shading popover | 00:30:41 |
 
 Clip start only hides flicker from the course's oversized scene (2 m round cubes). Leave it alone at real scale.
 
@@ -457,7 +609,8 @@ neutral pose, the gap to 0.98 is a proportion error: fix it now, while the parts
   but does not polish the faces beside it. `Lasso Mask` becomes a `sculpt_mask` box: no slanted mask edges.
 - The course judges every proportion by eye against a posed three-quarter drawing and gives no numbers for part
   sizes, positions or angles. Every size, angle and tolerance here marked "ours" or read from a frame is a starting
-  point, not the course's instruction.
+  point, not the course's instruction. Brush sizes and strengths are read from the frames and listed in "Settings the
+  course uses" and "How the artist works on screen".
 - The live tools were not run against a GUI Blender for this file; the stroke maths was checked by calling
   `sculpt_cmds.py` in background Blender. Example coordinates assume `H = 1.7`; recompute them with `outline_point`.
 - `turnaround_sheet`, `outline_match` and `mesh_report` take one object, hence `build_proxy` before every check.

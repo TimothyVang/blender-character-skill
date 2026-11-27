@@ -210,11 +210,14 @@ when judging thickness: only Strip shows the radius profile [12:52:00, 13:02:28]
    temple and get shorter at the tail (Grow/Shrink with Minimum Length 0) [12:43:12].
 4. **Interpolate**: drag `Interpolate Hair Curves` onto the object; everything vanishes until Surface is set to the
    scalp [12:46:55]. Density is raised in steps (50 000, 800 000, then 1 500 000 and 3 000 000 once masked).
-5. **Mask**: unmasked, children cover the whole scalp. The course paints a 2K black image `brow density` white
-   where the brow is (Texture Paint, mode Single Image, saved into a `textures` folder; images must be saved by
-   hand, `Alt S`) and picks it as Mask Texture [12:47:50 to 12:51:50].
+5. **Mask**: unmasked, children cover the whole scalp. The course paints a black image `brow density` white
+   where the brow is (Texture Paint, brush Paint Soft, Size 44 px, Strength 1.000, mode Single Image; the new-image
+   dialog's size is not legible, see Settings; `Image > Save` straight after, `Alt S`) and picks it as Mask Texture
+   [12:47:50 to 12:51:50].
 6. **Profile**: Render Properties, `Curves > Shape: Strip`; add `Set Hair Curve Profile`, Radius 0.0001 m ("the
-   average human hair is about 0.1 mm"), Shape about 0.6; Interpolation Guides tried at 6, left at 3 [12:52:00].
+   average human hair is about 0.1 mm"), Shape 0.500 on the panel (the example below uses 0.6, my choice for a slightly
+   stronger taper); Interpolation Guides reads 4 in every frame seen here, the narration mentions trying 6 and
+   settling on 3 [12:52:00].
 7. **Clump** twice: primary `Clump Hair Curves` with Existing Guide Map off (otherwise Guide Distance does
    nothing), Guide Distance 0.004 m, Factor lowered; secondary with Guide Distance 0.002 m [12:55:16 to 12:57:10].
 8. **Frizz**: `Frizz Hair Curves`, Cumulative Offset off (with it on "everything goes crazy"), Factor 0.272,
@@ -265,8 +268,8 @@ pixels from numpy, save it, and pass it as `Mask_Texture=image` (that input was 
 - **Stack** for the upper lashes: `Set Hair Curve Profile` Radius 0.0002 m, Shape 0.5 (the narrator says "2 mm";
   the panel reads 0.0002 m) [13:10:00]; `Interpolate Hair Curves` Surface `lashes_scalp`, Density 2 500 000;
   `Clump Hair Curves` Existing Guide Map off, Guide Distance 0.001 m, a very small Tip Spread [13:11:20];
-  `Hair Curves Noise` Cumulative Offset off, Factor about 0.04, Shape 0.5, Scale about 9, Scale along Curve 15
-  [13:12:10].
+  `Hair Curves Noise` Cumulative Offset off, Factor about 0.13 (0.172 mid-drag, then reads 0.132; the sheets
+  show no further drop), Shape 0.5, Scale 8.98, Scale along Curve 15 [13:12:10, 13:12:59].
 - **Lower lashes** want far fewer, clumpier hairs, so they are separated into their own Curves object
   (`eyelashes.001`), and the scalp ring is split between upper and lower lid (rip, `V`) so the two are separate
   mesh islands [13:13:05]. Its clump keeps Existing Guide Map **on**, so children gather onto the hand-placed
@@ -304,7 +307,8 @@ Distance 0.015 m, Factor 0.743, then a second clump inside the first and noise o
   image; the right side is the same tree with a mask for the other side [14:06:20 to 14:15:20].
 - `ponytail`: its own scalp `ponytail scalp`, a small disc (a plane subdivided twice, made round, parked at the
   gather point); guides fan out, drop and curl at the tips as planned on screen first [14:15:30 to 14:19:40]. When
-  adding hair to a new scalp raised a missing-attachment error, the fix was select curves then scalp,
+  adding hair to a new scalp raised an error (the Surface Deform panel reads "Invalid surface UVs on 2 curves" after
+  the fresh unwrap [14:20:24]), the fix was select curves then scalp,
   `Ctrl P > Object (Attach Curves to Surface)` [14:20:25]; `new_hair` avoids it.
 
 The node chain, in order (`hair_tree` builds it; pieces not wanted for a part are switched off by argument):
@@ -406,27 +410,198 @@ The parting rip is not in the snippet: split the scalp along the parting edges w
 `bmesh.ops.split_edges(bm, edges=[...])` (tested) before adding hair. `lift=0.012` and the 1.3 length factor are
 mine; the course only says to leave space under the guides and grows each one until it reaches the band.
 
+## How the artist works on screen
+
+Read from 120 course sheets (Blender 5.0.1, the version label is bottom right). Clip ids are `qy-wwP-b9HY-11-` plus
+six digits; times are the on-screen clock. Brush sizes below are screen pixels at the artist's zoom and do not carry
+over to you: use the world-unit equivalents given with each step. These are observations; "reader" lines are mine.
+
+### Layout and habits (all steps)
+
+- Brows, lashes and the short cut are done in the **Layout** workspace: 3D viewport on the left, an area that is
+  switched between Asset Browser (`Essentials > Hair`), Image Editor, UV Editor and Geometry Node Editor, and the
+  Properties editor on the right. A small Text editor lists the four steps: create guides, interpolate, clump, add
+  noise and frizz, with the current line highlighted [qy-wwP-b9HY-11-124648, 12:46:50; qy-wwP-b9HY-11-125508, 12:55:09].
+- Viewport: MatCap lighting, focal length 150 mm set in the `N` panel `View` tab, Outline left ticked
+  [qy-wwP-b9HY-11-122827, 12:28:32 to 12:28:39]. The hair reference floats over the viewport as a separate small
+  window, so the picture and the head are always in view together [qy-wwP-b9HY-11-123013].
+- Curves Sculpt Mode shows a brush shelf under the viewport: Comb, Grow/Shrink, Pinch, Puff, Pull Tips, Slide, Smooth,
+  Add, Delete, Density, Select. The header holds Size, Strength, a Sphere / Projected pair, Brush Falloff, Curve Falloff
+  and the X Y Z mirror toggles [qy-wwP-b9HY-11-122158]. `Q` opens a Quick Favorites list (Add, Delete, Comb, Grow/Shrink,
+  Pull Tips, Smooth, Slide, Puff, Pinch); `F` resizes the brush; `Ctrl+Tab` flips between Object Mode and Curves Sculpt
+  Mode [qy-wwP-b9HY-11-123756, 12:37:58; qy-wwP-b9HY-11-135144, 13:51:51].
+- **Strength reads 1.000 in every header that is legible.** The artist changes the radius instead: about 40 to 100 px
+  for Add, 100 to 470 px for Comb, 164 px for Grow/Shrink, 44 px for Paint Soft.
+- Rhythm: a few strokes, then orbit to a second view (side after front, top after side) to check nothing passes through
+  the skin; he zooms in far for the brow and lash work, out to the full head for the main hair. He judges finished work
+  against the floating reference, in a clean grey matcap, in the viewport colour he set (black for brows and main hair).
+- Do not copy: the ponytail Curves object stays at the default light viewport colour in the video, so it renders pale
+  while the rest is black [qy-wwP-b9HY-11-142258, 14:23:00]. Set it black yourself to match.
+
+### Reading the system (before step 1)
+
+- Scalp, guides and children: the artist shows a plane with a few dark guides and many pale children, then the
+  subdivision-surface comparison [qy-wwP-b9HY-11-121402, 12:14:04 to 12:14:14].
+- Brush demonstrations on a bald head: Delete removes one whole guide when hovered, Select picks whole curves (Sphere
+  mode, Strength 1.000), and a very large Comb (about 312 to 404 px) drags the whole fan [qy-wwP-b9HY-11-121757,
+  qy-wwP-b9HY-11-121914, qy-wwP-b9HY-11-122158]. Sphere only touches hairs near the surface under the cursor; Projected
+  carries through everything under the circle.
+- Modifiers or nodes: dragging `Interpolate Hair Curves` from the Asset Browser onto the object makes everything vanish
+  until Surface is chosen (panel: Surface empty, Surface UV Map `UVMap`, Interpolation Guides 4, Part by Mesh Islands
+  ticked, Method Random, Density 10) [qy-wwP-b9HY-11-122343, 12:23:45 to 12:23:56]. `Clump Hair Curves` opens with
+  Factor 1.000, Shape 0.500, Tip Spread 0, Guide Distance 0.1 m, Existing Guide Map ticked [qy-wwP-b9HY-11-122442].
+
+### Step 1. Eyebrows
+
+- **1.1 Scalp.** On `body_retopo` in Edit Mode he selects the quads under one brow, enables the high-poly collection to
+  see the sculpted ridge, duplicates and separates them; the new `brow_scalp` has a Shrinkwrap (Nearest Surface Point,
+  On Surface, offset 0 m, target `body_retopo`) and a Mirror (merge 0.001 m); `Ctrl+A` opens Apply and he picks Visual
+  Geometry to Mesh [qy-wwP-b9HY-11-123013; qy-wwP-b9HY-11-123129, 12:31:31]. The scalp goes into a new collection. He
+  selects all, `U`, Unwrap Angle Based, and scales the two UV islands into the square; the UV layout is irrelevant
+  [qy-wwP-b9HY-11-123221; qy-wwP-b9HY-11-123253]. Reader: `scalp_from_faces(body, "brow_scalp", test, subdivide=2)`.
+- **1.2 Mark the brow.** Annotate tool, Placement set to Surface (the header lists 3D Cursor, View, Surface), a blue
+  line drawn over the sculpt [qy-wwP-b9HY-11-123333, 12:33:46]. Reader: choose three or four world points on the brow
+  centre line from the sculpt and reference.
+- **1.3 Guides.** `Add > Curve > Empty Hair` (object `eyebrows`, a Surface Deform modifier is already there). In Curves
+  Sculpt Mode he picks Add, ticks X mirror, and drops the first strand with the Curve Shape popover open: `Interpolate`
+  shows Length / Radius / Shape / Point Count tick boxes with only Radius ticked, Length typed as 0.01 m, Points 8
+  [qy-wwP-b9HY-11-123428; qy-wwP-b9HY-11-123447, 12:34:50 to 12:34:55]. He adds a few strands, then combs each along the
+  blue line with Comb (Projected, Strength 1.000, radius about 410 to 470 px zoomed to the brow). Guides that dive
+  through the skin are selected with Select, then Comb pushes them out, checked edge-on [qy-wwP-b9HY-11-123813]. Toward
+  the tail he uses Grow/Shrink with `Ctrl`; its Scaling popover shows Scale Uniform off and Minimum Length 0 m, which is
+  what lets it shorten [qy-wwP-b9HY-11-124312, 12:43:25 to 12:43:31]. Reader: `add_guides(brows, flow_guides(...),
+  points=8, mirror_x=True)`; shorten the tail guides by scaling about the root, e.g. 0.007 m falling to 0.0035 m.
+- **1.4 Interpolate.** Dragged in; Surface chosen with the eyedropper from the scalp; Density typed (about 50 000, later
+  up to 800 000 and 3 000 000); with no mask the whole scalp outline fills with hair [qy-wwP-b9HY-11-124702;
+  qy-wwP-b9HY-11-124743, 12:47:44 to 12:47:54]. Reader: `add_hair_modifier(brows, "Interpolate Hair Curves", Surface=...,
+  Poisson_Disk_Distribution=False, Density=...)`.
+- **1.5 Mask.** In Texture Paint he opens the Texture Slots popover, sets Single Image, and clicks `New` to open
+  the create-image dialog (name `brow density`, a Width/Height pair whose default shows 1024 px, Blank, alpha ticked;
+  Paint Hard is active in the header) [qy-wwP-b9HY-11-124823, 12:48:24 to 12:48:35]. Strokes follow the brow outline
+  on the scalp with Paint Soft, white, Mix, Size 44 px, Strength 1.000; the Image Editor below shows two white arcs
+  on black, and `Image > Save` is used at once [qy-wwP-b9HY-11-125009, 12:50:10 to 12:50:16]. After painting the brows
+  shrink to a thin line [qy-wwP-b9HY-11-125146].
+  Reader: `Density_Mask="density"`, a vertex group weighted 1 on the brow band (see snippet).
+- **1.6 Profile.** Render Properties, `Curves` panel, Shape Strand / Strip / Cylinder; Strip makes the brow flat and
+  wide [qy-wwP-b9HY-11-125208, 12:52:16; qy-wwP-b9HY-11-125244]. `Set Hair Curve Profile` panel: Replace Radius ticked,
+  Radius (0.0001 m typed), Shape 0.500, Factor Min 0.000, Factor Max 1.000. The Curves object's Color (Object properties
+  > Viewport Display) is changed from white to black [qy-wwP-b9HY-11-125305, 12:53:14].
+- **1.7 Clump.** `Clump Hair Curves` with Existing Guide Map unticked, then Guide Distance 0.002 m on a second clump; a
+  clump inside a clump is the look [qy-wwP-b9HY-11-125531; qy-wwP-b9HY-11-125658, 12:56:59 to 12:57:09].
+- **1.8 Frizz.** On first drop it is wild (Cumulative ticked, Factor 1.000, Distance 0.01 m, Shape 0.500); he unticks
+  Cumulative, lowers Distance to 0.001 m, then drags Factor down to 0.272 [qy-wwP-b9HY-11-125728, 12:57:36;
+  qy-wwP-b9HY-11-125749; qy-wwP-b9HY-11-125817, 12:58:18]. Done when a front view of the whole head shows brows that
+  look soft, not wiry.
+
+### Step 2. Eyelashes
+
+- **2.1 Scalp.** On `body_retopo` he selects the lid ring in a side view, duplicates it to `lashes_scalp` (a thin band
+  that appears as an orange ring on each eye) and unwraps: the UV editor shows four long curved strips, and he checks
+  that none overlap [qy-wwP-b9HY-11-125829; qy-wwP-b9HY-11-130051, 13:00:53 to 13:01:03].
+- **2.2 Guides.** New Curves object `eyelashes`. Add brush, Curve Shape popover, Length about 0.01 m, Points 8; he
+  keeps the display on Strand while placing (the Render Properties tab shows Shape Strand), because in Strip the guide
+  is a fat flat patch [qy-wwP-b9HY-11-130206; qy-wwP-b9HY-11-130221, 13:02:33]. Lashes are placed evenly along the upper
+  lid in a close three-quarter view, with `lashes_scalp` selected so the roots can be seen [qy-wwP-b9HY-11-130246].
+  Grow/Shrink with `Ctrl` (radius about 164 px) shortens the corners; plain Grow lengthens the middle
+  [qy-wwP-b9HY-11-130402]. X mirror is on in the header when he combs the outward-then-up curve
+  [qy-wwP-b9HY-11-130457; qy-wwP-b9HY-11-130537]. Reader: `add_guides(lashes, ..., points=8, mirror_x=True)`.
+- **2.3 Stack.** Strip display on, `Set Hair Curve Profile` put above `Interpolate` (stack: Surface Deform, Set Hair
+  Curve Profile, Interpolate, Clump, Noise); order does not matter, he says [qy-wwP-b9HY-11-130958; qy-wwP-b9HY-11-131103].
+  Clump: Factor 1.000, Shape 0.500, Tip Spread 0.001, Guide Distance 0.001 m, Existing Guide Map off
+  [qy-wwP-b9HY-11-131201, 13:12:02]. `Hair Curves Noise`: Cumulative Offset off, Factor about 0.13 after dragging
+  (0.17 mid-drag), Distance 0.01 m, Shape 0.500, Scale 8.980, Scale along Curve 15.000, Offset per Curve 0
+  [qy-wwP-b9HY-11-131248, 13:12:50 to 13:12:59].
+- **2.4 Lower lashes.** A second object `eyelashes.001` with the same stack (profile, Interpolate on `lashes_scalp` with
+  Density about 2 500 000, Clump, Noise) [qy-wwP-b9HY-11-131611, 13:16:12]. The lowered Density is not legible.
+
+### Step 3. Head hair
+
+- **3.1 Scalp.** In Edit Mode on `body_retopo` he selects the cranium faces in side, back and rear-three-quarter views,
+  adds missing faces with `Shift`, duplicates (`Shift+D`) and separates (`P`) [qy-wwP-b9HY-11-131750]. Shrinkwrap and
+  Mirror are applied with `Ctrl+A > Visual Geometry to Mesh`, then `U` > Unwrap, and he renames it `hair_scalp`
+  [qy-wwP-b9HY-11-132132; qy-wwP-b9HY-11-132218].
+- **3.2 Short cut.** Object `short`. Density brush (shelf shows Smooth, Add, Delete, Density, Select here): header Distance
+  Min about 0.01 m and Count Max 100, strokes over the cranium from side and top views; it fills the head with upright
+  guides like a mohawk, and he types a larger Distance Min (0.02) to thin it [qy-wwP-b9HY-11-132420, 13:24:22 to
+  13:24:37]. From the side Comb (Projected) lays the guides down; hairs are kept in front of the ear; the front hairs
+  are angled up and forward [qy-wwP-b9HY-11-132607; qy-wwP-b9HY-11-132756]. Reader: `scalp_points(scalp, 0.013..0.02)`
+  and `flow_guides(..., length=0.04, points=8)`.
+- **3.3 Node tree `short hair`.** The bottom area is switched to Geometry Node Editor (editor-type menu), a new group
+  `short hair` appears beside the Surface Deform one, and nodes are dragged in from the Asset Browser
+  [qy-wwP-b9HY-11-132949, 13:29:54 to 13:30:01]. `Set Hair Curve Profile` first: Strip on, Radius typed as 0.1 mm
+  [qy-wwP-b9HY-11-133038, 13:30:51]. `Interpolate Hair Curves`: Part by Mesh Islands ticked, Interpolation Guides 4,
+  Distance to Guides 0 m, Method Random, Density 800 000, Viewport Amount 1.000; a Named Attribute node holds the UV map
+  name [qy-wwP-b9HY-11-133258, 13:33:00 to 13:33:09]. `Clump Hair Curves`: Guide Distance 0.05 m, edited to 0.01 m
+  (final value 0.015 m), Existing Guide Map unticked; Factor dragged from 0.994 to 0.765
+  [qy-wwP-b9HY-11-133336; qy-wwP-b9HY-11-133403]. Reader: `hair_tree(short, hair_scalp, "short hair", density=800000.0,
+  clump="DISTANCE", guide_distance=0.015)`.
+- **3.4 Share-based noise.** `Hair Curves Noise` first on everything (Factor 1.000, Distance 0.015 m, Shape 0.500, Scale
+  31.500, Scale along Curve 15.400). He then adds Separate Geometry (the narration and an on-screen note say change Point
+  to Spline), a Random Value (Boolean) feeding its Selection with Probability typed as 0.25, and joins the Inverted
+  output back [qy-wwP-b9HY-11-133908; qy-wwP-b9HY-11-133939]. Done when the top looks mostly smooth with a few rough
+  strands. Reader: `noise_share=0.25`.
+- **3.5 Ponytail-style plan.** He draws the parts and flow on the reference (red outlines and orange arrows: guides pack to
+  one point at the band, the lower tail runs a different way and is shorter) [qy-wwP-b9HY-11-120935, 12:09:38 to 12:09:53].
+- **3.6 Main hair guides.** Annotate with Placement Surface marks the hair pattern (blue lines over the bald head); Add
+  brush, Curve Shape popover: Interpolate Radius ticked, Length 0.3 m, Points typed 30, X mirror on; the first strand
+  stands straight up from the hairline [qy-wwP-b9HY-11-134302; qy-wwP-b9HY-11-134348, 13:43:50 to 13:43:58]. Comb
+  (Projected, radius 162 to 314 px) arches each guide over the head; `Shift` smooths; near the middle line the Comb
+  radius is cut from about 454 px to 180 px so the mirrored twin is not caught [qy-wwP-b9HY-11-134418;
+  qy-wwP-b9HY-11-134608]. The time-lapse (5X speed badge) shows the sequence only in outline: arcs of white guides from
+  the hairline rim, over the crown, to one point behind the head [qy-wwP-b9HY-11-134714; qy-wwP-b9HY-11-135144, 13:51:46
+  to 13:52:01]. Reader: `flow_guides(body, roots, lambda p,t: gather - p, ..., points=30, lift=0.012)`, mirrored.
+- **3.7 Main hair tree.** New group `main hair`: Set Hair Curve Profile (Radius 0.0001 m, Shape 0.500), a Named Attribute
+  for the UV map, `Interpolate` (children appear over the whole scalp, with a ring of guides only at the rim)
+  [qy-wwP-b9HY-11-135253; qy-wwP-b9HY-11-135332]. The mask is a painted image `main hair density`, saved
+  [qy-wwP-b9HY-11-135554]. Clump takes Interpolate's Guide Index; Shape dragged from 0.500 to 0.800, Factor 1.000
+  [qy-wwP-b9HY-11-135619]. Density reads 1 500 000 at 13:58:14 and 2 000 000 at 14:06:21, so it was raised late
+  [qy-wwP-b9HY-11-135812; qy-wwP-b9HY-11-140619].
+- **3.8 Parting.** Part by Mesh Islands is ticked but does nothing on one island; he selects half the scalp (Select Linked
+  is the last operator shown) and separates it so the mesh has left, right and rest islands; the parting then shows on
+  the forehead; `Blend Hair Curves` (Factor 1.000, Blend Radius 0.01 m, Blend Neighbors 10) closes it again until its
+  Factor is fed from an attribute [qy-wwP-b9HY-11-135704; qy-wwP-b9HY-11-135756; qy-wwP-b9HY-11-135812]. Reader: split
+  scalp edges along the parting; `blend_attr="parting"`.
+- **3.9 Noise and flyaways.** Random Value probability about 0.066 into Separate Geometry (Spline) then Noise: Cumulative
+  Offset off, Distance 0.01 then 0.02 m, Shape 0.500, Scale 47.2, Scale along Curve 44.6, Factor 1.000
+  [qy-wwP-b9HY-11-140051; qy-wwP-b9HY-11-140110]. The Separate Geometry plus Random Value pair is duplicated for the
+  short, noisy flyaways [qy-wwP-b9HY-11-140258, 14:02:59 to 14:03:08].
+- **3.10 Side strand.** New object `left side hair` with its own tree; Q-menu to Add, Slide, Comb; a few long guides hang
+  from the front hairline past the eye and cheek, curved from the side view [qy-wwP-b9HY-11-140754;
+  qy-wwP-b9HY-11-140806 at 5X speed]. Its tree: Clump with Guide Distance 0.1 m and Existing Guide Map ticked, Create
+  Guide Index Map after Delete Geometry for secondary clumps, Noise with Cumulative off, Scale 100, Scale along Curve 100
+  [qy-wwP-b9HY-11-141206; qy-wwP-b9HY-11-141258; qy-wwP-b9HY-11-141444]. The right side repeats it with another mask
+  [qy-wwP-b9HY-11-141508].
+- **3.11 Ponytail.** A plane is scaled down and placed at the back, subdivided twice, made round with LoopTools Circle (the
+  operator panel is labelled Circle); `U` > Unwrap Angle Based because no UV map was made; the Surface Deform modifier
+  then warns "Invalid surface UVs on 2 curves" [qy-wwP-b9HY-11-141600, 14:16:11; qy-wwP-b9HY-11-142002;
+  qy-wwP-b9HY-11-142016, 14:20:24]. Guides: Add brush, then Grow/Shrink and Comb (radius about 190 to 440 px), a fan of
+  about a dozen long guides drooping from the disc [qy-wwP-b9HY-11-141750; qy-wwP-b9HY-11-141935]. Tree: profile 0.0001 m,
+  Interpolate Density 8 000 000 then 10 000 000, Clump Guide Distance 0.1 m, Existing Guide Map ticked, Separate Geometry
+  (Spline) with Random Value about 0.074 [qy-wwP-b9HY-11-142154]. Final Noise: Cumulative off, Factor 1.000, Distance
+  0.01 m, Shape 0.100, Scale and Scale along Curve first 50 then 20 [qy-wwP-b9HY-11-142258, 14:23:10 to 14:23:16]. Done when
+  the tail from the back reads as curling tufts at the band, not a smear.
+
 ## Settings the course uses
 
 | Setting | Value | Where | Time |
 |---|---|---|---|
 | Curves render shape | Strand while placing guides, Strip to see thickness | Render Properties > Curves > Shape | 12:52:21 |
-| Viewport | Matcap, outline off, focal length 150 mm; high-poly collection disabled in viewport | Layout workspace | 12:28:30 |
+| Viewport | Matcap, Outline ticked, focal length 150 mm; high-poly collection disabled in viewport | Layout workspace | 12:28:30 |
 | Add brush, brows | Length 0.01 m then shorter, Points 8, Count 1, X symmetry | Curve Shape popover | 12:34:55 |
-| Interpolate, brows | Density 50 000 up to 3 000 000; Interpolation Guides 4, 6, then 3; Mask Texture `brow density` (2K) | modifier | 12:47:10 |
+| Interpolate, brows | Density 50 000 up to 3 000 000; Interpolation Guides 4, 6, then 3; Mask Texture `brow density` | modifier | 12:47:10 |
 | Profile, brows | Radius 0.0001 m, Shape 0.6 | `Set Hair Curve Profile` | 12:52:57 |
 | Clump, brows | Guide Distance 0.004 m then 0.002 m; Existing Guide Map off | two `Clump Hair Curves` | 12:55:44 |
 | Frizz, brows | Factor 0.272, Distance 0.001 m, Shape 0.5, Cumulative Offset off | `Frizz Hair Curves` | 12:57:37 |
-| Lashes | Length 0.01 m; Radius 0.0002 m; Density 2 500 000; clump 0.001 m; noise Scale 8.98, Scale along Curve 15 | modifiers | 13:02:18 |
-| Density brush, `short` | Distance Min 0.013 m, Count Max 100, Length 0.04 m | tool header | 13:24:39 |
-| `short hair` tree | Density 800 000; clump Factor 0.743, Guide Distance 0.015 m; secondary guides Probability 0.95 deleted | node editor | 13:33:40 |
+| Lashes | Length 0.01 m; Radius 0.0002 m; Density 2 500 000; clump 0.001 m; noise Factor about 0.13, Scale 8.98, Scale along Curve 15 | modifiers | 13:02:18 |
+| Density brush, `short` | Distance Min about 0.01 m on first stroke, 0.02 tried; final 0.013 m; Count Max 100 (legible); Length 0.04 m | tool header | 13:24:39 |
+| `short hair` tree | Density 800 000; clump Factor 0.743 final (0.994 to 0.765 seen while dragging), Guide Distance 0.015 m (0.05 default, 0.01 tried); secondary guides Probability 0.95 deleted | node editor | 13:33:40 |
 | Noise, `short` | share 0.25; Factor 1, Distance 0.015 m, Shape 0.1, Scale 10, Scale along Curve 40.9, Offset per Curve 0.1 | `Hair Curves Noise` | 13:39:50 |
-| Add brush, main hair | Points 30; Interpolate Length and Shape on after the first guides | Curve Shape popover | 13:43:50 |
+| Add brush, main hair | Length 0.3 m before growing, Points 30 (typed); Interpolate Radius ticked | Curve Shape popover | 13:43:50 |
 | `main hair` tree | Density 2 000 000; clump Shape 0.8, Existing Guide Map on; Blend Radius 0.01 m, Blend Neighbors 10 | node editor | 13:56:25 |
-| Noise, main hair | share about 0.1; Distance 0.02 m, Shape 0.2, Cumulative Offset on | `Hair Curves Noise` | 14:01:10 |
+| Noise, main hair | share about 0.1; Distance 0.02 m, Shape 0.500, Cumulative Offset unticked | `Hair Curves Noise` | 14:00:51 to 14:01:10 |
 | Flyaways | share 0.05 falling to 0.01; Length Factor random 0 to 0.2 (0.1 and 0.3 tried); Preserve Length on | Trim + Noise | 14:03:10 |
-| Noise, ponytail | Factor 1, Distance 0.01 m, Shape 0.1, Scale 50, Scale along Curve 50, Cumulative Offset off | `Hair Curves Noise` | 14:22:10 |
-| Mask images | 2048 x 2048, black, painted white, saved in `textures` | Texture Paint | 12:48:30 |
+| Noise, ponytail | Factor 1, Distance 0.01 m, Shape 0.1, Scale and Scale along Curve 50 first, then 20 and 20, Cumulative Offset off | `Hair Curves Noise` | 14:23:10 to 14:23:16 |
+| Mask images | Name `brow density` / `main hair density`; create dialog defaults to 1024 px (typed final resolution not legible); black, painted white, saved | Texture Paint | 12:48:30 |
 
 In 5.0 the Interpolate panel has a Method switch (Random / Poisson Disk) and the course leaves it on Random. In 4.5
 the same input is the checkbox `Poisson Disk Distribution`, default on, so set it to `False`. The 4.5 default
@@ -535,19 +710,24 @@ thick (my choice) so strands register in a silhouette; with millions of strands 
 
 ## Gaps
 
-- **Add-ons.** LoopTools (free; a Blender extension since 4.2) is used once, `LoopTools > Circle`, to make the
-  ponytail scalp round [14:16:05]. Built-in route: `bpy.ops.mesh.primitive_circle_add(fill_type='NGON')` or
-  `bpy.ops.mesh.looptools_circle()` is not needed at all. Everything else is built in.
+- **Add-ons.** LoopTools (free; a Blender extension since 4.2) is used once, `LoopTools > Circle` (the operator panel
+  reads Circle), to make the ponytail scalp round [14:16:05, 14:16:11]. Built-in route:
+  `bpy.ops.mesh.primitive_circle_add(fill_type='NGON')`. Everything else is built in.
 - **Curve sculpt brushes** (Comb, Pinch, Slide and the rest) are not available to you. Flow functions plus
   `reshape_guides` reach the same shapes but without the look-and-nudge loop the course relies on; expect several
   capture-and-correct rounds per part. This is the weakest point of the stage.
 - **Texture painting the masks** is replaced by vertex groups read through `Density Mask`. A mask is then only as
   sharp as the scalp's vertex spacing; subdivide the scalp where a crisp edge matters.
-- **Hair material: the chapter has none.** It sets only the viewport colour (black) on each Curves object. The
-  hair shader belongs to the next stage (course chapter 12, shading); add its material to each Curves object there.
+- **Hair material: the chapter has none.** It sets only the viewport colour (black on the brows and main hair; the
+  ponytail object is left light). The hair shader belongs to the next stage (course chapter 12, shading); add its
+  material to each Curves object there.
 - **Not shown in the video**: most of the main-hair, side-strand and ponytail guide placement is a time-lapse with
-  music [13:47:20 to 13:52:00, 14:08:10, 14:17:55], so guide counts and exact paths for those parts are not
-  recorded; the right-side strand is described, not made; the lower-lash Density is inaudible.
+  music marked with a 5X speed badge [13:47:20 to 13:52:00, 14:08:10, 14:17:55]. The sheets show the result of that
+  time-lapse (arcs of guides from the hairline rim to one point behind the head; about a dozen long guides on the
+  ponytail disc) but guide counts and exact paths are not recorded; the right-side strand is described, not made;
+  the lower-lash Density after thinning is not legible (2 500 000 is the copied value).
+- **Ponytail viewport colour**: the video leaves the ponytail Curves object at the default light colour (white),
+  unlike the black brows and main hair [14:23:00]; make it black for a consistent review capture.
 - **Unsettled in the course**: for secondary clumps the narrator unticks Existing Guide Map while also linking
   Guide Index. `hair_tree` copies that. If secondary clumps do not appear, tick it on node `clump2` and compare.
 - `Curl Hair Curves`, `Braid Hair Curves` and the other unused groups are named from the asset file but untested.

@@ -396,6 +396,153 @@ With the clothes on, compare proportions with the concept again and change the b
 course thickens the thighs and notes the head must be scaled up [06:00:04 to 06:00:40]. After any body change,
 run `push_out` again on every piece near it.
 
+## How the artist works on screen
+
+The numbered observations correspond to the order above. Pixel sizes belong to the displayed zoom,
+not world space; choose world radii from the actual garment dimensions and inspect after each pass.
+
+### 1. Read the cloth
+
+- The artist shows a dress pulled sideways and uses its held point to explain radiating tension
+  [qy-wwP-b9HY-06-041738, 04:17:39].
+- On a reference board, red guide lines run away from raised corners of hanging cloth
+  [qy-wwP-b9HY-06-042208, 04:22:16–04:22:19].
+- The board mixes close-up cloth examples with full garments, so the comparison includes both
+  individual fold direction and the larger drape [qy-wwP-b9HY-06-042233, 04:22:35–04:22:44].
+- An animated character is shown from the front with a mostly smooth shirt and a few folds
+  near its hem [qy-wwP-b9HY-06-042311, 04:23:13–04:23:24].
+- Reader equivalent: identify anchors and compression zones on the actual references first;
+  use `turnaround_sheet` to judge the overall garment before sculpting details.
+
+### 2. Choose the starting shape
+
+- The clothing photo board is kept visible beside the whole neutral body, then the artist opens
+  the Add menu and starts a shirt with a cube [qy-wwP-b9HY-06-042531, 04:25:33–04:25:43].
+- Reader equivalent: choose `extract_region` for close cloth, or a polygon shell for a looser shape;
+  these are scripted alternatives, not a claim that the course extracted its shirt.
+- The separate orange garment makes intersections against the grey body easy to see later.
+
+### 3. Shirt blockout
+
+- In Edit Mode the shirt starts as a very coarse torso shell with horizontal bands and a center
+  line; Auto Mirror appears in the sidebar [qy-wwP-b9HY-06-042701, 04:27:03–04:27:14].
+- The artist pulls the side outward near the shoulder and adds loops for the sleeve,
+  keeping the opposite half mirrored [qy-wwP-b9HY-06-042729, 04:27:30–04:27:40].
+- They orbit to side and back, adding loops and checking that the shell wraps the torso
+  [qy-wwP-b9HY-06-043047, 04:30:48–04:30:59].
+- A long sleeve is briefly extruded to the wrist and then undone for the short-sleeve design
+  [qy-wwP-b9HY-06-043334, 04:33:35–04:33:41].
+- Reader equivalent: `extract_region` selects the torso and sleeve region from `BODY_TMP`;
+  inspect the open neckline, hem and sleeve ends rather than treating extraction as finished.
+
+### 4. Fit before detail
+
+- In Sculpt Mode, Grab at strength 0.400 moves the coarse collar and shoulder;
+  the cursor is large relative to the shoulder [qy-wwP-b9HY-06-043111, 04:31:12–04:31:22].
+- They rotate behind the shoulder, dragging and smoothing the sleeve transition while some skin
+  still shows through the coarse shell [qy-wwP-b9HY-06-043237, 04:32:39–04:32:49].
+- Near the collar they alternate broad Grab adjustments and smoothing from oblique and front views
+  [qy-wwP-b9HY-06-043417, 04:34:20–04:34:33].
+- They zoom under the arm, pull the edge into place and inspect it from below before moving on
+  [qy-wwP-b9HY-06-043732, 04:37:33–04:37:44].
+- The Mirror modifier is applied before the next sculpting pass
+  [qy-wwP-b9HY-06-043800, 04:38:02–04:38:12].
+- Multires is then added and subdivided; the smooth silhouette appears before the waist folds
+  [qy-wwP-b9HY-06-043917, 04:39:18–04:39:25; qy-wwP-b9HY-06-043926, 04:39:27–04:39:38].
+- Reader equivalent: use `sculpt_strokes` Grab and Smooth with a radius initially a substantial
+  fraction of the shoulder width, then `push_out` and inspect front and side with `turnaround_sheet`.
+- Apply real subdivision as in step 4; the bridge cannot sculpt higher Multires levels.
+
+### 5. Folds and seams
+
+- The artist first draws guides near the tucked waist, then switches back to sculpting
+  [qy-wwP-b9HY-06-044112, 04:41:13–04:41:23].
+- The Draw header shows observed screen Size 80 px and strength 0.500 as the artist prepares the smooth waist
+  for folds [qy-wwP-b9HY-06-044138, 04:41:39–04:41:49].
+- Use asymmetric fold paths rather than copying the guides onto both sides;
+  the guide lines indicate where compression would gather, not a required number of folds.
+- Reader equivalent: `sculpt_begin("Shirt", symmetry="")`, then short `draw` and `crease`
+  paths in world coordinates; start with a radius small relative to the waist width.
+- Follow each set with `push_out`, and compare front and perpendicular views.
+- At the front crotch, the artist forms a small fan and then softens and sharpens individual
+  ridges [qy-wwP-b9HY-06-050521, 05:05:22–05:05:32; qy-wwP-b9HY-06-050533, 05:05:35–05:05:47].
+- The back of each knee receives short crosswise compression folds, checked from behind
+  [qy-wwP-b9HY-06-051223, 05:12:25–05:12:40].
+
+### 6. Trousers
+
+- The course separately demonstrates a trouser shell, with seat and legs shaped before the
+  smaller fold and fly details; the final outfit returns to the skirt.
+- The coarse trouser shell is fitted with Grab and Inflate around the hips and inner thighs;
+  protruding skin remains visible during this rough stage [qy-wwP-b9HY-06-045606, 04:56:08–04:56:20].
+- After fitting, they switch to the body and push an exposed thigh in under the cloth
+  [qy-wwP-b9HY-06-050433, 05:04:35–05:04:43].
+- Reader equivalent: rebuild `BODY_TMP` after body edits and check clearance rather than accepting
+  the temporary coarse-stage intersections at the exit check.
+- Reader equivalent: extract the covered body region, widen the lower legs from their own
+  center lines, and use restrained crease paths after fitting.
+
+### 7. Pleated skirt
+
+- Pleats are built into the ring-based silhouette rather than added as sculpt marks.
+- In isolation the artist raises the pleated ring toward the waist and extrudes a narrow band
+  [qy-wwP-b9HY-06-051915, 05:19:17–05:19:32].
+- After the skirt is returned to the body, a large Grab brush adjusts the waistband overlap and
+  uneven hem [qy-wwP-b9HY-06-052134, 05:21:36–05:21:43; qy-wwP-b9HY-06-052235, 05:22:36–05:22:43].
+- The pleats themselves come from the modeled ring; these broad Grab movements adjust the shape,
+  not a separate sculpted wrinkle pass.
+- Reader equivalent: `pleated_skirt` produces the repeated folded ring and waistband;
+  compare the flare and hem against the actual reference before choosing radii.
+
+### 8. Foot and boots
+
+- During foot remesh sizing, the overlay at 05:29:45 reads **0.00733 m**; this is the displayed
+  interactive value, not a universal setting [qy-wwP-b9HY-06-052937].
+- In right orthographic Edit Mode the artist moves the boot shell around the foot and flattens
+  the sole on Z [qy-wwP-b9HY-06-053227, 05:32:29–05:32:40].
+- Later, the sole line is traced from the side and the Stroke menu is opened for stabilization
+  [qy-wwP-b9HY-06-054322, 05:43:24–05:43:37]; Pinch tightens it around the toe
+  [qy-wwP-b9HY-06-054403, 05:44:05–05:44:12].
+- Reader equivalent: select a voxel size relative to the foot and toe spacing; inspect separation
+  after remeshing and do not copy the course's number without scaling it to the model.
+- Fit the boot shaft and its planar sole separately; use `loft_tube`, measured clearance and
+  coordinate edits rather than assuming Blender's interactive brushes are available.
+
+### 9. Hair masses
+
+- In right orthographic Sculpt Mode, the scalp mask starts at the high forehead and falls in
+  front of the ear; the dark selected region covers the crown and back of the head
+  [qy-wwP-b9HY-06-054739, 05:47:41–05:47:53].
+- The artist orbits through front and side views to inspect the masked hairline before extraction
+  [qy-wwP-b9HY-06-054808, 05:48:09–05:48:20].
+- Solidify offset is set to zero and the thickness is increased while the cap is viewed from
+  the front; the exact final thickness remains obscured [qy-wwP-b9HY-06-054834, 05:48:36–05:48:44].
+- Clay Strips at strength 0.500 makes repeated strokes from the hairline around toward the back;
+  the artist rotates above the head to check flow [qy-wwP-b9HY-06-055137, 05:51:40–05:51:59].
+- The front locks are mirrored and checked from front and three-quarter views
+  [qy-wwP-b9HY-06-055621, 05:56:24–05:56:37].
+- A separate rear chain initially shows the Skin modifier's missing-root warning
+  [qy-wwP-b9HY-06-055735, 05:57:37–05:57:47].
+- Reader equivalent: shape `Hair.Cap` with `extract_region`, remesh at a size relative to cap
+  thickness, and use `clay_strips` in short paths following the intended gathering direction.
+- Use `skin_strand` with a root for each separate chain and compare the silhouette from the side.
+
+### 10. Rigid accessories
+
+- No separate jewellery construction is established by these observations.
+- Reader equivalent: model each required rigid item separately with polygons and controlled bevels;
+  keep this as a recommendation, not an observed course operation.
+
+### 11. Recheck the dressed figure
+
+- With the skirt and boots visible, the artist compares the legs against the concept, inflates
+  the thighs and changes Grab radius while inspecting the knees
+  [qy-wwP-b9HY-06-060028, 06:00:30–06:00:42].
+- Reader equivalent: change `BLK_leg` with broad `inflate` or `grab` strokes, rebuild
+  `BODY_TMP`, and rerun `push_out` for nearby cloth.
+- Measure the entire `CHARACTER` against each real usable reference at 0.98; an unavailable view
+  remains `not_run`, never a pass. Keep Z up, feet on Z=0, and the character facing -Y.
+
 ## Settings the course uses
 
 | Setting | Value | Where | Time |
@@ -410,7 +557,7 @@ run `push_out` again on every piece near it.
 | `Subdivision Surface` | Catmull-Clark, levels 2 | skirt, hair chains | 05:20:22, 05:54:47 |
 | Boot `Mirror` | `Mirror Object` = body, `Clipping` off, `Merge` 0.001 m | second boot | 05:36:34 |
 | Hair cap extract | default options; `Solidify` offset 0, thickness raised by eye | `Mask > Mask Extract` | 05:48:22 |
-| Voxel remesh | 0.015 hair cap; the foot's value is spoken as "0 73" and not readable on screen | Sculpt Mode | 05:50:30, 05:29:44 |
+| Voxel remesh | 0.015 hair cap; 0.00733 m shown during foot voxel-size adjustment | Sculpt Mode | 05:50:30, 05:29:45 |
 
 Brush sizes are in screen pixels and change with zoom, so none are listed. The course never states the
 character's height: treat its metre values as proportions of its character, not absolutes.
@@ -472,7 +619,7 @@ knee boots, hair tied in a bun): the fold positions in step 5, the 11 pleats, th
   build both sides), LoopTools `Circle` and `Relax` (build rings round, as `loft_tube` does), Extra Mesh Objects
   `Single Vert` (use `from_pydata`). Its reference board is a PureRef file [04:22:20]; PureRef is not needed.
 - **Not verified.** Step 5's strokes ran on the stroke code in background Blender, not through MCP; nothing ran live.
-- **Could not work out.** The foot's voxel size [05:29:44]; the hair cap's final `Solidify` thickness (under
-  the cursor at 05:48:38); the exact lasso outline of the hair mask. The trousers are a demonstration only: by
-  05:36:34 they are hidden and the character wears the skirt. Belts, buckles, buttons and the concept's
-  necklace are not made in this chapter.
+- **Still uncertain.** The hair cap's final `Solidify` thickness is obscured at 05:48:38. The mask
+  silhouette is visible from front and right, but the exact surface boundary cannot be recovered from
+  those views alone. The trousers are a demonstration only: by 05:36:34 they are hidden and the
+  character wears the skirt. Belts, buckles, buttons and the concept's necklace are not made here.
