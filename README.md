@@ -67,6 +67,16 @@ Per video it writes `chapters/NN-<slug>.md` (timed transcript), `frames/NN-<slug
 changes, where the speaker points at the screen, and at least one per 30 seconds) and `index.json`. Running it again
 skips what is already there. It needs English captions and exits with code 2 without them.
 
+Then cut it into short captioned clips and make study sheets an agent can read:
+
+```
+python tools/make_clips.py references/video-courses/VIDEO_ID           # 8-30 s clips + clips/manifest.jsonl
+python tools/clip_sheets.py references/video-courses/VIDEO_ID          # 2x2 full-resolution frames + transcript per clip
+```
+
+Each clip starts where the narrator starts a line, never crosses a chapter, and its manifest row carries the spoken
+text and the skill stage it belongs to. Sheets let an agent that cannot play video see what the artist did on screen.
+
 The output is study material for your own use. It is git-ignored here; do not republish someone else's course.
 
 ## Credit
