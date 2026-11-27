@@ -1,7 +1,7 @@
 # 03 Sculpt the face
 
 Course source: chapter 04 "Sculpting the Face of Your Character", 01:36:09 to 02:28:05.
-(The course records in Blender 5.0.1; everything below was checked against 4.5.16.)
+(The course records in Blender 5.0.1; code-block verification is noted on each block.)
 
 ## Goal
 
@@ -36,6 +36,9 @@ Measure these before any stroke. All are stated on the slides at [01:37:16] to [
 | Mouth | Halfway between nose base and jaw bottom is the BOTTOM of the lower lip. | 01:40:55 |
 | Eye spacing | Gap between the eyes = one eye width (eye, gap, eye are three equal spans). | 01:41:31 |
 | Mouth width | Mouth corners never go wider than the centre of each eye (the pupil). | 01:42:06 |
+
+The hairline itself is chosen for the design rather than fixed by the thirds rule
+[qy-wwP-b9HY-04-013759, 01:37:59; qy-wwP-b9HY-04-013810, 01:38:10].
 
 Form rules: the head is a cranium with a jaw wedge attached [01:42:57]. The planes to sculpt are forehead, temples
 (both sides), eye line, brow line, side of the face, chin; the nose is added as a separate block, not a plane
@@ -250,9 +253,10 @@ stroke that crosses X=0 stays symmetric.
 17. **Whole-face pass** [02:11:40]. Eyes, nose and mouth now exist, so judge them together against the concept:
     jaw shape and length with `Grab`, cheek mass with `Clay Strips` plus Smooth, lip corners up or down.
 
-18. **Finer remesh and sharpen** [02:12:44]. Course: voxel about `0.012`, then `Crease Polish` again on the mouth
-    line and corners, round the nostrils, `Draw` (subtract) to dig the nostril holes, an edge on the wing; then
-    fill the old eye-line groove on the forehead side with `Clay Strips` and Smooth, since it was only a guide
+18. **Finer remesh and sharpen** [02:12:44]. The voxel-size preview reaches `0.0128 m`; the preview alone
+    does not prove the final applied value. After remeshing, the course uses `Crease Polish` again on the mouth
+    line and corners, rounds the nostrils, uses subtractive `Draw` to dig the nostril holes and marks the wing;
+    then fills the old eye-line groove on the forehead side with `Clay Strips` and Smooth, since it was only a guide
     [02:14:15]. Live: `sculpt_remesh(object="BLK_head", voxel_size=H/165)`; repeat the step 13 and 16 creases at
     two-thirds of their earlier radius.
 
@@ -301,7 +305,7 @@ stroke that crosses X=0 stays symmetric.
     [02:21:46]; invert the mask; `Grab` with a very large radius to push the bowl inward and slightly down
     [02:22:50]; clear the mask, remesh, Smooth; `Crease Polish` the inner edge of the rim (the question mark) and
     sharpen the rim's outer edge [02:23:17]; `Clay Strips` two short ridges for the two arms of the Y, Smooth, then
-    crease beside them [02:24:30]; remesh at `0.008`, Smooth, final crease pass [02:25:25]. Live:
+    crease beside them [02:24:30]; remesh finer, Smooth, final crease pass [02:25:25]. Live:
 
     ```python
     # verified in 4.5.16 background (mask_where from the helper block; ear on the +X side)
@@ -317,6 +321,153 @@ stroke that crosses X=0 stays symmetric.
     back after a break because fresh eyes find errors. For you: run the exit check, then run it again after the
     next stage and fix what the second look shows.
 
+## How the artist works on screen
+
+The artist keeps a small whole-head view and a reference board beside a larger working viewport.
+The large view is frequently orbited and zoomed; a screenshot does not establish every stroke direction
+or number of passes. The pixel radii below are examples at the displayed zoom, not world distances.
+The following world-space radii are starting recommendations, not conversions of those pixels.
+Use the existing `face_pt` and `flatten` helpers; surface coordinates must be measured on your own mesh.
+`H` and `W` are the measured head dimensions, and +Y points into the face.
+The artist commonly holds Shift to smooth without permanently switching brushes, resizes the
+brush between passes, and uses X-ray while adjusting the nose
+[qy-wwP-b9HY-04-015632, 01:56:45]. The reader's strokes are world-space operations,
+not interactive brush emulations; inspect `moved_verts` and recheck after short batches.
+
+**1 — Resolve the large masses.** The artist looks at the coarse head from front and profile,
+then sketches the cranium and jaw relationship on the side before smoothing the remesh
+[qy-wwP-b9HY-04-015005, 01:50:05]. In the working viewport the head is isolated for close work,
+while the small view keeps the neck and ears visible. Reader: remesh at `H/50`, then use
+`sculpt_strokes` with broad `smooth` paths and radius about `0.3*H`; inspect the profile again.
+
+**2 — Separate jaw and cranium.** The artist rotates down and around the isolated head to inspect
+the break behind the jaw; Crease Polish is selected before returning to a frontal view
+[qy-wwP-b9HY-04-015117, 01:51:17]. Reader: use a short `crease` path on the jaw side,
+radius `0.05*H`, and look from the side; do not cut a line across the back of the skull.
+
+**3 — Establish the eye band.** Front orthographic makes the halfway height easy to judge;
+the artist draws a wide, shallow band before checking its depth obliquely
+[qy-wwP-b9HY-04-015117, 01:51:28; qy-wwP-b9HY-04-015157, 01:51:57].
+Reader: `crease` from the center toward the temple, radius `0.06*H`, then `grab`
+the eye plane toward +Y with a `0.2*H` radius; compare front and profile.
+
+**4 — Make the brow shelf.** The artist softens the transition above the band and marks the
+next horizontal boundary, checking the reference rather than treating the mark as an eyebrow
+[qy-wwP-b9HY-04-015237, 01:52:37; qy-wwP-b9HY-04-015339, 01:53:39].
+Reader: `smooth` around the measured brow height, then a `crease` with radius `0.04*H`.
+
+**5 — Flatten the temple.** In a close oblique view, Scrape/Fill moves over the side of the
+cranium, not over the entire eye band; the artist changes the brush size while working.
+The panel shows strength `0.700`; a later frame shows size `188 px`
+[qy-wwP-b9HY-04-015405, 01:54:12]. Reader: `flatten` each temple separately at
+radius `0.25*H`; it is a fitted-plane approximation, not Blender's dragged brush.
+
+**6 — Define cheek and chin planes.** The artist keeps the cheek side broad and uses a short
+mark at the chin rather than dividing the lower face into many small facets
+[qy-wwP-b9HY-04-015429, 01:54:29; qy-wwP-b9HY-04-015452, 01:54:52].
+Reader: `flatten` both cheek sides at `0.25*H`, then make a small central `crease`;
+capture the head in front and three-quarter views.
+
+**7 — Compare the blockout.** The front view and the reference board remain visible together
+as the artist checks width and profile before introducing the next object
+[qy-wwP-b9HY-04-015535, 01:55:35]. Reader: use `turnaround_sheet` and make a
+large-radius `grab` only where the actual reference shows a mismatch.
+
+**8 — Shape the separate nose.** After placing a round block, the artist enables X symmetry
+in Sculpt Mode, views it from the front and side, and pulls the block into the face with Grab.
+The nose develops a tapered upper end and a rounder lower end
+[qy-wwP-b9HY-04-015632, 01:56:32]. Grab strength `0.400` is visible; size changes
+with zoom. Reader: parent `BLK_nose` to `CHARACTER`, use `grab` with world-space paths
+relative to `H`, and use a small subtractive `draw` under the tip for nostrils.
+
+**9 — Fuse and blend.** The separate nose and head become one remeshed surface; the artist
+works the bridge and its sides back into the brow, then softens the join
+[qy-wwP-b9HY-04-015758, 01:57:58; qy-wwP-b9HY-04-015839, 01:58:39].
+Reader: `join_and_fuse` at `H/65`, followed by short `clay_strips` paths from bridge
+to brow, radius `0.05*H`, and `smooth`. Check `loose_parts` is one.
+
+**10 — Place eyeballs.** The artist introduces a sphere and checks its position against the
+head, then uses a mirror for the opposite eye
+[qy-wwP-b9HY-04-015928, 01:59:28; qy-wwP-b9HY-04-020000, 02:00:00].
+Reader: use `add_eyes`, parent `BLK_eye` to `CHARACTER`, and adjust the actual gap to
+the design; compare front and side before committing to lid shapes.
+
+**11 — Recess the eye region.** With the balls visible, the artist uses broad adjustments around
+them rather than placing eyelids on a flat front plane
+[qy-wwP-b9HY-04-020028, 02:00:28]. Reader: `grab` the surrounding head surface toward
++Y with radius about `0.12*H`; check that the ball remains visible from three-quarter view.
+
+**12 — Build and reshape lids.** Draw adds an upper ridge against the sphere; a close-up then
+shows a switch to Grab while the concept remains alongside the sculpt. The observed screen headers read
+Draw at Size `94 px`, Strength `0.500` in Add mode, then Grab at Size `300 px` and `258 px`, Strength `0.400`
+[qy-wwP-b9HY-04-020154, 02:01:54].
+Reader: `draw` an arc at radius `0.03*H`, then `grab` its ends and peak to fit the reference.
+Repeat below the ball, smoothing away excessive folds for a design that has little lid fold.
+
+**13 — Give lids depth.** The working view turns around the ball while the artist works the
+rim and transition, so the outer contour is judged from more than the frontal projection
+[qy-wwP-b9HY-04-020332, 02:03:32; qy-wwP-b9HY-04-020400, 02:04:00].
+Reader: a small `crease` or raised-edge approximation at `0.015*H`, `flatten` under
+the lid, and `grab` the ends back toward +Y. Confirm the wrap from above and obliquely.
+
+**14 — Revisit nose, brows and chin.** The artist adjusts the nose once the eyes exist and
+checks its silhouette in profile, then moves attention to the brow and chin
+[qy-wwP-b9HY-04-020537, 02:05:37; qy-wwP-b9HY-04-020656, 02:06:56].
+Reader: use restrained `grab` moves with radii suited to each feature, then a small
+`crease` around the wings; compare against the supplied concept after each change.
+
+**15 — Build the mouth support.** Clay Strips adds a broad mound before any mouth slit.
+The artist turns from profile to front to check its projection and width
+[qy-wwP-b9HY-04-020819, 02:08:22]. Reader: `clay_strips` across the muzzle with
+radius about `0.1*H`, then `smooth`; do not cut the mouth into a flat plane.
+
+**16 — Locate corners before lips.** In front orthographic, the artist switches from Clay
+Strips to a much smaller Crease Polish brush and locates the mouth corners first
+[qy-wwP-b9HY-04-020819, 02:08:27; qy-wwP-b9HY-04-020839, 02:08:39].
+After setting the line, the artist checks its curvature and builds upper and lower lip volume
+[qy-wwP-b9HY-04-020942, 02:09:42; qy-wwP-b9HY-04-021052, 02:10:52].
+Reader: `crease` at `0.02*H` for the line, `grab` corners toward +Y and `inflate`
+under the line at `0.04*H`; the two sides should wrap the muzzle.
+
+**17 — Judge the whole face.** The artist zooms out to compare the features together and
+returns to broad silhouette and cheek adjustments
+[qy-wwP-b9HY-04-021127, 02:11:27; qy-wwP-b9HY-04-021218, 02:12:18].
+Reader: use `turnaround_sheet`, then local `grab`, `clay_strips` and `smooth` strokes;
+no single close-up is enough to judge the head.
+
+**18 — Refine at finer density.** The artist remeshes again and sharpens features only after
+the broad forms are established, cleaning nostrils and old construction lines
+[qy-wwP-b9HY-04-021244, 02:12:44; qy-wwP-b9HY-04-021405, 02:14:05].
+Reader: `sculpt_remesh` at `H/165`, then use smaller `crease` and subtractive `draw`
+paths; smooth only the construction groove, not the intended lid or lip boundary.
+
+**19 — Use iris contrast to judge gaze.** A dark patch on the eye makes its aiming and the
+lid opening easier to compare; the artist returns to the lids after the eye treatment
+[qy-wwP-b9HY-04-021432, 02:14:32; qy-wwP-b9HY-04-021538, 02:15:38].
+Reader: use the existing eye color-attribute block; the optional viewport color setting
+requires a 3D viewport and is not verified by the background script.
+
+**20 — Temporary brows and lashes.** A thin surfaced strip and its modifiers give a readable
+brow, and a second strip follows the upper lid; the dark color is not treated as final hair
+[qy-wwP-b9HY-04-021811, 02:18:11; qy-wwP-b9HY-04-021918, 02:19:18].
+Reader: use `surface_strip`, parent the object to `CHARACTER`, and scale its world-unit
+width and thickness to the head. Nearest-surface placement approximates face snapping.
+
+**21 — Work the ear separately.** In the close ear view the first mask reaches the back;
+the artist undoes it and enables Front Faces Only before drawing the bowl again
+[qy-wwP-b9HY-04-022212, 02:22:12]. The inner patch is then isolated, pushed in,
+and surrounded by a rim and internal raised branches
+[qy-wwP-b9HY-04-022242, 02:22:42; qy-wwP-b9HY-04-022424, 02:24:24].
+Reader: `mask_where` the complement of the outward bowl, `grab` in by a fraction of
+ear depth, clear the mask, and use `crease` and `clay_strips` at ear-relative radii.
+With a Mirror modifier sculpt only the real ear, not a second symmetric mesh stroke.
+
+**22 — Compare again.** The artist steps back to review the face as a whole rather than
+declaring success from the final ear close-up [qy-wwP-b9HY-04-022608, 02:26:08].
+Reader: run the exit check: `outline_match` at `0.98` for real reference views only;
+`not_run` is never a pass, and references must not be altered.
+
+
 ## Settings the course uses
 
 | Setting | Value | Where | Timestamp |
@@ -324,8 +475,8 @@ stroke that crosses X=0 stays symmetric.
 | Voxel size, head planes | 0.04 to 0.05 | Sculpt Mode remesh (`R` to size, `Ctrl+R` to apply) | 01:50:18 |
 | Voxel size after joining nose | 0.03 | same | 01:58:11 |
 | Voxel size for eyelids | 0.02 | same | 02:01:21 |
-| Voxel size for final face detail | about 0.012 | same | 02:12:55 |
-| Voxel size, ear first pass / detail | 0.02 / 0.008 | ear object | 02:21:19 / 02:25:28 |
+| Voxel size for final face detail | preview 0.0128 m, applied value not established by that frame | same | 02:12:44 |
+| Voxel size, ear detail | preview 0.00867 m, applied value not established by that frame | ear object | 02:25:14 |
 | Symmetry | X on, for head and nose | Sculpt Mode header | 01:56:39 |
 | `Grab` strength | 0.400 | brush panel | 01:50:36 |
 | `Crease Polish` strength / pinch | 0.250 / 0.500 | brush panel | 01:51:20 |
@@ -404,4 +555,3 @@ stroke that crosses X=0 stays symmetric.
   round cube's default size), which is how the `H/50` to `H/165` ratios were derived. If your head is a different
   size, use the ratios, not the course's numbers.
 - **Face-project snapping** for the brow strip is replaced by nearest-surface placement in `surface_strip`.
-- The exact hairline height is a free choice in the course ("an arbitrary point") [01:38:14].

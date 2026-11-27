@@ -16,8 +16,9 @@ for exposure, and finished with a light grading pass.
 - Stage 10 finished: `rig` generated, every part following it, at least one presentation pose keyed on a known
   frame. Set that frame before building anything here, because the lights are placed around the posed character.
 - Materials and hair from stages 08 and 09.
-- `rig`, `metarig` and the rig helper meshes hidden from the viewport and from renders [19:23:01]. The `WGT-...`
-  widget meshes in the `WGTS_rig` collection are not part of the character (see step 1).
+- Hide `rig`, `metarig` and rig helper meshes from the viewport and renders. The course shows the viewport
+  visibility change [19:23:01]; render visibility is a reader precaution. Rigify `WGT-...` widgets in
+  `WGTS_rig` are not part of the character (see step 1).
 
 ## What the course says lighting is for [19:07:07 to 19:11:15]
 
@@ -28,10 +29,10 @@ for exposure, and finished with a light grading pass.
   the camera comes first [19:09:57].
 - Use reference for lighting and composition too: film stills, animation frames. Copy what already works
   [19:10:22].
-- Light types [19:11:15 to 19:17:10]: an HDRI lights the whole scene from an image but its light cannot be moved,
-  so the course uses it only as dim ambient light; a point light shines in all directions; a sun cares only about
-  its rotation and is rarely used for characters; a spot is a cone with `Spot Size` and `Blend`; an area light is
-  a soft box and is the main tool for characters. A larger light (radius, or area size) gives softer shadows.
+- Light types [19:11:15 to 19:17:10]: an HDRI lights the scene from an image; the whole environment can rotate,
+  but its individual light sources cannot be repositioned independently. The course uses it as dim ambient light;
+  a point shines in all directions; a sun cares only about rotation; a spot is a cone with `Spot Size` and
+  `Blend`; an area light is a soft box and the main character-lighting tool. A larger emitter softens shadows.
 - Three-point lighting is the dependable start, not the destination. The key is the brightest light and draws
   the form with shadow. The fill sits on the opposite side and lifts those shadows without removing them. The
   rim sits behind and draws a bright edge that separates the character from the background [19:18:37 to
@@ -128,9 +129,10 @@ are my starting values; the course chooses angles by eye and says the right one 
 
 A studio sweep: floor and back wall in one curved surface, so there is no horizon line. The course first shows a
 plane with its back edge extruded up and bevelled, then rejects it because a camera to the side sees the plane's
-edge. Its choice: a filled circle, scaled up, the back half of the rim extruded up into a wall, the corner
-bevelled with several segments, shaded smooth [19:27:59]. It goes in a new collection `RENDER` together with the
-cameras; lights go in a child collection `lights` [19:28:48, 19:29:52].
+edge. Its choice is a scaled filled circle; the visible extrusion makes a cylindrical wall around the rim. The
+floor-wall edge is bevelled with six segments and shaded smooth [qy-wwP-b9HY-14-192822, 19:28:22].
+The scripted half-wall below is a practical reconstruction, not the exact demonstrated mesh.
+It goes in a new collection `RENDER` together with the cameras; lights go in a child collection `lights`.
 
 Material [19:36:29 to 19:37:06]: one dark colour chosen to suit the character, high roughness (0.895 in the
 frame) and specular turned down, so the backdrop takes light softly and shows no hot spot. Later the course
@@ -181,7 +183,7 @@ What the course builds, in order, each judged by switching it off and on [19:32:
 
 | Light | Type, size | Where, relative to the character | Power in the course | Colour | Job |
 |---|---|---|---|---|---|
-| `light_key` | area, 1 m square | in front, to one side, above head height, turned down onto the face | 16.7 W, then 13.4 W once two lights share it | white | main light; shades the far side of the face [19:31:08] |
+| `light_key` | area, 1 m square | in front, to one side, above head height, turned down onto the face | 16.7 W while adjusting, later 18.2 W, then 13.4 W once two lights share it | white | main light; shades the far side of the face [19:31:08, 19:31:44] |
 | `light_fill` | area, 1 m, object scaled up | in front on the opposite side | 1.36 W | white | lifts the shadows; large so it casts no shadow of its own [19:33:20] |
 | `light_rim` | area, 1 m, scaled narrow in X and tall in Z | behind, off to one side, reaching down to the legs | 49.4 W | orange-red, `#FF8859` | bright edge on one side of the body [19:33:48, 19:39:20] |
 | `light_key.001` | copy of the key sharing its light data | same side, lower, aimed at the legs | shared | white | the legs were too dark [19:37:58] |
@@ -258,11 +260,11 @@ key position and power, then fill power, then rim position, then backdrop.
 
 ### 5. World: dim ambient light only [19:43:10 to 19:44:36]
 
-The course leaves the world a flat dark colour while placing lights, then adds an outdoor nature HDRI (Poly
-Haven `lauter_waterfall`, 1K) and turns it far down, so it only keeps unlit areas from going black. The frame
-shows `Strength (EVs)` at -2.28 in the add-on's world panel, which is a strength of about 0.21 [19:44:36]. It
-uses the Poly Haven add-on's asset browser and rotation slider; without it, load a downloaded HDRI into an
-`Environment Texture` node [19:44:03]. Blender ships a few small HDRIs of its own, used here as the default.
+The course lights with a flat dark world, then switches to a dim outdoor HDRI using Poly Haven's
+`lauter_waterfall` asset (1K) and lowers its Strength (EVs) to about −2.1 to −2.3 EV
+[qy-wwP-b9HY-14-194424, 19:44:26–19:44:33]. A brief remark at 19:44:01–19:44:10 shows switching back to the original
+world only to explain the route without the add-on. Without the add-on, load a downloaded HDRI into an
+`Environment Texture` node. The bundled forest HDRI and strength below are reader starting points, not measured course settings.
 
 ```python
 # verified in 4.5.16 background
@@ -443,6 +445,143 @@ The course never opens Colour Management. A new 4.5 scene uses the `AgX` view tr
 (checked); for more contrast set `scene.view_settings.look = "AgX - Medium High Contrast"` (the name is
 accepted in 4.5.16) and compare. Turn the turntable PNGs into a video with ffmpeg or Blender's Video Sequencer.
 
+## How the artist works on screen
+
+The lesson uses a split layout: a solid perspective view of the set beside a rendered camera view.
+The camera image is the judgment view; the other view exposes the lights and backdrop.
+The artist moves objects in Object Mode, rather than sculpting, and waits for the render preview to resolve.
+The equivalents below use the functions in the numbered steps; placements are starting points, not measured course coordinates.
+
+### Step 1 — posed subject and bounds
+
+- The posed character is already in the viewport when the lighting demonstration begins
+  [qy-wwP-b9HY-14-192150, 19:21:50].
+- Rig controls are hidden so the presentation view is not cluttered
+  [qy-wwP-b9HY-14-192259, 19:22:59].
+- The course does not demonstrate the bounding-box calculation: that is this skill's scale-independent adaptation.
+- Reader equivalent: use `character_meshes()` and `character_box(...)` from step 1 on the evaluated pose.
+- Exclude widgets and the backdrop; keep the posed figure's actual renderable pieces.
+- Keep the skill's Z-up, -Y-facing convention; do not modify reference images.
+
+### Step 2 — frame before lighting
+
+- The artist starts from the existing camera and frames the posed subject before building lights
+  [qy-wwP-b9HY-14-192313, 19:23:13].
+- Locking the camera to the view lets viewport navigation change the composition
+  [qy-wwP-b9HY-14-192339, 19:23:39].
+- A portrait frame is used for the demonstration; the subject is framed with room around the body.
+- The lens is adjusted while the artist judges facial distortion and composition in camera view
+  [qy-wwP-b9HY-14-192458, 19:24:58].
+- The camera is unlocked again to avoid accidentally changing the chosen shot
+  [qy-wwP-b9HY-14-192556, 19:25:56].
+- Reader equivalent: set portrait resolution, call `add_camera`, and inspect with `viewport_capture`.
+- Adjust camera position rather than changing the character or any reference to force a fit.
+
+### Step 3 — build the sweep
+
+- Scene world and lights are enabled for the rendered preview before the studio is evaluated
+  [qy-wwP-b9HY-14-192639, 19:26:39].
+- The artist demonstrates a plane, extrudes its rear edge up, and rounds the floor-wall corner
+  [qy-wwP-b9HY-14-192719, 19:27:19].
+- Orbiting the view reveals the flat plane's side edge, so this first attempt is discarded
+  [qy-wwP-b9HY-14-192733, 19:27:33].
+- A filled circle replaces it; the rim is extruded into a cylindrical wall
+  [qy-wwP-b9HY-14-192822, 19:28:22].
+- The floor-wall edge bevel shows six segments and profile 0.5, followed by smooth shading.
+- Judge from the chosen camera, then from the side: neither the horizon nor an edge should intrude.
+- Reader equivalent: `make_backdrop(box)` constructs a smooth sweep using the posed height.
+- Its radius is a starting proportion; enlarge it if the subject or camera would reveal an edge.
+
+### Step 4 — construct light by light
+
+- The lights are edited in a perspective view while their effect is checked in the rendered camera view.
+- The artist first establishes a key on one side above the figure, directed toward the face
+  [qy-wwP-b9HY-14-193121, 19:31:21], adjusting its power toward 18.2 W [qy-wwP-b9HY-14-193142, 19:31:44].
+- Power is tuned against the bright cheek, not chosen independently of the camera and material.
+- The fill is placed on the other side and reduced until it lifts, but does not erase, the key's shadow
+  [qy-wwP-b9HY-14-193202, 19:32:02; qy-wwP-b9HY-14-193310, 19:33:10].
+- The artist toggles lights for comparison instead of evaluating only their combined result.
+- A larger area emitter makes the fill softer; a smaller emitter makes sharper shadows.
+- The rim is positioned behind the figure and stretched to reach a long section of the silhouette (19:35:28).
+- When it brightens the wall as well as the figure, the backdrop is excluded from that light's receivers.
+- Reader equivalent: `three_point_rig(box, backdrop)` and `exclude_from_light` in step 4.
+- Inspect the key, fill and rim separately with `render_image`, then together.
+- Duplicate the key and fill lower down when the legs need separate illumination; linked data shares their power (19:40:30).
+- The warm rim (`#FF8859`, 19:39:38) and the background point light (14.5 W orange, 19:41:58) are adjusted against the clothing and hair, not copied blindly.
+- If the key divides the face too starkly, bring it closer to the camera axis before compensating with fill.
+- A separate lower fill can wash an unwanted cast shadow off the background.
+- Reader equivalent: adjust the light objects' location, aim and energy through `exec_python`, followed by a render.
+
+### Step 5 — a restrained world
+
+- After working with a dark world, the artist enables Poly Haven's `lauter_waterfall` (1K) HDRI and dims its
+  Strength (EVs) to about −2.1 to −2.2 EV [qy-wwP-b9HY-14-194424, 19:44:26–19:44:33]; switching back at
+  19:44:04–19:44:10 is only an aside on working without the add-on [qy-wwP-b9HY-14-194400].
+- Reader equivalent: `set_world` with a legally obtained environment texture, then compare a rendered camera view.
+- The HDRI choice and strength are artistic starting points; check that the face still has directional shading.
+
+### Step 6 — compare shots
+
+- The artist switches between the closer portrait and a full-body portrait in the camera view
+  [qy-wwP-b9HY-14-194625, 19:46:25].
+- The close view emphasizes face and torso; the wide view includes both boots and the backdrop glow.
+- The camera data panel shows the same long lens for the two views.
+- Reader equivalent: call `add_camera` for `camera_closeup` and `camera_wideshot`; render each.
+- Check for unintended cropping independently; lighting judged on one framing may need adjustment on the other.
+
+### Step 7 — turntable and camera markers
+
+- The wide camera is selected as the starting point for a turntable
+  [qy-wwP-b9HY-14-194639, 19:46:39].
+- A sphere empty is added and named as the turnaround control in the render collection
+  [qy-wwP-b9HY-14-194720, 19:47:20].
+- Rotating the camera alone exposes the problem: the wall can block the image and the light changes with angle
+  [qy-wwP-b9HY-14-194813, 19:48:13].
+- The backdrop and lights travel with the camera; rotating the controller now preserves their relation to the shot
+  [qy-wwP-b9HY-14-194855, 19:48:55].
+- The rotation is cleared before setting up the timeline.
+- At frame 1 the artist binds the close-up camera using a timeline marker
+  [qy-wwP-b9HY-14-194941, 19:49:41].
+- The wide camera is assigned to frame 2 and the turnaround camera to frame 3
+  [qy-wwP-b9HY-14-195031, 19:50:31].
+- The controller is animated around Z; scrubbing checks both the moving wall and the rendered silhouette
+  [qy-wwP-b9HY-14-195227, 19:52:27].
+- The timeline start is restored to 1 so the two stills are not omitted
+  [qy-wwP-b9HY-14-195240, 19:52:40].
+- Reader equivalent: `turntable(...)`, then `bind_cameras(...)` and `motion_preview` at quarter turns.
+- The supplied helper deliberately uses linear keys and omits the duplicate loop endpoint; that differs from the lesson.
+
+### Step 8 — render and inspect
+
+- In Output Properties the artist reviews 1200 × 1500 portrait dimensions and chooses 150% scale
+  [qy-wwP-b9HY-14-195308, 19:53:08].
+- The frame rate is 24 fps, the course end is 195, and step stays at 1
+  [qy-wwP-b9HY-14-195321, 19:53:21; qy-wwP-b9HY-14-195336, 19:53:36].
+- An output folder is chosen for the image sequence; the individual frames are PNGs.
+- Render Properties selects Cycles and GPU where available; the visible render sample count is 200
+  [qy-wwP-b9HY-14-195431, 19:54:31; qy-wwP-b9HY-14-195459, 19:54:59].
+- The artist scrubs to a side angle and points to Render Image before rendering the complete animation
+  [qy-wwP-b9HY-14-195531, 19:55:31].
+- Iteration is render, inspect, adjust, and render again; only then is the animation submitted.
+- Reader equivalent: `render_settings`, test with `render_image`, and use `headless_run` for the sequence.
+- `exposure_report` is this skill's numeric aid, not a measurement demonstrated by the course.
+
+### Step 9 — finish still and sequence
+
+- Numbered frames are shown as thumbnails before the sequence is imported into a video editor
+  [qy-wwP-b9HY-14-195733, 19:57:33].
+- Resolve recognizes the numbered images as one clip in the Media page
+  [qy-wwP-b9HY-14-195811, 19:58:11].
+- For the still demonstration the artist converts the image layer to a smart object
+  [qy-wwP-b9HY-14-195914, 19:59:14].
+- Camera Raw is used to adjust and compare the finish, including grain and vignette
+  [qy-wwP-b9HY-14-200103, 20:01:03].
+- The filter remains visible under the smart object after returning to the layer view
+  [qy-wwP-b9HY-14-200119, 20:01:19].
+- This grading example uses a different character; do not treat its appearance as this character's final render.
+- Reader equivalent: `finishing_nodes` covers some effects; assemble the sequence in the Video Sequencer or ffmpeg.
+- The supplied compositor route is not equivalent to Camera Raw's grain and per-colour controls.
+
 ## Shots the course renders
 
 - In the lesson [19:25 to 19:46]: `camera_wideshot`, full body from slightly to one side on a warm dark-brown
@@ -469,12 +608,12 @@ accepted in 4.5.16) and compare. Turn the turntable PNGs into a video with ffmpe
 | Engine, device | Cycles, GPU if there is one | Render Properties | 19:54:31 |
 | Render max samples | 200 (says 200 to 500; default 4096 is too many) | Render > Sampling | 19:54:46 |
 | Denoise, noise threshold | on, 0.01 (left at defaults) | Render > Sampling | frame at 19:55:00 |
-| Key / fill / rim power | 16.7 W (13.4 W shared) / 1.36 W / 49.4 W | Light data | frames 19:31:28, 19:40:30, 19:33:30, 19:35:28 |
+| Key / fill / rim power | 16.7 W while adjusting, 18.2 W later (13.4 W shared) / 1.36 W / 49.4 W | Light data | 19:31:00, 19:31:44, 19:40:30, 19:33:30, 19:35:28 |
 | Area light size | 1 m square, resized by object scale | Light data | 19:31:28 |
 | Rim colour | `#FF8859` (HSV 0.047, 0.65, 1.0) | Light data | frame at 19:39:38 |
 | Backdrop point light | 14.5 W, radius 0, orange | Light data | frame at 19:41:58 |
 | Backdrop material | dark colour, roughness 0.895, specular lowered | Material | 19:36:55 |
-| World | HDRI `lauter_waterfall` 1K, Strength (EVs) -2.28 | World (Poly Haven panel) | frame at 19:44:36 |
+| World | Dark background, then Poly Haven `lauter_waterfall` 1K dimmed to about −2.1 to −2.3 EV | World / asset browser | 19:43:11, 19:44:26–19:44:33 |
 | Hair while lighting | `Viewport Amount` 0.05, then 0.01; full for checks | hair modifier input | 19:30:35, 19:45:16 |
 
 ## Mistakes the course warns about
@@ -533,5 +672,6 @@ realistic head can use 85 mm. For a pose that looks to one side, key from that s
 - The final cinematic setup of chapter 15 is never shown being built; only the results are seen.
 - Whether a picture has the right mood, or leads the eye to the face, cannot be measured with the tools here.
   `exposure_report` only catches blown-out and under-lit renders.
-- Light sizes in the table are the 1 m default plus object scaling that the course never states in numbers.
+- Exact light positions and most final object scales are not readable; the fill's temporary uniform scale changes
+  are visible, but should not be treated as universal values.
 - Tested on a grey test figure without hair or skin shading; hair in Cycles needs more samples and time.

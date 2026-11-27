@@ -118,7 +118,7 @@ meets all of these:
 
 1. Taken or drawn straight-on from that side, with no perspective tilt. A three-quarter drawing is not a
    FRONT picture.
-2. At least FRONT and one side (LEFT or RIGHT). BACK and TOP are welcome.
+2. FRONT and one side (LEFT or RIGHT) are desirable for a broader check; eligible views are measured independently.
 3. A transparent background, or one plain colour. `outline_match` refuses a picture whose four corners
    differ in colour.
 4. Cropped tight to the character.
@@ -131,8 +131,8 @@ meets all of these:
 A view with no such picture can be looked at with `turnaround_sheet` but not measured. `outline_match`
 reports it as `not_run`. Report such a view as "looked at, not measured". Never report it as passed.
 
-The course's own concept fails points 1, 2 and 5: it is a single three-quarter drawing with the hands behind
-the back. So for a concept like that, the agent has three honest choices, in this order of preference:
+The course's own concept fails points 1 and 5 and has no straight-on side view: it is a single
+three-quarter drawing with the hands behind the back. For a concept like that, the agent has three honest choices:
 
 - Ask the user for a turnaround (front, side, back) of the character in a neutral pose.
 - Ask the user whether they (or an artist working for them) will draw straight-on neutral-pose views of the
@@ -261,13 +261,134 @@ e.hide_select = True; e.hide_render = True
 bpy.context.scene.collection.objects.link(e)
 ```
 
-Check before moving on: `viewport_capture(view="FRONT")` and `viewport_capture(view="RIGHT")` each show
-the picture upright, feet on the ground line, facing the right way. `scene_tree` lists the `REF_` empties.
+Check before moving on: use `viewport_capture` for each supplied view to inspect the picture's orientation
+and ground line. `scene_tree` lists the `REF_` empties. Missing views remain unmeasured.
 
 ### 8. Save
 
 `save_file(filepath=r"C:\path\to\<character>_00_refs.blend")`. The course saves late and admits it should
 have said so sooner [01:34:28]. Save at the end of every stage under a new name.
+
+## How the artist works on screen
+
+This chapter shows slides, a browser and a PureRef board, not a Blender sculpting session.
+The selected chapter frames do not show brush settings, strokes, symmetry or a measurement.
+Do not transfer a screen-pixel brush radius from this material.
+The following observations follow the numbered steps above; equivalents are our workflow.
+
+### Step 1 — choose the target
+
+- At 00:10:26 the slide pairs a stick drawing and a simple 3D stick figure,
+  then a developed dress concept and front/back 3D results
+  [qy-wwP-b9HY-02-001024]. This is a comparison, not a modelling demonstration.
+- At 00:11:26 the slide changes from the comparison to a definition of a useful concept
+  [qy-wwP-b9HY-02-001113].
+- At 00:12:04 four different example designs appear together
+  [qy-wwP-b9HY-02-001156]. They illustrate personal appeal, not four targets to combine.
+- At 00:15:31 the artist's board shows one full-body drawing on the left,
+  separated from the supporting face, boot, hair, body and skirt groups
+  [qy-wwP-b9HY-02-001529].
+- The drawing has a turned head and hands hidden behind the body.
+  Its three-quarter pose is not a straight-on neutral-pose measurement target.
+- The artist selects the drawing, then opens its credited artist's profile
+  [qy-wwP-b9HY-02-001529, 00:15:38–00:15:42].
+- **Reader equivalent:** read the user-supplied image; record one chosen design,
+  its creator and permission status. Treat the rest as supporting evidence.
+
+### Step 2 — control complexity
+
+- The 00:12:38 slide shows three densely layered fantasy designs side by side
+  [qy-wwP-b9HY-02-001222]. Their armour and accessories illustrate added work.
+- These are presented as examples to avoid during this learning exercise,
+  not a rule to change a user's chosen design.
+- **Reader equivalent:** list garment, hair, prop and body objects separately;
+  preserve an explicitly requested complex concept.
+
+### Step 3 — source and permission
+
+- At 00:13:44 a slide displays a curated Pinterest board link and thumbnail grid
+  [qy-wwP-b9HY-02-001342].
+- The artist opens the link, scrolls through a grid of character illustrations,
+  then returns to the slide [qy-wwP-b9HY-02-001355, 00:13:56–00:14:05;
+  qy-wwP-b9HY-02-001406, 00:14:08–00:14:18].
+- The visible board address is https://www.pinterest.com/kennysarts_/concept-art-inspo/;
+  the screenshot shows 70 pins at that moment, not a permanent count.
+- At 00:15:45 the credited concept artist's Instagram profile is visible
+  [qy-wwP-b9HY-02-001543]; the board credits `@jennifer.p_679`.
+- The narration says permission was given for this course; that is not a grant to others.
+- **Reader equivalent:** retain the original source and permission information;
+  a saved pin is not itself evidence of permission.
+
+### Step 4 — compare groups, not a generic mood board
+
+- At 00:15:57 the whole first board is visible before the artist zooms into its concept
+  [qy-wwP-b9HY-02-001556].
+- A close-up of the concept head is placed beside several stylised faces and a photo.
+  At 00:16:14–00:16:21 individual face images receive selection outlines
+  [qy-wwP-b9HY-02-001609].
+- The large-eyed stylised face is the stated style reference; the others support
+  interpretation of facial proportions, rather than replacing the original face.
+- At 00:16:34 the view moves to the boots, then back to the ambiguous sketch and
+  into the product photograph [qy-wwP-b9HY-02-001623;
+  qy-wwP-b9HY-02-001636, 00:16:37–00:16:47].
+- One large image supplies the boot design; three smaller photographs illustrate
+  leather creases [qy-wwP-b9HY-02-001648, 00:16:50–00:16:59].
+- At 00:17:14 the skirt group shows a large pleated example with four smaller ones
+  [qy-wwP-b9HY-02-001713]. The artist returns to the concept before changing groups.
+- At 00:17:31–00:17:37 two side-view hair photographs are enlarged:
+  inspect the crown flow, tie location and loose strands near the face
+  [qy-wwP-b9HY-02-001726].
+- At 00:17:47 the board moves to two stylised body examples, one with arms away
+  from the torso [qy-wwP-b9HY-02-001739].
+- At 00:18:02 a second board appears, with a different red-dress concept and
+  groups for face, body, jewellery, hair, heels, dress and dress material
+  [qy-wwP-b9HY-02-001752].
+- The artist selects the face group, then the body images, including a torso shown
+  from several directions [qy-wwP-b9HY-02-001808, 00:18:12–00:18:18;
+  qy-wwP-b9HY-02-001820, 00:18:24–00:18:29].
+- The dress construction photographs and the separate fabric appearance group serve
+  different decisions: ruffle form versus shading
+  [qy-wwP-b9HY-02-001830, 00:18:36–00:18:43;
+  qy-wwP-b9HY-02-001845, 00:18:46–00:18:52].
+- The artist returns to an overview after selecting hair and jewellery
+  [qy-wwP-b9HY-02-001857, 00:18:59–00:19:09].
+- This zoom-out, zoom-in rhythm keeps each detail tied to the selected concept;
+  screenshots do not reveal the precise input gestures used for every navigation.
+- **Reader equivalent:** read the original and each supporting file directly;
+  record which uncertainty each one resolves. Do not measure against unrelated people.
+
+### Step 5 — proportions
+
+- The chapter 02 board sheets end at 00:21:34; the proportion exercise appears at the start of chapter 03,
+  where the artist marks and compares head and torso heights over the concept [qy-wwP-b9HY-03-002359, 00:23:59].
+- **Reader equivalent:** record estimated landmarks and ratios from the actual
+  concept, labelling a posed or three-quarter estimate as an estimate.
+
+### Step 6 — measurable views
+
+- The board pictures are visual guides, not measured orthographic turnarounds.
+  A multi-angle supporting character is not automatically a view of this design.
+- **Reader equivalent:** inspect genuine design views for orientation and pose,
+  run the existing background/crop checks, and retain the original reference.
+- `outline_match` uses the unchanged 0.98 threshold on eligible views only.
+  `not_run` means looked at, not measured; it is never a pass.
+
+### Step 7 — put usable views in Blender
+
+- The artist presents PureRef as a separate reference-board application; at
+  00:19:33–00:19:47 the browser shows its download choices
+  [qy-wwP-b9HY-02-001924; qy-wwP-b9HY-02-001938], and chapter 03 demonstrates
+  pinning the PureRef window with Always on Top [qy-wwP-b9HY-03-003531, 00:35:31].
+- Chapter 02 does not demonstrate adding an image empty to Blender.
+- **Reader equivalent:** use `reference_setup` for each eligible real view,
+  and read detail images as files. Keep Z up, feet at Z=0, facing -Y.
+- Use `viewport_capture` to inspect only views for which images were provided.
+
+### Step 8 — save
+
+- Chapter 02 ends with a concept-and-reference checkpoint [qy-wwP-b9HY-02-002005, 00:20:07–00:20:23];
+  saving the Blender project via the Save As dialog appears in chapter 03 [qy-wwP-b9HY-03-013428, 01:34:28].
+- **Reader equivalent:** use `save_file` after reference setup; keep stage versions.
 
 ## Settings the course uses
 
@@ -321,15 +442,15 @@ Before starting the blockout, all of these are true and written down:
 4. `check_reference` has been run on every picture meant for measuring. For each of FRONT, BACK, LEFT,
    RIGHT, TOP the notes say one of: "measurable" (straight-on, plain or transparent background, cropped
    tight, neutral pose) or "no picture: looked at, not measured".
-5. `reference_setup` has been called for every measurable view with one shared `height`, and a FRONT and a
-   side `viewport_capture` show the pictures upright and facing the right way.
+5. `reference_setup` has been called for every measurable view with one shared `height`, and captures of
+   supplied views show the pictures upright and facing the right way.
 6. The file is saved.
 
 What counts as failed: no concept; a picture intended for measuring that `check_reference` reports as not
 measurable; front and side pictures whose landmarks disagree by more than about 2% of height; a view listed
 as measurable that is really a three-quarter or posed drawing. Having fewer than two measurable views
-(FRONT plus one side) is not a failure of this stage, but it must be reported to the user now, because it
-means the 0.98 likeness target cannot be tested later.
+(FRONT plus one side) is not a failure of this stage; report which views can be tested and which cannot.
+The 0.98 target can still be tested independently for each eligible view, but not for missing views.
 
 ## Gaps
 
@@ -342,7 +463,7 @@ means the 0.98 likeness target cannot be tested later.
   shows. The agent must judge that by reading the image itself.
 - Making neutral-pose front and side views from a single posed drawing is outside these tools. It needs the
   user, an artist, or an image tool.
-- The course's Pinterest board, project files and artist link are in the video description, not in the
-  transcript; they were not available here.
+- The selected frames identify the concept artist and Pinterest board, but do not establish where to obtain
+  the course project files.
 - The proportion theory used in step 5 comes from the opening of chapter 03, not chapter 02. It is placed
   here because it has to happen before any geometry is made.

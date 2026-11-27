@@ -291,8 +291,12 @@ result = {"scale": round(s, 5)}
 ```
 
 3. **Fuse the body into one sculpt** [06:27:44 to 06:43:09]. Apply modifiers on head, ears, neck, torso, legs and
-   arms, join them, voxel remesh so they become one skin, then repair what the remesh softened. The course's voxel
-   size is 0.008 m; 0.076 wiped the detail [06:29:27]. Hands and feet are left out of the remesh because they need a
+   arms, join them, voxel remesh so they become one skin, then repair what the remesh softened. The video shows the
+   remesh popover (Preserve Volume and Attributes on, Adaptivity 0): the first remesh left black, over-dense mesh and a
+   later one lost the details, so the artist dragged the voxel size by hand (Shift for fine steps) until the nostril
+   and lip lines survived; the field reads 0.000844 m just before the final Remesh [qy-wwP-b9HY-07-062940, 06:29:47].
+   That makes about 3.2 million vertices (statistics at [06:27:14] and [07:27:14]). The file's earlier 0.008 m was a
+   misreading. Hands and feet are left out of the remesh because they need a
    much finer voxel than the rest; they are added with two Boolean (Union) modifiers instead, then applied [06:38:12].
    The joins are smoothed (Clay Strips to add volume, Smooth), and lids, nostril edge, lip line, ear folds, armpit,
    under-bust and rib lines are re-cut with Crease Polish, because vertices are about to be placed on those lines
@@ -337,9 +341,11 @@ lips open and purse; a ring round the nose lets it move; the nasolabial loop (no
 the chin) carries the smile line; the face contour (forehead, temple, in front of the ear, jaw, chin) frames the
 mask; a ring round the ear base lets the ear move and separates face from skull.
 
-5. **Lay the five loop sets, one face wide, on the +X half** [06:45:51 to 06:54:00]. The course starts every set
-   with **8 edges** so that sets meet with equal counts, extrudes each ring outward once (E, S), and mirrors with a
-   Mirror modifier (X, `Clipping` on, `On Cage` on) so centre vertices stay on x = 0.
+5. **Lay the five loop sets on the +X half** [06:45:51 to 06:54:00]. The course starts every set
+   with **8 edges** so that sets meet with equal counts, extrudes the eye ring outward twice (E, S; three rings of 8,
+   24 vertices, 16 faces on the statistics) and mirrors with a
+   Mirror modifier (X, `Clipping` on) so centre vertices stay on x = 0. It adds the Mirror only when it needs the
+   midline for the nasolabial loop [06:48:11].
 
    | Loop set | Runs through | Edges (half) | Course |
    |---|---|---|---|
@@ -629,6 +635,164 @@ result = {"base": base, "final": census(shirt), "modifiers": [m.name for m in sh
     [10:42:36]: each cloth object keeps a Multires or a Subdivision modifier and nothing else. The course leaves paired
     items (boots) on one side until after UV unwrapping [10:42:48].
 
+## How the artist works on screen
+
+Read from 120 study sheets (course 07, 08, 09). All screens are Blender 5.0.1 in the Sculpting workspace: the left
+quarter is a pinned reference of the sculpt, the right three quarters is the 3D view, Outliner and Properties on the
+far right. The key-press overlay in the corner shows what the artist types. Pixel brush sizes below are read from the
+header; the world-unit conversions are my estimates (brush circle against the part), not read values. `Size` is about
+the diameter of the drawn circle. Short ids like [07-070108] stand for qy-wwP-b9HY-07-070108 (clip id, then the
+time on the course clock).
+
+### How a whole step looks (the rhythm)
+
+- The artist works in short bursts: place or extrude a few vertices (G, E, S) with snapping on and Alt held for
+  surface snap, then tab into Sculpt Mode, hold Shift for smooth and brush over the patch, then orbit (Alt) and look.
+  [qy-wwP-b9HY-07-070108, 07:01:11 to 07:01:29].
+- The brush key F resizes the brush many times per minute (key overlay shows "F x8", "F x15"); radius follows the
+  part: about 90 to 190 px at the lips and eyes, 214 to 350 px on cheek and skull, 290 to 410 px on thigh, back and
+  torso [07:04:48, 07:17:08, 07:52:16].
+- The same cycle repeats at every part: fill with F, loop cut with Ctrl+R (usually 1 or 2 cuts), slide with G,
+  smooth with Relax Slide, orbit to check silhouette from the side and from behind.
+- Retopology overlay (blue faces) is on during Edit Mode; the artist turns it off in the overlays popover when it gets
+  in the way [08:53:15]. Object `Wireframe` display is on for the cage so vertices stay visible in Sculpt Mode [07:01:11].
+- Dark faces mean flipped normals: Shift+N [07:47:47, 06:50:56]. Reader: `bmesh.ops.recalc_face_normals`, done inside `add_grid`.
+
+### A. Prepare the sculpt (steps 1 to 4)
+
+1. **Sort and name.** Outliner: clothes and hair are dragged into a `Highpoly` collection (tooltip says Ctrl links
+   instead of moves), then hidden with the eye icon [qy-wwP-b9HY-07-062239, 06:22:44]. A second empty collection is
+   created with C in the Outliner and renamed `Lowpoly` [07-064327, 06:43:29 to 06:43:39]. Fresh meshes come from
+   Shift+A > Mesh > Plane or Circle with the Lowpoly collection active [07-064341, 06:43:43].
+   Reader: `new_lowpoly(name)`; no mouse needed.
+2. **Real size.** Not covered by the studied sheets; the Solidify thickness on garments is dragged with Shift for fine
+   steps while the camera is close to the hem [07-062606, 06:26:07 to 06:26:15]. Reader: `[scale]` block multiplies thickness.
+3. **Fuse the body.** Sculpt Mode, Grab active (Size 424 px, Strength 0.400 in the header), Remesh popover open
+   [07-062906, 06:29:08]. After the remesh the lips and lid lines are re-cut: Clay Strips (Size 216 to 412 px,
+   Strength 0.500) adds volume, then Crease Polish (Size 94 to 108 px, Strength 0.250) cuts the lip line in short
+   strokes along it, F x3 and F x5 between strokes [07-063124, 06:31:25 to 06:31:35]. Ankle: Clay Strips (Size 58
+   to 214 px, Strength 0.500) in a clipped side view, two dabs, the inner ankle bone higher [07-064157, 06:42:02].
+   Then hands and feet are deleted (X) and the leftovers renamed body, brows, eyes [07-064256, 06:42:58].
+   Reader: `sculpt_remesh(object="Body", voxel_size=...)` enforces a 700-cell axis cap (`voxel_size >= H / 700`,
+   so >= `0.0025` m on a 1.7 m figure; run `bpy.ops.object.voxel_remesh()` via `exec_python` if you need a finer
+   body remesh near the course's 0.000844 m). Then `sculpt_strokes` with `crease` along the lip line, radius about
+   0.012 m (my estimate for 100 px), `clay_strips` radius about 0.03 m, strength 0.5.
+4. **Plan the loops.** The Annotate tool is active in the header with Placement `Surface` [07-072016, 07:20:18]; lines
+   are erased at the end of the face chapter. Reader: keep landmark coordinates instead.
+
+### B. Head (steps 5 to 9)
+
+5. **Five loop sets.** The artist lays them in this order, always Edit Mode, vertex select, snapping Face Project with
+   Alt: eye [07-064707, 06:47:09 to 06:47:20: E then S twice, G x9 to seat each vertex on the lid edge]; nasolabial and
+   mouth [07-064800, 06:48:01 to 06:49:22: duplicate a vertex at the mouth corner, E to the centre, Mirror added via
+   Add Modifier search]; nose ring and mouth ring [07-065048, 06:50:50 to 06:50:59: faces 40, vertices 78]; ear and contour in side view
+   [07-065344, 06:53:46 to 06:53:58: faces 56, vertices 112 once all five exist]. After each set the blue overlay is checked.
+   Reader: `add_grid(face, [S.drop(ellipse(...)) ...], closed=True)` for loops wholly on one side (eye, ear; 3 rings
+   of 16 points for the eye when the half ring is 8 edges), and `closed=False` for centre-line half-rings (mouth,
+   nasolabial) so the Mirror modifier joins cleanly; check with `census(face)`.
+6. **Join.** F on two edges, beginning at the bottom of the mouth [07-065400, 06:54:15]; the F2 add-on is needed
+   for single-vertex fills, and Preferences > Get Extensions shows Auto Mirror, F2, LoopTools and Screencast Keys
+   installed [07-065654, 06:57:03]. Gaps close to 151 vertices, 111 faces [07-065820, 06:58:21], then Ctrl+R with two cuts at
+   forehead and temple to reach 185 vertices, 143 faces [07-065832, 06:58:39]. Reader: `add_grid` between two
+   `border_points` slices.
+7. **Keep on the surface.** Add Modifier > Shrinkwrap under the Mirror: Wrap Method Nearest Surface Point, Snap Mode On
+   Surface, Target body, Offset 0 m [07-065844, 06:58:51 to 06:59:00]. Then Ctrl+Tab > Sculpt Mode, Relax Slide with Size
+   214 px, Strength 1.000 [07-070108, 07:01:11], held with Shift to smooth; Grab (Size ~326 px, Strength 0.400) pushes a
+   row back onto the sculpt [07-070636, 07:06:41]. One stroke is about one finger-width of travel, many short
+   overlapping strokes, no long drag. Reader: `relax(low, S, iters=8)`; for a larger move `snap(low, S)` first.
+8. **Fill.** Mouth: select the mouth ring, E then Z, flatten (G, Z) [07-070108, 07:01:29]. Lips get Ctrl+R with 2 cuts
+   (preview in yellow) [07-070146, 07:01:53]. Nose: nostril ring of 8 is scaled in twice with E, S (no new ring is
+   dragged), then Ctrl+F > Grid Fill; with an odd count an error appears and the artist undoes four times [07-070406,
+   07:04:08 to 07:04:19]. Back of head: edges behind the ear extruded to the centre, Ctrl+R with 7 cuts shown as yellow
+   strips [07-070705, 07:07:12], then two more cuts at the crown and F x3 [07-070806, 07:08:11]. Ear: one more Ctrl+R
+   ring round the ear [07-070852, 07:08:56]. Neck: lower border extruded with G, Clipping toggled back on, then Relax Slide Size 216 to 392 px
+   [07-071844, 07:18:45 to 07:18:53]. Reader: `cap(obj, point, span=2)` (raises on an odd count) and `Surf.ring` rows for
+   skull and neck.
+9. **Centre line.** Apply the Mirror, smooth with Relax Slide (Size 166 to 334 px, Strength 1.000, Shift) until 1,933
+   vertices, 1,896 faces show [07-071920, 07:19:30]. Then in Edit Mode the N-panel Edit tab, Auto Mirror: axis X,
+   Orientation Positive, Threshold 0.00, Cut and Mirror and Use Clip on; the half is selected and one click adds the
+   Mirror back [07-071936, 07:19:41 to 07:20:01]. Reader: `relax()` handles it; add Mirror with `use_clip` True.
+
+### C. Body (steps 10 to 18)
+
+10. **Torso and shoulder.** Shift+A > Mesh > Circle, then in the Add Circle panel Vertices changed from 32 to 10, Fill
+    Type Nothing [08-072724, 07:27:25 to 07:27:36]. F bridges quads at the shoulder [08-072958, 07:30:00 to 07:30:10, 54
+    vertices]; Ctrl+R repeatedly until the arm ring selection reads 20 vertices [08-073210, 07:32:12 to 07:32:27]. The
+    neck border is checked by selecting it: 9 vertices (8 edges) per half on the torso side [08-073306, 07:33:23]
+    versus 14 on the head side [08-073325, 07:33:25], which is why the artist adds loop cuts to match them.
+    Relax Slide with Alt/Shift (Size 268 px, Strength 1.000) [08-073548, 07:35:50]. Chest: rings round each breast, Grid
+    Fill inside, snapping OFF before the rib band is pulled down with G [08-074034, 07:40:36 to 07:40:46]. Reader: `[torso-arm]` block.
+11. **Hips, legs.** The hip band is extruded with G (Shift for fine) and loop cuts (2) are slid with G over buttock and
+    crease [07-074431, 07:44:33 to 07:44:43]; Relax Slide Size 260 to 412 px from behind [07-075214, 07:52:16].
+    Reader: `[hips-leg]` block, relax with Shift-equivalent iterations.
+12. **Elbow, knee, rib patches.** Select the edge loop, Ctrl+B, in the redo panel Segments 2 (header read: offset about
+    0.006 m, Profile 0.5; panel also shows Loop Slide on, Miter Sharp, Intersection Type Grid Fill) [07-074231, 07:42:33 to
+    07:42:42]. Elbow: a Ctrl+R cut with S to scale it, checked from the side [07-075322, 07:53:23 to 07:53:33]; the
+    arm rings read 20. Knee: Relax Slide Size 292 to 344 px, Strength 1.000 [07-080015, 08:00:17 to 08:00:29]. Body ends at
+    1,874 vertices, 1,815 faces [07-080030]. Reader: `joint_patch(low, pick, offset=0.006)` (offset matches the read
+    value; the block's 0.012 is mine).
+13. **Hands.** Each finger is a cube moved onto the finger with many G steps and Shift [08-080801, 08:08:02 to 08:08:11];
+    two faces on top, three on each side [08-080813, 08:08:14 to 08:08:20]. Knuckle row: S then Y, G then Y, then
+    right-click > LoopTools > Relax [08-081001, 08:10:03 to 08:10:12; 34 vertices]. 34 against the arm's 20 is
+    announced [08-081141, 08:11:44]. Palm loop 26 is checked after duplicating and applying the Shrinkwrap on a copy
+    (warning "applied modifier was not first" appears) [08-081715, 08:17:17 to 08:17:27]; 20 reached [08-081941, 08:19:46].
+    Fingertip: select the end patch, I (inset), G x5 to x10 to round it; no nails [08-082548, 08:25:50 to 08:25:59].
+    Join: Ctrl+J, then two edge groups and Ctrl+E > Bridge Edge Loops at the wrist [08-082843, 08:28:45 to 08:28:56].
+    Reader: closed 10-point rings plus `cap(..., span=2)` per finger; `bridge_near` at the wrist; counts need planning.
+14. **Feet.** Same cube method [08-082926, 08:29:43]. Ankle border selected reads 26 against the leg [08-084103,
+    08:41:05 to 08:41:14]. After joining, body statistics are 4,969 vertices / 4,885 faces [08-084518], then 9,953
+    vertices / 9,924 faces [08-084824, 08:48:26].
+15. **Join and tidy.** The whole cage is smoothed with Shift Relax Slide in front and rear views [08-084518,
+    08:45:20 to 08:45:31]. Reader: `relax(low, S)` on the whole object.
+16. **Sockets and mouth.** Retopology overlay off, upper lip row up and lower row down with G then Z, alternating
+    [08-085314, 08:53:15 to 08:53:26]. Result 10,449 vertices, 10,422 faces, shaded smooth [08-085907, 08:59:09].
+    Reader: `extrude_border` with a vertex group.
+17. **Eyes and jaw.** `Eye - Stylized` and `Jaw - Stylized` sit in Lowpoly; eye scaled in a right orthographic view
+    (scale reading 0.98), original eye hidden, shaded smooth [08-090332, 09:03:34 to 09:03:49]. The eye mesh reads 802
+    vertices, 832 faces. Reader: set `obj.scale`/`location`; names per this file.
+18. **Reproject.** Shrinkwrap (Nearest Surface Point, On Surface) gets vertex group `no shrinkwrap` with the invert
+    button on [08-090806, 09:08:08 to 09:08:17]; Multires added by Add Modifier search (typed mu) and moved above it,
+    levels set to 2 (Viewport, Sculpt, Render all 2; 174,880 vertices) [08-090819, 09:08:31 / 09:08:52]; Shrinkwrap applied
+    from its dropdown [08-090851]. On the Multires, Crease Polish (Size 92 to 104 px, Strength 0.250) re-marks the
+    palm lines [08-091913, 09:19:14]. Final modifier: Subdivision, Catmull-Clark, Viewport 1, Render 2 [08-092044,
+    09:20:46]. Reader: `[reproject]` block; the brush touch-up cannot reach Multires (Gaps).
+
+### D. Clothes (steps 19 to 27)
+
+- The artist keeps a six-line checklist in a Text Editor docked under the Properties panel: base topology from the body,
+  align with seams, align with folds, reinforce seams, add thickness, reproject [09-092702, 09:27:04].
+19. **Base from the body.** `shirt_retopo` carries Mirror (Clipping later on, Merge 0.001 m) and Shrinkwrap to the shirt
+    sculpt (here `Cube.001`); hem vertices moved with G and Alt snapping, video at 4.5x [09-093037, 09:30:38 to 09:30:45].
+    Base statistics about 420 vertices, 376 faces [09-093327, 09:33:29].
+20. **Seams.** G with Alt slides sleeve and hem loops; a loop not needed is deleted [09-093519, 09:35:20];
+    result 479 vertices, 434 faces [09-093811].
+21. **Folds.** Loops pulled out onto fold ridges with G, Ctrl+R with 2 cuts [09-094546, 09:45:48 to 09:46:00; 589 vertices, 540 faces].
+22. **Reinforce seams.** Ctrl+Z, check Auto Merge Vertices is ON as the tooltip says, select the seam loop with Ctrl+click, Ctrl+B
+    with Shift for fine width: Offset 0.00168 m, Segments 2, Profile 0.5 [09-094853, 09:48:57 to 09:49:02].
+    Reader: `joint_patch(shirt, pick, offset=0.0017)`.
+23. **Thickness.** Temporary Subdivision to judge, Solidify typed 0.007 m (Mode Simple, Offset -1.0, Rim Fill on)
+    [09-095141, 09:51:43 to 09:51:53]. Applying it while Shrinkwrap is above makes the shell collapse and Blender warns
+    [09-095155, 09:52:07]; after the groups are set and inverted on the Shrinkwrap the thickness holds [09-095333,
+    09:53:35 to 09:53:43]. Rim: Alt+S shrink/fatten (header about 0.0014 m) with one Ctrl+R cut [09-095415, 09:54:16 to
+    09:54:23]. Inner faces nobody sees are deleted [09-095542]. Reader: `[cloth]` block (0.007, offset -1).
+24. **Reproject.** Multires above Shrinkwrap, subdivided to level 2 (27,050 vertices, 26,848 faces), Shrinkwrap applied
+    from its dropdown, no Apply Base [09-095618, 09:56:25 to 09:56:34].
+25. **Skirt.** `skirt_retopo` Shrinkwrap target is the skirt sculpt (`Circle.002`); pleat vertices moved with G (Shift
+    for fine) [09-100307, 10:03:09]; a corner is left open instead of forming a triangle [09-100321, 10:03:23 to
+    10:03:32; 117 vertices, 91 faces]. Inner hem faces deleted with X, Ctrl+R 1 cut [09-101353, 10:13:54]. Multires
+    level 1 [09-101635, 10:16:39 to 10:16:45], Delete Higher used once.
+26. **Boots.** Foot and shin rows copied from the body onto the boot with snapping and G at 6x speed; target `Cube.004`
+    [09-102007, 10:20:10 to 10:20:24; 573 vertices, 538 faces].
+27. **Modelled parts.** Strap: Ctrl+M mirror, Shift+D duplicate, Auto Merge off [09-104200, 10:42:01 to 10:42:12];
+    Grab (Size 364 to 420 px, Strength 0.400) in Sculpt Mode to nudge [09-104222, 10:42:24]. Whole lower body in
+    Object Mode reads 114,664 vertices, 113,768 faces with the Multires levels [09-104236, 10:42:37]; the skirt shows Levels 1.
+
+### Judging done
+
+- The artist rotates round the part, switches to Object Mode, shades smooth, and watches the Retopology overlay and
+  statistics; the body is accepted at about 10,400 faces and the shirt at about 2,500 before Multires. Reader: the
+  Exit check below, with `census` and `deviation`.
+
 ## Which scripted route gives what
 
 | Route | Use for | Loops for animation? |
@@ -662,7 +826,7 @@ temple, side of a limb), never on a lid edge, a lip edge, or the inside of a ben
 | Setting | Value | Where | Time |
 |---|---|---|---|
 | Character height | about 1.6 to 1.7 m | scale about 3D cursor, then apply all transforms | 06:24:15 |
-| Voxel size, body fuse | 0.008 m (0.076 was too coarse) | Sculpt Mode remesh | 06:29:40 |
+| Voxel size, body fuse | about 0.0008 m (0.000844 shown); 0.0076 lost the detail | Sculpt Mode remesh | 06:29:47 |
 | Hands and feet onto body | Boolean, Union, two modifiers | on `Body` | 06:38:12 |
 | Annotate | placement `Surface`, opacity 0.3 | plan the loops | 06:43:54 |
 | Snapping | `Face Project`, plus rotate and scale | Edit Mode header; off before a free extrude | 06:45:45 |
@@ -766,14 +930,13 @@ result = {"census": census(low), "deviation": deviation(low, sculpt, levels=1)} 
   before step 18, so the reprojection carries it.
 - **Relax Slide** has no equal among the `sculpt_strokes` brushes; `relax()` replaces it (smooth, then re-snap).
 - **Annotate** lines cannot be drawn; landmark coordinates replace them.
-- **Add-ons the course uses**, all free, none needed by the scripted route: F2 (F makes a face from one vertex or
-  edge) [06:57:01], LoopTools (Relax on a selected loop) [08:10:07], Auto Mirror [07:19:45], Screencast Keys (shows
-  key presses only). In Blender 4.2 and later they are extensions that must be downloaded.
 - **Human Base Meshes bundle** (free, Blender Studio): not on this machine, so step 17 was not run. Without it,
   model the eye as a UV sphere and leave teeth for later. The bundle also holds whole body and head base meshes;
   wrapping one onto the sculpt could replace hand-built face loops, but I did not test that.
 - **Live session.** Every block was run in background Blender with the active object set by `act()`. Through
   `exec_python` the `bpy.ops.object.*` calls should behave the same; if one reports a context error, that operator
   needs a window override and the block should be run with `headless_run` on a saved copy instead.
-- **Not stated in the course:** ring counts round the torso, how many faces a finished garment should have, where
-  poles should go, and how close the low-poly must lie to the sculpt. Values given for those are marked as mine.
+- **Counts the course shows but never states.** Body 9,924 faces before sockets, 10,422 after [08-084824, 08-085907];
+  shirt base 376 faces, 2,542 after Solidify, 2,584 after the rim [09-093327, 09-095155, 09-095415]; skirt base about 91 faces
+  [09-100321]. Still not stated: ring counts round the torso (the torso circles are not legible), where poles
+  should go, and how close the low-poly must lie to the sculpt. Values given for those are marked as mine.

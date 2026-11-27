@@ -106,7 +106,7 @@ worked (palm length, foot length, limb length).
 4. **Mirror and soften** [02:45:01]. Course: `Mirror` modifier, then `Subdivision` (viewport level 1), then `Grab`
    to thin and tidy. Check from front, side and above.
 5. **One finger from one edge** [02:47:05]. Course: a cube merged to a single vertex at its origin, extruded along
-   X; `Skin` modifier then `Subdivision` (levels 1, later 2); `Ctrl+A` in Edit Mode sets thickness. The first
+   X; `Skin` modifier then `Subdivision` (levels 1, later 2); `Ctrl+A` in Edit Mode (Skin Resize) sets thickness. The first
    vertex never moves, so the object's origin stays at the knuckle and the finger rotates from the knuckle
    [02:48:45]. Live: `skin_digit("Finger_index", [(0,0,0),(0.5*f,0,0.03*f),(0.75*f,0,0),(f,0,-0.06*f)], [0.09*f,0.085*f,0.08*f,0.06*f])`
    where `f` = finger length. The extra points at 1/2 and 3/4 are the joints; their small Z offsets give the
@@ -139,7 +139,7 @@ worked (palm length, foot length, limb length).
     Nails are optional: crease the outline, sharpen it, keep the nail flat [03:11:09].
 12. **Join and fuse** [03:13:54]. Be satisfied with each finger first: after joining, every finger must be
     sculpted separately [03:14:49]. Course: select fingers and thumb, palm active, `Ctrl+J`, voxel about `0.01`
-    (the viewport readout shows 0.00816 at 03:22:50), `Ctrl+R`. Too coarse a voxel webs the fingers together
+   (the viewport readout shows 0.0100 m at 03:14:46 and 03:22:48), `Ctrl+R`. Too coarse a voxel webs the fingers together
     [03:14:23]. Live: `join_and_fuse([palm, thumb, f1, f2, f3, f4], palm, v)` with `palm` = `BLK_hand` and `v` no more than a third of the
     narrowest finger gap, then `mesh_report`: `loose_parts` 1.
 13. **Blend the roots** [03:15:11]. Course: on the back of the hand, `Clay Strips` in straight strokes from the
@@ -179,7 +179,7 @@ worked (palm length, foot length, limb length).
 ### C. Legs, torso, arms
 
 19. **Each part alone: remesh, smooth, one or two big shape changes** [03:47:58]. No detail yet.
-    - Upper leg: voxel `0.05` (readout 0.0563), Smooth; from the side `Grab` the front of the thigh into a clear
+    - Upper leg: voxel `0.05` (readouts 0.0563 and, on the frame at 03:48:19, 0.0495), Smooth; from the side `Grab` the front of the thigh into a clear
       curve, keep the back straighter; shape the hip [03:48:51].
     - Lower leg: remesh, Smooth; `Inflate` the calf to the reference's thickness; back curved, front straight;
       make it flow into the thigh [03:49:35]. Mark the knee on the upper leg with a crease and a small flattened
@@ -196,7 +196,8 @@ worked (palm length, foot length, limb length).
     Live for each: `sculpt_remesh(object=part, voxel_size=part_length/40)` (mine), `smooth` passes with radius
     `0.3*L`, then `grab`. Limb parts with a `Mirror` modifier: `sculpt_begin(object=part, symmetry="")` and stroke
     the real side only. Example thigh curve:
-    `{"brush":"grab","points":[front mid-thigh, same point -0.06*L in Y],"radius":0.5*L}`.
+    `{"brush":"grab","points":[front mid-thigh, same point -0.06*L in Y],"radius":0.3*L}` (ring measured on the frames at
+    about 0.2 to 0.3 of thigh length; use 0.5*L only for a whole-part curve).
 20. **Join in groups, coarse to fine, blending each joint as it appears.** Be happy with the shapes and save
     before each join [03:57:33].
     - Upper + lower leg, voxel `0.04` [03:57:19]. `Clay Strips` across the knee front and back, Smooth, faint
@@ -229,6 +230,172 @@ At the end of this chapter the figure is still several meshes, all under `CHARAC
 `BLK_eye`, `BLK_neck`, `BLK_ears`, `BLK_torso`, `BLK_leg`, `BLK_arm`, `BLK_hand`, `BLK_foot`. The course does not
 fuse them here; stage 06 does.
 
+## How the artist works on screen
+
+Studied from the course frames (120 clips, chapter 05, `qy-wwP-b9HY-05-HHMMSS`, ids cite the clip start). Blender 5.0.1,
+Sculpting workspace: viewport in the middle, concept and reference board docked in a small pane at the left (the
+board app is PureRef, title bar visible at 02:37:05), outliner and Properties on the right. The figure stays in its
+stiff A-pose the whole chapter (`[qy-wwP-b9HY-05-041323]` 04:13:23). Header values below are as shown; a brush's Size is
+in screen pixels, so it does not carry over: I (not the course) estimate world radii from the ring drawn around the
+cursor in the same frame.
+
+**Habits that repeat everywhere**
+- Mode toggling: `Ctrl+Tab` swaps Object and Sculpt Mode constantly; every edit-mode job ends with `Tab` back.
+- Brush values never change from the defaults the 03 stage already lists: `Grab` Strength 0.400, `Crease Polish` 0.250,
+  `Scrape/Fill` 0.700, `Clay Strips` 0.500, `Inflate/Deflate` 0.500 (`[qy-wwP-b9HY-05-033938]` 03:39:40). Only Size changes
+  (54 px for creases up to about 540 px for whole-limb pulls).
+- Smooth is `Shift` held over the same spot, almost always right after a `Clay Strips` or `Grab` stroke.
+- Orbit constantly (`Alt` drag, `Numpad 1/3`, the viewport gizmo), and zoom to the whole figure before moving on
+  (`[qy-wwP-b9HY-05-040822]` 04:08:22: "rotate around your whole sculpt").
+- Heavy use of the Annotate tool: a quick pen line over the viewport marks a joint position or a curve, then it is
+  erased (`[qy-wwP-b9HY-05-030108]` 03:01:10; `[qy-wwP-b9HY-05-034847]` 03:48:49; `[qy-wwP-b9HY-05-041333]` 04:13:38).
+  Reader's equivalent: `reference_setup` or `turnaround_sheet` overlays and your own numbers; no annotation tool.
+- Clipping: `Alt+B` isolates a part; the viewport title then reads "(Clipped)" (`[qy-wwP-b9HY-05-030616]` 03:06:19).
+  `Alt+Z` is X-ray, `H`/`Alt+H` hide and unhide other parts (`[qy-wwP-b9HY-05-034847]`).
+- Remesh: select the part, Sculpt Mode, press `R` and drag to preview the voxel grid in metres
+  (e.g. 0.0998 down to 0.0114 on a finger, `[qy-wwP-b9HY-05-030921]` 03:09:30-03:09:34), then `Ctrl+R` to apply
+  the remesh. The scene is in metres.
+- Ring-to-part ratios measured on the frames (mine): finger `Grab` ring radius about 0.4 to 0.5 of finger length
+  (`[qy-wwP-b9HY-05-025901]` 02:59:06-02:59:12); foot `Grab` about 0.65 of foot length (`[qy-wwP-b9HY-05-032509]` 03:25:17);
+  thigh `Grab` about 0.2 to 0.3 of thigh length (`[qy-wwP-b9HY-05-034904]` 03:49:15). Use these over the 0.5*L above for thigh work.
+
+**Method, shown in the slides (02:28:05 to 02:39:20)**: no live sculpting yet. The red strokes drawn over the side-view
+leg photo mark thigh front curved and back straight, calf back curved and front straight (`[qy-wwP-b9HY-05-023142]`
+02:31:47-02:31:53); the angry-face collage and the ankle drawing with a level red line (wrong) versus a tilted one
+(right) (`[qy-wwP-b9HY-05-023310]` 02:33:12-02:33:16); arcs over a hand photo, each row of knuckles steeper (`[qy-wwP-b9HY-05-023601]`
+02:36:03-02:36:09); ticks on a finger side view at halves (`[qy-wwP-b9HY-05-023656]` 02:36:58-02:37:01).
+
+**Step 1 Palm box.** Add > Mesh > Cube in Object Mode at 02:40:44 (the cube arrives huge over the face and is scaled down
+beside the figure), moved to the forearm end and flattened (`[qy-wwP-b9HY-05-024034]`, `[qy-wwP-b9HY-05-024151]` 02:41:54). Seen from the side in Edit Mode.
+Reader: `quad_ball("BLK_hand", ...)` scaled about `(1.0, 0.85, 0.3) * palm_length`, rotated to the forearm.
+
+**Step 2 Arch.** One `Ctrl+R` loop cut across the middle raised with `G` (02:42:00), then two more cuts at 02:42:25 and 02:42:34
+(`[qy-wwP-b9HY-05-024218]`). Reader: one `grab` on the back of the palm, radius `0.6*L`, 0.08*L along the normal.
+
+**Step 3 Thumb wedge.** Pulled down and out in Edit Mode on the Mirror-modified cube, with a pad pulled lower to hint
+the fleshy side (`[qy-wwP-b9HY-05-024644]` 02:46:46). Reader: `snake_hook` from the side of the palm near the wrist,
+0.35*L sideways, radius `0.3*L`.
+
+**Step 4 Mirror and soften.** Mirror panel: axis X, Merge 0.001 m (`[qy-wwP-b9HY-05-024536]` 02:45:40); `Add Modifier`
+search "sub" gives Subdivision Surface, panel reads viewport 1, render 2 (`[qy-wwP-b9HY-05-024617]` 02:46:18). `Grab`
+Size 284 px at 02:44:59 and 200 px at 02:46:18, Strength 0.400; checks the shape from front, side and above. Reader:
+`ob.modifiers.new("Subdivision", "SUBSURF")`, then `grab` strokes with strength 0.4.
+
+**Step 5 Finger from one edge.** A cube is created near the head, extruded along X, then Add Modifier: Skin first,
+then Subdivision Surface; levels set from 1 to 2 (`[qy-wwP-b9HY-05-024808]` 02:48:10-02:48:19). The Skin panel shows
+Symmetry X ticked. Thickness: `Ctrl+A` is Skin Resize; the tool panel at the bottom-left reads "Skin Resize" while the
+header shows Scale X 0.3757 (`[qy-wwP-b9HY-05-024836]` 02:48:38-02:48:41). Back in Object Mode the first vertex is
+untouched so `R` rotates about the knuckle (`[qy-wwP-b9HY-05-024904]` 02:49:09). Reader: `skin_digit(...)` as above; the
+radii param is the thickness.
+
+**Step 6 Place and duplicate.** `G` then `R` in Object Mode; four near-parallel fingers appear at 02:51:53; one is
+fattened with a loop cut (`Ctrl+R`, 02:52:03, `[qy-wwP-b9HY-05-025151]`). The four are later given different lengths and
+a fan (`[qy-wwP-b9HY-05-025319]` 02:53:35).
+
+**Step 7 Thumb.** A copy of a finger is rotated into the wedge and shortened (02:53:21 to 02:53:35). Reader: `skin_digit`
+with three points.
+
+**Step 8 Palm meets fingers.** The Subdivision dropdown's Apply is used on the palm (`[qy-wwP-b9HY-05-025615]` 02:56:30).
+`Grab` Size 540 px (about the forearm width scale), Strength 0.400, drags the forearm end to the wrist
+(`[qy-wwP-b9HY-05-025732]` 02:57:34); then all fingers selected (02:57:43). Reader: `grab` from forearm end to wrist,
+radius about `0.6*L`.
+
+**Step 9 Bake and sculpt one for all.** Pivot is reset to Median Point (02:58:11). Applying a modifier on a linked finger
+shows an "Apply Modifier" box that makes data single-user; instead `Ctrl+A` opens the Apply menu and the choice is
+Visual Geometry to Mesh, and all four fingers lose the stack at once (`[qy-wwP-b9HY-05-025841]` 02:58:43-02:58:59). In
+Sculpt Mode a `Grab` of 324 px, Strength 0.400, on one finger moves all four (`[qy-wwP-b9HY-05-025901]` 02:59:03).
+Reader: `bake_modifiers_linked(...)`, then `sculpt_begin(object="Finger_index", symmetry="Y")`.
+
+**Step 10 Joint creases.** The artist draws two short Annotate lines across the finger for the joint heights, draws them
+"all the way to the bottom of the fingers", then erases them (`[qy-wwP-b9HY-05-030108]` 03:01:10-03:01:22). `Crease
+Polish` Size 84 then 68 px, Strength 0.250, with only a faint line. Nails are skipped
+for this character (`[qy-wwP-b9HY-05-030150]` 03:02:00). The thumb is checked for symmetry and found not to work (`[qy-wwP-b9HY-05-030311]`).
+Reader: `{"brush":"crease","points":[underside at 0.5*f],"radius":0.06*f,"strength":0.25,"snap":true}`.
+
+**Step 11 Remesh parts separately.** The reference palm is docked at the left while the artist works (03:06:50-03:07:00).
+`Scrape/Fill` Size 160 to 196 px, Strength 0.700, red ring, flattens the top of the palm with broad sweeps
+(`[qy-wwP-b9HY-05-030856]` 03:08:58). Finger voxel drag reads 0.0998 down to 0.0114 m (`[qy-wwP-b9HY-05-030921]`);
+`Clay Strips` Size 112 then 286 px adds pad volume on the underside and `Shift` smooths it
+(`[qy-wwP-b9HY-05-031033]` 03:10:34-03:10:43); `Crease Polish` Size 110-120 px, kept faint (`[qy-wwP-b9HY-05-031056]`). The thumb
+reads 0.0106 m and is smoothed lightly (`[qy-wwP-b9HY-05-031214]` 03:12:20). Reader: `sculpt_remesh(object=finger,
+voxel_size=0.011)`; `flatten(...)`; `crease` with strength 0.25.
+
+**Step 12 Join and fuse.** Fingers and thumb are selected and the palm made active, then `Ctrl+J` (the narrator says
+Ctrl G, the on-screen key is `Ctrl+J`) (`[qy-wwP-b9HY-05-031407]` 03:14:17). The voxel preview reads 0.0160, 0.0145,
+0.0129, 0.0100 m as it is dragged down (`[qy-wwP-b9HY-05-031437]` 03:14:38-03:14:46); the fuse leaves ragged stair-steps at
+  the finger roots (`[qy-wwP-b9HY-05-031503]` 03:15:10). Reader: `join_and_fuse([...], palm, voxel_size)` with
+  `voxel_size` at most one-third of the narrowest finger gap (keep `0.01` only when the gap is at least 30 mm).
+
+**Step 13 Blend the roots.** `Clay Strips` Size 60-176 px, Strength 0.500, pulls the palm onto each finger and
+`Shift` smooths (`[qy-wwP-b9HY-05-031742]` 03:17:43-03:17:54). Palm lines: `Crease Polish` Size 208-344 px then 80 px at
+0.250 (`[qy-wwP-b9HY-05-031829]` 03:18:31-03:18:40). Knuckles: `Crease Polish` Size 56-82 px with `Ctrl` held
+(`[qy-wwP-b9HY-05-032116]` 03:21:18; `[qy-wwP-b9HY-05-032130]` 03:21:32); `Scrape/Fill` Size 144-274 px flattens the sides
+(03:21:38-03:21:49). A last pass at 0.0100 m is possible but skipped (`[qy-wwP-b9HY-05-032243]` 03:22:48).
+Reader: per finger `clay_strips` then `smooth`; `crease` 0.25 on the knuckle row.
+
+**Step 14 Sole first.** A rounded cube (named Roundcube in the outliner) lies near the legs; the artist enters the bottom
+orthographic view by clicking the gizmo's -Z, then `Grab` Size 284 px, Strength 0.400, shapes the rectangle
+(`[qy-wwP-b9HY-05-032429]` 03:24:30-03:24:40). Reader: `quad_ball("BLK_foot", ...)` scaled to length, width and height.
+
+**Step 15 Triangle with sole protected.** After the failed mask, `Ctrl+Z` and the tool-header tick box "Front Faces Only"
+is cleared (`[qy-wwP-b9HY-05-032619]` 03:26:21-03:26:31). `Grab` Size 434 px, Strength 0.400, pulls the foot top up into the
+leg; an Annotate sketch in front view shows the unwanted symmetric triangle and is erased with `Ctrl+Z` x6
+(`[qy-wwP-b9HY-05-032726]` 03:27:28-03:27:43). Reader: `sculpt_mask(op="box", ...)`, `grab` radius about `0.6*L`.
+
+**Step 16 Heel and toe shelf.** Smoothing at the ankle junction so it is not sharp (`[qy-wwP-b9HY-05-032800]` 03:28:01);
+side orthographic via `Numpad 3` with the foot as a flat wedge (`[qy-wwP-b9HY-05-032933]` 03:29:34-03:29:40). The Line
+Project action is not legible in the frames, so the mapping stays as the stage's own. Heel `Inflate/Deflate` Size 420 px,
+Strength 0.500, is shown at 03:39:40 (`[qy-wwP-b9HY-05-033938]`).
+
+**Step 17 Toes.** Annotate sketch of where the toes begin, seen from below, then the toe is created like a finger: Skin
+and Subdivision, panel viewport 1 then 2 (`[qy-wwP-b9HY-05-033102]` 03:31:04-03:31:13), moved into place (03:31:47) and
+stepped in Edit Mode while a green foot reference sits docked left (`[qy-wwP-b9HY-05-033145]` 03:31:55). `Alt+D` then `S Y`
+shortens each duplicate (`[qy-wwP-b9HY-05-033259]` 03:33:07-03:33:17). Reader: `skin_digit("Toe_big", ...)`, then `copy()` and
+`scale.y`.
+
+**Step 18 Bake, remesh, join.** Toes selected together (03:36:46, `[qy-wwP-b9HY-05-033637]`); heel and symmetry check
+(03:39:40-03:39:52). Toe remesh preview 0.0752 then 0.0103 m (`[qy-wwP-b9HY-05-034139]` 03:41:47-03:41:50); join with
+`Ctrl+J` and a voxel preview 0.0132 then 0.00642 m (`[qy-wwP-b9HY-05-034306]` 03:43:14-03:43:17); `Scrape/Fill` Size 114 px
+and `Clay Strips` Size 54 px blend toe roots (`[qy-wwP-b9HY-05-034319]` 03:43:31-03:43:36); toes are kept apart with a wide
+gap (`[qy-wwP-b9HY-05-034709]` 03:47:10). Reader: `sculpt_remesh(object=toe, voxel_size=0.0103)`, `join_and_fuse(...,
+0.006)`.
+
+**Step 19 Each part alone.** Upper leg: right orthographic with other pieces hidden (`H`), Annotate marks, `Grab` Size
+412 px, Strength 0.400 (`[qy-wwP-b9HY-05-034847]` 03:48:49-03:49:02); voxel readout 0.0495 m (`[qy-wwP-b9HY-05-034807]`
+03:48:19). Lower leg: smoothing with `Shift`, Annotate along the calf (`[qy-wwP-b9HY-05-035027]` 03:50:29-03:50:42).
+Pelvis: `Ctrl+R`, smooth, `Crease Polish` Size 88 px for the gluteal split (`[qy-wwP-b9HY-05-035137]` 03:51:41;
+`[qy-wwP-b9HY-05-035156]` 03:51:59). Chest: the rib-cage edge is `Crease Polish` Size 186 px then 80 px at 0.250
+(`[qy-wwP-b9HY-05-035326]` 03:53:34-03:53:38). Placeholders deleted with `X`, then File > Save Incremental, which writes
+the next numbered name (`[qy-wwP-b9HY-05-035426]` 03:54:37; `[qy-wwP-b9HY-05-035438]` 03:54:40). Arm voxel preview 0.0526 m
+(03:54:49); elbow: `Crease Polish` Size 54-70 px with `Ctrl` held, then `Scrape/Fill` Size 114 px
+(`[qy-wwP-b9HY-05-035546]` 03:55:47-03:55:58). Shoulder: `Grab` Size 244 px, `Ctrl+R`, smooth (`[qy-wwP-b9HY-05-035622]`).
+Reader: remesh voxel `part_length/40` stays mine; strokes as in the step.
+
+**Step 20 Join in groups.** Legs: `Ctrl+J` (the narrator says Ctrl G), `Ctrl+S`, remesh preview 0.0405 m
+(`[qy-wwP-b9HY-05-035712]` 03:57:30; `[qy-wwP-b9HY-05-035746]` 03:57:54). Knee: `Clay Strips` Size 56-238 px (`[qy-wwP-b9HY-05-035856]`
+03:58:57-03:59:03), then `Crease Polish` Size 100 px and `Grab` Size 280-320 px pull the back of the knee
+(`[qy-wwP-b9HY-05-035936]` 03:59:38-03:59:45). Lower back S: `Grab` Size 358-442 px from the side with an Annotate guide
+(`[qy-wwP-b9HY-05-040035]` 04:00:37-04:00:45). Torso: three parts joined, voxel narrated as 0.03 (no readout seen)
+(`[qy-wwP-b9HY-05-040100]` 04:01:02-04:01:15); buttocks dragged down to overlap the legs (`[qy-wwP-b9HY-05-040117]`
+04:01:20-04:01:34). Waist fold: `Crease Polish` Size 114 px at 0.250 copied from the reference docked at left
+(`[qy-wwP-b9HY-05-040216]` 04:02:27); belly centre line `Crease Polish` Size 82 px (`[qy-wwP-b9HY-05-040329]`
+04:03:40; `[qy-wwP-b9HY-05-040341]`). Stomach: `Crease Polish` Size 60-70 px (`[qy-wwP-b9HY-05-040428]` 04:04:40) then `Clay Strips` Size 76-344 px adds low belly volume
+(`[qy-wwP-b9HY-05-040447]` 04:04:49-04:04:55). Chest: `Grab` Size 224-329 px lowers the breasts, then `Inflate/Deflate` Size
+270 px, Strength 0.500 (`[qy-wwP-b9HY-05-040629]` 04:06:30-04:06:38). Arms: elbow smoothing and `Inflate` Size
+504 px (`[qy-wwP-b9HY-05-040822]` 04:08:24-04:08:34); arms plus shoulder joined with `Ctrl+J`, `Ctrl+R`, and a blue
+Face Set patch from a stray key (`[qy-wwP-b9HY-05-041009]` 04:10:17-04:10:28); `Clay Strips` Size 120-424 px
+with `Shift` smooths shoulder onto arm (`[qy-wwP-b9HY-05-041111]` 04:11:13-04:11:29). Back centre line: `Crease Polish`
+Size 64-88 px, one stroke undone (`[qy-wwP-b9HY-05-041232]` 04:12:33). Reader: `join_and_fuse(...)`, `clay_strips`
+then `smooth` on the same path, `crease` strength 0.25, `inflate` strength 0.5.
+
+**Step 21 Proportion pass.** `Ctrl+Tab`, `Alt+H`, zoom out to the whole figure (`[qy-wwP-b9HY-05-041323]` 04:13:23-04:13:32).
+The artist circles the head with Annotate in front and side views and says the head and the feet are too small
+(`[qy-wwP-b9HY-05-041333]` 04:13:35-04:13:44). Reader: `turnaround_sheet(object="CHARACTER")`, scale whole objects
+about their joint, re-run `outline_match`.
+
+**What the artist treats as done.** Only by eye against the docked reference or a zoomed-out view; nothing is measured. The
+stage's exit check is therefore ours, not the course's.
+
 ## Settings the course uses
 
 | Setting | Value | Where | Timestamp |
@@ -241,9 +408,9 @@ fuse them here; stage 06 does.
 | Finger symmetry | Y (whichever axis crosses the finger); thumb none | Sculpt Mode | 02:59:14, 03:03:14 |
 | Voxel size, palm | 0.025 | remesh | 03:05:59 |
 | Voxel size, finger, thumb | 0.01 | remesh | 03:09:36, 03:12:17 |
-| Voxel size, joined hand | about 0.01 (readout 0.00816) | remesh | 03:14:44, 03:22:50 |
-| Voxel size, joined foot | about 0.006 | remesh | 03:43:14 |
-| Voxel size, upper leg | 0.05 (readout 0.0563) | remesh | 03:48:18 |
+| Voxel size, joined hand | about 0.01 (readout 0.0100) | remesh | 03:14:46, 03:22:48 |
+| Voxel size, joined foot | about 0.006 (readout 0.00642); a single toe reads 0.0103 | remesh | 03:43:17, 03:41:50 |
+| Voxel size, upper leg | 0.05 (readouts 0.0563, 0.0495) | remesh | 03:48:19 |
 | Voxel size, lower arm | 0.03 | remesh | 03:54:50 |
 | Voxel size, joined legs | 0.04 | remesh | 03:57:54 |
 | Voxel size, joined torso | 0.03 | remesh | 04:01:08 |
@@ -315,16 +482,23 @@ The course says voxel size depends on scene scale and to go higher or lower as n
 - `sculpt_strokes` symmetry mirrors about the named object's own local axis. A hand at the end of an angled arm
   has no useful symmetry plane; the course gets both hands from a `Mirror` modifier, so sculpt one hand and keep
   the modifier (or bake it at the end).
-- Loop cuts, edge slides and skin-radius edits in Edit Mode are described here as their result (arched palm,
-  stepped toe); reproduce them with `skin_digit` points and radii or with `grab`, not key presses.
-- Several remesh sizes are not spoken or shown: the foot block, single toes, lower leg, pelvis, waist, chest,
-  upper arm, shoulder, neck, and the two arm joins. Use the size of the neighbouring part.
-- At 03:54:38 the narrator says "hands" while remeshing at 0.03; from the surrounding steps this is the lower
-  arm. Treat that reading as mine.
-- Which side of the foot is the upright side of the "right-angled triangle" in front view is drawn on screen but
-  not said; the frames suggest the inner side is nearer vertical. Check your reference.
-- Where exactly the foot's side hollows are carved [03:39:54] is shown only by cursor; "behind the ankle bones on
-  both sides" is my reading of the frames.
-- Scene scale is never stated (see 03-sculpt-face.md). The `part_length/40` voxel rule and all radii are mine.
+- Loop cuts, edge slides and skin-radius edits in Edit Mode are now seen on screen (loop cuts across the palm at
+  02:41:58 to 02:42:34, Skin Resize at 02:48:41, stepped toe at 03:31:55) but still have no tool; reproduce the
+  result with `skin_digit` points and radii or with `grab`, not key presses.
+- Remesh sizes the frames settle (now in the table above): single toe 0.0103, joined foot 0.00642, upper leg 0.0495,
+  joined legs 0.0405, finger 0.0114, thumb 0.0106, joined hand 0.0100. Arm remesh previews 0.0526 at 03:54:49; the final
+  arm and pelvis, waist, chest, shoulder, neck and torso-join sizes are narrated only (torso 0.03) or not shown. Use the
+  size of the neighbouring part for those.
+- At 03:54:38 the narrator says "hands" while selecting arm pieces after deleting the placeholders; the frames show
+  arm meshes outlined, so the lower-arm reading stays mine.
+- Which side of the foot is the upright side of the "right-angled triangle" in front view: the Annotate sketch at
+  03:27:38 is not legible. Still open; check your reference.
+- Where exactly the foot's side hollows are carved [03:39:54]: still open. The frames at 03:39:40 show only `Inflate`
+  on the heel and `Grab`; "behind the ankle bones on both sides" remains my reading.
+- Scene scale is never stated, but remesh previews read in metres (finger voxel 0.0114 m) and the figure is human-sized.
+  The `part_length/40` voxel rule and all world radii are still mine; use the ring-to-part ratios in the
+  on-screen section.
 - The course says it refines hands, feet and body further off camera [03:23:00], [03:47:19], [04:13:33]; the
   recorded result is a first pass, so matching the reference to 0.98 will need more grab passes than it shows.
+- The Line Project action at 03:29:34 and the navel (`Draw` subtract) at 04:03:55 are not legible in the sampled frames;
+  keep the stage's own mappings for both.
