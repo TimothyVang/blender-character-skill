@@ -135,6 +135,7 @@ def cmd_capture(req):
     keep_camera = sc.camera
     keep_frame = sc.frame_current
     keep_perspective = r3d.view_perspective
+    keep_clip_end = sp.clip_end
     keep_selected = list(bpy.context.selected_objects)
     keep_active = bpy.context.view_layer.objects.active
     with bpy.context.temp_override(window=win, area=area, region=region):
@@ -171,6 +172,7 @@ def cmd_capture(req):
             sc.camera = keep_camera
             sc.frame_set(keep_frame)
             r3d.view_perspective = keep_perspective
+            sp.clip_end = keep_clip_end
             for s in list(bpy.context.selected_objects): s.select_set(False)
             for s in keep_selected:
                 try: s.select_set(True)

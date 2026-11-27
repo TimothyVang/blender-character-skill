@@ -3,20 +3,22 @@
 Teach an AI agent to build a character in Blender from concept pictures, by hand: blockout, sculpt, clothes,
 retopology, UVs, hair, shading, rig, lighting.
 
-Three parts:
+Four parts:
 
 | Part | Where | What it does |
 |------|-------|--------------|
 | The skill | `skill/blender-character/` | A Claude skill: one entry file and one reference file per stage of the character pipeline. |
 | The MCP server | `mcp/blender-live/` | Drives a running Blender: run Python, capture the viewport, sculpt, remesh, mask, place references, and measure the model's outline against reference pictures. |
 | The course grabber | `tools/course_grab.py` | Turns a video course into a transcript per chapter plus the frames that go with it, for writing skills like this one. |
+| Visual study annotations | `annotations/qy-wwP-b9HY/` | 1,253 structured visual study labels across 11 stage JSONL files (`53` in stage 01 + `120` each in stages 02–11) backing the stage notes. |
 
 ## Status
 
-- **MCP sculpt and review tools:** tested against a live Blender 4.5.16 (`mcp/blender-live/sculpt_smoke.py`, 45 checks).
-- **Outline measuring and course grabber:** tested without Blender (`tests/`, 19 tests).
-- **Skill stage files:** written from the course. They have **not yet been proven** by an agent building a full
-  character with them. Bpy snippets are marked in each file as verified in background Blender or not verified.
+- **MCP sculpt and review tools:** tested against live Blender 4.5.16 (`mcp/blender-live/sculpt_smoke.py`, 48 checks passing).
+- **Outline measuring, MCP contracts, and course/sheet tools:** tested without Blender (`tests/`, 38 tests passing).
+- **Skill stage files (Stages 01–11 E2E proof):** executed end to end in live Blender 4.5.16 through the `blender-live` MCP server from a real front concept image (`character_01_refs.blend` through `character_11_final.blend`): 13 blockout parts, sculpted face/body (`BLK_head` `symmetry_error=0.000385`, `symmetry_p95_error=0.001598`, `symmetry_max_error=0.004978`), clothes/cloak/hair/goggles, manifold retopo (`body_retopo` 6,060 faces, `non_manifold_edges=0`), 13 UV-unwrapped meshes, `hair_scalp` + 710 hair curves, 15 shaded renderables, Rigify 918-bone rig (`0` unweighted body vertices, `0.4618 m` verified pose deformation), and Cycles studio renders.
+  - **Likeness measurement (`outline_match`, `threshold=0.98`):** `FRONT` measured `0.9055` IoU (`failed` at the strict `0.98` target; remaining gap comes from the reference's studio floor cast shadow, inter-boot shadow, and fine hair/cuff differences). `BACK`, `LEFT`, `RIGHT`, and `TOP` were `not_run` ("looked at, not measured", no reference pictures for those views).
+  - **Limitations:** retopology in the scripted E2E run used voxel/clean-mesh lowpoly proxies rather than hand-placed edge-loop patches; hitting `>= 0.98` across multiple views still requires multi-view clean-cutout references and iterative sculpting/fitting. Bpy snippets in stage files carry explicit verification markers for Blender 4.5.16.
 
 ## Set up
 

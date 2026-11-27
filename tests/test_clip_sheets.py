@@ -56,3 +56,19 @@ def test_sheets_written_once_with_index(course):
     assert cs.make_sheets(course, "clip", ffmpeg_dir=FFMPEG, workers=2) == 0
     assert (course / idx[0]["sheet"]).stat().st_mtime == m
     assert (course / "sheets" / ".gitignore").read_text().strip() == "*"
+
+
+def test_frame_pipes_png_without_tempdir(course, monkeypatch):
+    def forbid_tempdir(*args, **kwargs):
+        raise AssertionError("_frame must not create temporary directories")
+
+    import tempfile
+    monkeypatch.setattr(tempfile, "TemporaryDirectory", forbid_tempdir)
+    im = cs._frame(course / "clip.mp4", 5.0, FFMPEG)
+    assert im is not None and im.mode == "RGB" and im.size == (1920, 1080)
+
+    def bad_ffmpeg(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], 1, stdout=b"", stderr=b"boom")
+
+    monkeypatch.setattr(cs.subprocess, "run", bad_ffmpeg)
+    assert cs._frame(course / "clip.mp4", 5.0, FFMPEG) is None

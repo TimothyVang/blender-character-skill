@@ -903,7 +903,7 @@ result = {"census": census(low), "deviation": deviation(low, sculpt, levels=1)} 
 
 - `census`: `tris` 0, `ngons` 0, `bad_poles` 0, `non_manifold` 0. `open_borders` must be empty on the body (eye
   sockets and mouth bag are closed sacks) and hold only real openings on clothes (neck, cuffs, hem). Failed otherwise.
-- `mesh_report("body_retopo")`: `loose_parts` 1, `symmetry_error` below 0.001.
+- `mesh_report("body_retopo")`: `loose_parts` 1, `symmetry_error` below 0.001 (also report `symmetry_p95_error` and `symmetry_max_error`).
 - `deviation`: my limits, not the course's: `sculpt_to_low` `p99` under 0.3 % of the character's height and `max`
   under 1 % (a larger `max` means a part is not covered: a finger, an ear); `low_to_sculpt` `p99` under 0.3 %. Sockets
   and the mouth bag are meant to be off the surface and raise `low_to_sculpt` `max`; say so rather than hide it.

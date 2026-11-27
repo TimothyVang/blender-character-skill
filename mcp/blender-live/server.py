@@ -227,15 +227,15 @@ def compare_images(reference: str, candidate: str, max_px: int = 1600) -> CallTo
 Brush = Literal["grab", "snake_hook", "draw", "clay_strips", "inflate", "crease", "smooth"]
 
 
-def _bridge(cmd: str, timeout: float = 300, **args) -> dict:
+def _bridge(cmd: str, timeout: float = 300, **args) -> CallToolResult:
     try:
-        r = call(cmd, timeout=timeout, **args); r.pop("ok", None); return r
+        r = call(cmd, timeout=timeout, **args); r.pop("ok", None); return reply(r)
     except Exception as exc:
-        return {"status": "error", "detail": str(exc)[:3000]}
+        return reply({"status": "error", "detail": str(exc)[:3000]}, error=True)
 
 
 @mcp.tool()
-def reference_setup(images: dict[str, str], height: float = 2.0) -> dict:
+def reference_setup(images: dict[str, str], height: float = 2.0) -> CallToolResult:
     """Place concept pictures as REF_<VIEW> image empties. images maps FRONT/BACK/LEFT/RIGHT/TOP to a file path.
     Each stands upright with its bottom edge on the ground plane, `height` world units tall, behind the model for that
     view, visible only in orthographic views. Crop each picture tight to the character first so `height` is its height."""
@@ -243,7 +243,7 @@ def reference_setup(images: dict[str, str], height: float = 2.0) -> dict:
 
 
 @mcp.tool()
-def sculpt_begin(object: str, symmetry: Literal["", "X", "Y", "Z"] = "X", voxel_size: float | None = None) -> dict:
+def sculpt_begin(object: str, symmetry: Literal["", "X", "Y", "Z"] = "X", voxel_size: float | None = None) -> CallToolResult:
     """Pick the mesh to sculpt and its symmetry axis (object-local; "" for none). The choice is stored on the object and
     used by sculpt_strokes. Returns vertex count and the brush list."""
     return _bridge("sculpt_begin", object=object, symmetry=symmetry, voxel_size=voxel_size)
@@ -252,7 +252,7 @@ def sculpt_begin(object: str, symmetry: Literal["", "X", "Y", "Z"] = "X", voxel_
 @mcp.tool()
 def sculpt_strokes(object: str, strokes: list[dict], symmetry: str | None = None, capture: bool = False,
                    view: Literal["", "TOP", "BOTTOM", "FRONT", "BACK", "LEFT", "RIGHT"] = "", max_px: int = 1024) -> CallToolResult:
-    """Apply sculpt strokes in order. Each stroke is {"brush", "points": [[x,y,z],...], "radius", "strength",
+    """Apply strokes in order. Each stroke is {"brush", "points": [[x,y,z],...], "radius", "strength",
     "subtract", "snap"}: points and radius in world units; snap=true moves each point onto the nearest surface spot.
     Brushes: grab (one move: verts near the FIRST point shift by last minus first), snake_hook (pulls along the path),
     draw, clay_strips, inflate (raise; subtract lowers), crease (cuts a valley; subtract makes a ridge), smooth.
@@ -271,7 +271,7 @@ def sculpt_strokes(object: str, strokes: list[dict], symmetry: str | None = None
 
 
 @mcp.tool()
-def sculpt_remesh(object: str, voxel_size: float) -> dict:
+def sculpt_remesh(object: str, voxel_size: float) -> CallToolResult:
     """Voxel remesh: rebuild the surface as even quads of about voxel_size (world units), fusing overlapping parts
     into one skin. Use after a blockout and whenever strokes have stretched the faces. Clears the mask."""
     return _bridge("sculpt_remesh", timeout=900, object=object, voxel_size=voxel_size)
@@ -279,17 +279,17 @@ def sculpt_remesh(object: str, voxel_size: float) -> dict:
 
 @mcp.tool()
 def sculpt_mask(object: str, op: Literal["box", "clear", "invert"] = "clear", min: list[float] | None = None,
-                max: list[float] | None = None) -> dict:
+                max: list[float] | None = None) -> CallToolResult:
     """Protect vertices from strokes. box: mask everything inside the world-space box min..max; invert; clear."""
     return _bridge("sculpt_mask", object=object, op=op, min=min, max=max)
 
 
 @mcp.tool()
-def mesh_report(object: str) -> dict:
+def mesh_report(object: str) -> CallToolResult:
     """Mesh health in numbers: verts, faces, loose_parts, boundary_edges (holes), non_manifold_edges, symmetry_error
-    (0 = perfectly mirrored in X; fraction of the bounding-box diagonal), world bounds, masked_verts."""
+    (mean), symmetry_p95_error (95th percentile), symmetry_max_error (worst sampled vertex, exact up to 100k verts;
+    0 = perfectly mirrored in X, fraction of the bounding-box diagonal), world bounds, masked_verts."""
     return _bridge("mesh_report", object=object)
-
 
 def _label(cell: Image.Image, text: str) -> Image.Image:
     from PIL import ImageDraw

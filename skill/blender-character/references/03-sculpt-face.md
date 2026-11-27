@@ -523,7 +523,7 @@ Reader: run the exit check: `outline_match` at `0.98` for real reference views o
 ## Exit check
 
 1. `mesh_report(object="BLK_head")`: `loose_parts` 1, `boundary_edges` 0, `non_manifold_edges` 0, `symmetry_error`
-   below 0.002 unless the concept is asymmetric (say so if it is). Any other result is failed.
+   below 0.002 (and report `symmetry_p95_error` and `symmetry_max_error` to catch local spikes) unless the concept is asymmetric (say so if it is). Any other result is failed.
 2. Landmark numbers, from ray casts and bounds, each within `0.02*H` of the rule or of the concept's own measured
    ratio: eye centres on the eye line; nose base and brow on the thirds; lower-lip bottom at the halfway point;
    mouth corner X not beyond eye centre X; gap between eyeballs equal to one eye width; ear top and bottom inside

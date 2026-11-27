@@ -457,7 +457,7 @@ The course says voxel size depends on scene scale and to go higher or lower as n
 
 1. `mesh_report` on every body mesh: `loose_parts` 1 for each fused mesh (hand, foot, legs, torso, arm),
    `boundary_edges` 0, `non_manifold_edges` 0. More than one loose part after a join means the voxel remesh did
-   not fuse: failed. `symmetry_error` below 0.002 for the torso.
+   not fuse: failed. `symmetry_error` below 0.002 for the torso (and report `symmetry_p95_error` and `symmetry_max_error`).
 2. Numbers, each reported with pass or fail: finger joint creases at 0.5 and 0.75 of knuckle-to-tip (within
    0.05); finger lengths ordered middle > ring and index > little; neighbouring fingers and toes separated by a
    gap of at least 3 voxels (cast rays between them: no hit); inner ankle higher than outer; foot sole flat on

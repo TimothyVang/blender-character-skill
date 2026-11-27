@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .superpowers/
 .scratch/
+.deepmodebot/
 # course material is never committed: video, captions, transcripts, frames
 /references/
 video-courses/

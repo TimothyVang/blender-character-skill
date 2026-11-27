@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 POINTING_WORDS: tuple[str, ...] = ("right here", "this area", "like this", "like so", "over here", "this part")
@@ -81,14 +82,20 @@ def chapters_from_info(info: dict) -> list[dict]:
 
 def split_by_chapter(lines: list[tuple[float, str]], chapters: list[dict]) -> dict[int, list[tuple[float, str]]]:
     out: dict[int, list[tuple[float, str]]] = {c["n"]: [] for c in chapters}
+    if not chapters:
+        return out
     for t, s in lines:
-        owner = chapters[-1]
+        owner = None
         for c in chapters:
             if c["start"] <= t < c["end"]:
                 owner = c
                 break
-        if t < chapters[0]["start"]:
-            owner = chapters[0]
+        if owner is None:
+            if t < chapters[0]["start"]:
+                owner = chapters[0]
+            else:
+                started = [c for c in chapters if c["start"] <= t]
+                owner = started[-1] if started else chapters[0]
         out[owner["n"]].append((t, s))
     return out
 
@@ -107,6 +114,10 @@ def frame_times(chapter: dict, scene_times: list[float], pointing: list[float], 
                 min_gap_s: float = 2.0) -> list[float]:
     """Sorted times inside the chapter: pointing moments first, then scene changes, then a floor of one per floor_s.
     No two are closer than min_gap_s."""
+    if floor_s < 2.0:
+        raise ValueError(f"floor_s must be >= 2.0 to avoid filename collisions, got {floor_s}")
+    if min_gap_s < 1.0:
+        raise ValueError(f"min_gap_s must be >= 1.0 to avoid filename collisions, got {min_gap_s}")
     a, b = chapter["start"], chapter["end"]
     kept: list[float] = []
     for group in (sorted(pointing), sorted(scene_times)):
@@ -147,18 +158,41 @@ def find_ffmpeg_dir() -> str | None:
     return str(Path(exe).parent) if exe else None
 
 
+def _probe_duration(video: Path, ffmpeg_dir: str | None) -> float:
+    if not video.is_file():
+        return 0.0
+    ffprobe = str(Path(ffmpeg_dir) / "ffprobe") if ffmpeg_dir else (shutil.which("ffprobe") or "ffprobe")
+    try:
+        res = subprocess.run(
+            [ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(video)],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return 0.0
+    if res.returncode != 0:
+        return 0.0
+    try:
+        val = float((res.stdout or "").strip())
+    except ValueError:
+        return 0.0
+    return val if math.isfinite(val) and val > 0 else 0.0
+
+
 def _scene_times(video: Path, chapter: dict, ffmpeg_dir: str, threshold: float) -> list[float]:
     """Times where the picture changes, read from keyframes only at a small size (fast on long videos)."""
     cmd = [str(Path(ffmpeg_dir) / "ffmpeg"), "-hide_banner", "-nostats", "-skip_frame", "nokey",
            "-ss", f"{chapter['start']:.3f}", "-t", f"{chapter['end'] - chapter['start']:.3f}", "-i", str(video), "-an",
            "-vf", f"scale=320:-2,select='gt(scene,{threshold})',showinfo", "-vsync", "vfr", "-f", "null", "-"]
-    err = subprocess.run(cmd, capture_output=True, text=True, errors="replace").stderr
-    return [round(chapter["start"] + float(m), 2) for m in re.findall(r"pts_time:([0-9.]+)", err)]
+    res = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=600)
+    if res.returncode != 0:
+        detail = (res.stderr or "").strip()[-800:] or f"exit code {res.returncode}"
+        raise RuntimeError(f"ffmpeg scene detection failed for {video.name} chapter {chapter['n']}: {detail}")
+    return [round(chapter["start"] + float(m), 2) for m in re.findall(r"pts_time:([0-9.]+)", res.stderr)]
 
 
 def _grab_frame(video: Path, t: float, dest: Path, ffmpeg_dir: str) -> None:
     subprocess.run([str(Path(ffmpeg_dir) / "ffmpeg"), "-v", "error", "-ss", f"{t:.2f}", "-i", str(video), "-frames:v", "1",
-                    "-q:v", "3", "-y", str(dest)], check=False)
+                    "-q:v", "3", "-y", str(dest)], check=False, timeout=60)
 
 
 def _parse_chapter_selection(spec: str | None, chapters: list[dict]) -> set[int]:
@@ -177,8 +211,10 @@ def _fmt_clock(t: float) -> str:
 
 
 def process_video_dir(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters: str | None = None,
-                      floor_s: float = 30.0, threshold: float = SCENE_THRESHOLD) -> int:
+                      floor_s: float = 30.0, threshold: float = SCENE_THRESHOLD, workers: int = 4) -> int:
     """Build chapters/, frames/ and index.json from the downloaded files in `dir`. Safe to run again."""
+    if floor_s < 2.0:
+        raise ValueError(f"floor_s must be >= 2.0 to avoid filename collisions, got {floor_s}")
     dir = Path(dir)
     info = json.loads((dir / f"{video_id}.info.json").read_text(encoding="utf-8"))
     vtts = sorted(dir.glob(f"{video_id}.en*.vtt"))
@@ -188,8 +224,13 @@ def process_video_dir(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters
     preferred = dir / f"{video_id}.en.vtt"
     lines = parse_vtt((preferred if preferred.exists() else vtts[0]).read_text(encoding="utf-8", errors="replace"))
     chaps = chapters_from_info(info)
-    by = split_by_chapter(lines, chaps)
     video = dir / f"{video_id}.mp4"
+    if not (info.get("chapters") or []) and chaps[0]["end"] <= 0:
+        probed = _probe_duration(video, ffmpeg_dir)
+        if probed <= 0:
+            raise RuntimeError(f"{video_id}: missing or non-positive duration in info.json and ffprobe failed for {video}")
+        chaps[0]["end"] = probed
+    by = split_by_chapter(lines, chaps)
     selected = _parse_chapter_selection(chapters, chaps)
 
     old = {}
@@ -212,16 +253,13 @@ def process_video_dir(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters
             scenes = _scene_times(video, c, ffmpeg_dir, threshold)
             cache.write_text(json.dumps(scenes))
         times = frame_times(c, scenes, pointing_times(by[c["n"]]), floor_s=floor_s)
-        got = []
-        for t in times:
-            dest = fdir / f"{hhmmss(t)}.jpg"
-            if not dest.exists():
-                _grab_frame(video, t, dest, ffmpeg_dir)
-            if dest.exists():
-                got.append(t)
+        missing = [(t, fdir / f"{hhmmss(t)}.jpg") for t in times if not (fdir / f"{hhmmss(t)}.jpg").exists()]
+        if missing:
+            with ThreadPoolExecutor(max_workers=max(1, int(workers))) as pool:
+                list(pool.map(lambda item: _grab_frame(video, item[0], item[1], ffmpeg_dir), missing))
+        got = [t for t in times if (fdir / f"{hhmmss(t)}.jpg").exists()]
         frames[c["n"]] = got
         print(f"{video_id} {name}: {len(by[c['n']])} lines, {len(got)} frames", flush=True)
-
     index = build_index(video_id, chaps, by, frames)
     (dir / "chapters").mkdir(exist_ok=True)
     url = info.get("webpage_url") or ""
@@ -245,8 +283,12 @@ def _video_id(url: str) -> str:
     m = re.search(r"(?:v=|youtu\.be/|/shorts/|/embed/)([A-Za-z0-9_-]{11})", url)
     if m:
         return m.group(1)
-    out = subprocess.run(["yt-dlp", "--no-playlist", "--skip-download", "--print", "id", url], capture_output=True, text=True)
-    return out.stdout.strip().splitlines()[-1]
+    out = subprocess.run(["yt-dlp", "--no-playlist", "--skip-download", "--print", "id", url], capture_output=True, text=True, timeout=60)
+    lines = [line.strip() for line in (out.stdout or "").splitlines() if line.strip()]
+    if out.returncode != 0 or not lines:
+        detail = (out.stderr or out.stdout or "").strip() or f"exit code {out.returncode}"
+        raise RuntimeError(f"yt-dlp failed to resolve video id for {url!r}: {detail}")
+    return lines[-1]
 
 
 def protect_output(out_root: Path) -> None:
@@ -268,7 +310,7 @@ def download(url: str, out_root: Path, ffmpeg_dir: str | None) -> tuple[Path, st
            "-o", str(d / "%(id)s.%(ext)s"), url]
     if ffmpeg_dir:
         cmd[1:1] = ["--ffmpeg-location", ffmpeg_dir]
-    subprocess.run(cmd, check=False)
+    subprocess.run(cmd, check=False, timeout=3600)
     return d, vid
 
 
@@ -280,6 +322,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ffmpeg", default=None, help="folder holding ffmpeg (default: the one on PATH)")
     ap.add_argument("--floor", type=float, default=30.0, help="at least one frame per this many seconds")
     ap.add_argument("--scene", type=float, default=SCENE_THRESHOLD, help="scene-change sensitivity (lower = more frames)")
+    ap.add_argument("--workers", type=int, default=4, help="parallel ffmpeg workers for frame extraction")
     a = ap.parse_args(argv)
     ffmpeg_dir = a.ffmpeg or find_ffmpeg_dir()
     urls = [a.target]
@@ -293,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{vid}: download failed", file=sys.stderr)
             worst = max(worst, 1)
             continue
-        worst = max(worst, process_video_dir(d, vid, ffmpeg_dir, a.chapters, a.floor, a.scene))
+        worst = max(worst, process_video_dir(d, vid, ffmpeg_dir, a.chapters, a.floor, a.scene, workers=a.workers))
     return worst
 
 

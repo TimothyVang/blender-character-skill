@@ -583,9 +583,9 @@ Run on a fresh `build_proxy(voxel_size=0.01 * H)`:
 1. `scene_tree`: 13 `BLK_` mesh objects, each parented to `CHARACTER`, each at location 0, rotation 0, scale 1. The 8 paired parts (ears, upper
    leg, lower leg, foot, shoulder, upper arm, lower arm, hand) each carry one Mirror modifier.
 2. `mesh_report` on each part: `loose_parts` 1, `boundary_edges` 0, `non_manifold_edges` 0. On the five centre
-   parts `symmetry_error` is at most 0.002 (ours).
+   parts `symmetry_error` is at most 0.002 and `symmetry_p95_error` / `symmetry_max_error` show no localized spike (ours).
 3. `mesh_report(object="BLOCKOUT_PROXY")`: `loose_parts` 1 (every part touches its neighbours), `boundary_edges` 0,
-   `symmetry_error` at most 0.005 (ours), and `bounds_min` Z within 0.01 `H` of 0 (feet on the ground).
+   `symmetry_error` at most 0.005 (also inspect `symmetry_p95_error` and `symmetry_max_error`; ours), and `bounds_min` Z within 0.01 `H` of 0 (feet on the ground).
 4. `turnaround_sheet(object="CHARACTER", references={...})`, looked at for: the S curve from the side, arms
    clear of the body with a slight elbow bend, no stacked or floating parts, a readable outline.
 5. `outline_match(object="CHARACTER", references={...}, threshold=0.98)`. Record the `iou` of every measured
