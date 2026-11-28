@@ -24,7 +24,9 @@ defaults for a stylised figure about 7 heads tall: the videos do not show number
 from the videos; radii and distances are fractions of the head height, chosen here.
 
 This module never imports bpy: the plan is data, and the `exec_python` steps carry their code as text. It runs and
-is tested without Blender. The generated code has not been run in Blender in this repository yet.
+is tested without Blender (tests/test_speed_sculpt.py). The whole plan is also replayed in a live Blender 4.5.16 over
+real MCP by mcp/blender-live/speed_sculpt_smoke.py: 79 steps, 12 checks. The result is a posed, painted mannequin in
+his structure, not a likeness. Shape it against the reference pictures.
 """
 from __future__ import annotations
 
@@ -59,13 +61,13 @@ def proportions(height: float = 1.6) -> dict[str, dict]:
         "pelvis":     ((0, 0, top - h * 3.15),           (h * 0.64, h * 0.42, h * 0.5), "C"),
         "ear":        ((h * 0.38, h * 0.05, head_c),      (h * 0.06, h * 0.1, h * 0.16), "L"),
         "eye":        ((h * 0.16, -h * 0.33, head_c - h * 0.04), (h * 0.1, h * 0.1, h * 0.1), "L"),
-        "arm_upper":  ((h * 0.85, 0, top - h * 2.0),     (h * 0.17, h * 0.17, h * 0.72), "L"),
-        "arm_lower":  ((h * 0.92, 0, top - h * 3.35),    (h * 0.14, h * 0.14, h * 0.65), "L"),
-        "hand":       ((h * 0.95, 0, top - h * 4.2),     (h * 0.11, h * 0.06, h * 0.22), "L"),
+        "arm_upper":  ((h * 0.68, 0, top - h * 2.0),     (h * 0.18, h * 0.18, h * 0.68), "L"),   # overlaps the shoulder
+        "arm_lower":  ((h * 0.74, 0, top - h * 3.25),    (h * 0.15, h * 0.15, h * 0.64), "L"),
+        "hand":       ((h * 0.78, 0, top - h * 3.98),    (h * 0.11, h * 0.06, h * 0.22), "L"),
         "leg_upper":  ((h * 0.32, 0, top - h * 4.15),    (h * 0.26, h * 0.26, h * 0.98), "L"),
-        "leg_lower":  ((h * 0.3, h * 0.04, top - h * 5.75), (h * 0.18, h * 0.18, h * 0.88), "L"),
-        "foot":       ((h * 0.3, -h * 0.12, h * 0.12),   (h * 0.14, h * 0.32, h * 0.12), "L"),
-        "hair_cap":   ((0, h * 0.04, head_c + h * 0.08), (h * 0.41, h * 0.46, h * 0.46), "C"),
+        "leg_lower":  ((h * 0.3, h * 0.04, top - h * 5.85), (h * 0.18, h * 0.18, h * 0.95), "L"),   # overlaps knee and foot
+        "foot":       ((h * 0.3, -h * 0.12, h * 0.13),   (h * 0.14, h * 0.32, h * 0.13), "L"),
+        "hair_cap":   ((0, h * 0.09, head_c + h * 0.15), (h * 0.41, h * 0.42, h * 0.4), "C"),   # back and up: forehead free
     }
     return {k: {"center": tuple(round(v, 5) for v in c), "radii": tuple(round(v, 5) for v in r), "side": s}
             for k, (c, r, s) in p.items()}
@@ -302,7 +304,7 @@ def body_strokes(parts: dict) -> dict[str, list[dict]]:
             _s("grab", [(trx * 0.9, ty, tz + trz * 0.6), (trx * 1.02, ty, tz + trz * 0.72)], trz * 0.4),  # shoulder
             _s("clay_strips", [(trx * 0.35, ty - try_, tz + trz * 0.15)], trz * 0.3),                    # chest
             _s("draw", [(trx * 0.3, ty - try_ * 0.9, tz + trz * 0.62), (trx * 0.8, ty - try_ * 0.7, tz + trz * 0.7)],
-               trz * 0.08),                                                                              # clavicle
+               trz * 0.15),                                                                              # clavicle
         ],
         "pelvis": [
             _s("grab", [(prx, py, pz), (prx * 1.08, py, pz - prz * 0.1)], prz * 0.6),                    # hip out
@@ -368,6 +370,10 @@ def plan(height: float = 1.6, colors: dict | None = None, hair_locks: int = 8) -
                       ("foot", "[YS FGU0ZwYub-0 00:20]")):
         add(name, f"{name}: its own sphere, never joined", src)
     for name, strokes in body_strokes(parts).items():
+        # A coarse remesh: a raw 114-vert sphere is too sparse for strokes to land on (a live run moved 0 verts with
+        # a clavicle stroke). Coarse on purpose: his torso stays faceted into painting.
+        steps.append(_step("sculpt_remesh", {"object": PREFIX + name, "voxel_size": round(h / 30, 5)},
+                           f"coarse remesh of {name} so strokes have verts to move", "[YS umF8UhsczO4: faceted torso]"))
         steps.append(_step("sculpt_begin", {"object": PREFIX + name, "symmetry": "X"}, f"sculpt {name}", "[YS]"))
         steps.append(_step("sculpt_strokes", {"object": PREFIX + name, "strokes": strokes},
                            "Grab-led shaping: waist, shoulders, chest, hips", "[YS Grab ~0.45 to 0.6]"))

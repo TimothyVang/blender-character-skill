@@ -17,6 +17,19 @@ Five parts:
 
 ## Status
 
+- **Speed-sculpt plan** (`skill/blender-character/scripts/speed_sculpt.py`): all 79 steps replayed in live Blender
+  4.5.16 over real MCP stdio (`uv run --script mcp/blender-live/speed_sculpt_smoke.py OUT_DIR` with `BLENDER_EXE`
+  set), 12 of 12 checks passing:
+  - every stroke moved vertices;
+  - every part exists, and the one-sided parts are mirrored;
+  - the brow and lash strips have their modifier stack;
+  - the top was extracted from the mask;
+  - paint reached vertices;
+  - the toon material and the 4 rim lights are in place;
+  - the figure stands at the requested height.
+
+  The result is a posed, painted mannequin, not a likeness: the face and front hair locks are crude until shaped
+  against reference pictures. The smoke uses its own bridge port (9891) and never touches an open Blender.
 - **MCP sculpt, 1:1 and review tools:** tested against live Blender 4.5.16 over real MCP stdio
   (`mcp/blender-live/sculpt_smoke.py`, 60 checks passing, including `sculpt_relax`, `fit_outline`, `project_paint`,
   `visual_match`, `orbit_check` and `three_quarter_check`).
