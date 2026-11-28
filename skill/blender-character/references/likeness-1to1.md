@@ -2,8 +2,10 @@
 
 `outline_match` proves the outline. This file is the rest of the **proof**: the model's pixels, colours and
 surface against the reference pictures, from every angle. For a 1:1 job, its Landmarks step (loop step 2) shapes
-the model from stage 02 on; the measured proof runs from stage 09 on (once UVs exist), and again after any later
-change to shape, UVs or materials.
+the model from stage 02 on. Then the **clay gate**: steps 1 to 5b on untextured grey clay, with
+`references/clay-first.md`. It must pass before any UVs or paint. The painted proof runs from stage 09 on, and again
+after any later change to shape, UVs or materials. Paint never makes up for clay: a model that passed every paint
+gate on FRONT and LEFT still showed nested hair shells, a floating fringe and a second face from other angles.
 
 The proof has two kinds of evidence, reported separately:
 
@@ -63,10 +65,23 @@ Work the biggest failure first, in this order, and re-measure after each step:
      beside the cheek like a flap: skin from the side, hair from the front, a lock down the cheek at three-quarter.
    Move only along the axis the gated views do not see (x for FRONT/side, y for hair), re-check `outline_match`
    after each move. Find the head's real heights (chin, eye row, fringe) in the side picture before choosing ranges.
-3. **Outline.** `outline_match` until every chosen view is `>= 0.98`. For the last few percent, alternate
-   `fit_outline(views=["FRONT"])` and `fit_outline(views=["LEFT"])` with `strength` 0.6 to 0.8 and `sigma_px` 5 to
-   8; stop when two rounds gain less than 0.002. A larger `sigma_px` keeps sides round; a smaller one follows
-   fingers and hair tips.
+3. **Outline, in clay.** `outline_match` until every chosen view is `>= 0.98`, with paint off. Work in this order
+   (`clay-first.md` has the details and numbers):
+   1. move whole parts by the overlay (red: the picture has it, the model does not; blue: the model has extra);
+   2. sculpt the forms;
+   3. fit each part to its own smoothed profile curves read from the 2K pictures;
+   4. surgical moves for hands, bows and profile;
+   5. only then broad `fit_outline`.
+
+   `fit_outline` rules:
+   - `sigma_px` 6 to 10, `strength` 0.3 to 0.5, `max_px` about 2.5, `rim_angle` 50 to 60;
+   - face, eyes and hands masked; Mirror modifiers applied;
+   - Taubin `sculpt_relax` after it, then the clay pan;
+   - stop when two rounds gain less than 0.002, or at once if the pan shows damage.
+
+   **Never use a small `sigma_px` to chase fingers and hair tips.** On the test character, passes at 1.2 to 3.5 px
+   lifted the level views and turned the crown, chest and bow into cardboard boxes, the hem into teeth and the
+   fingers into twigs, at angles the level views do not see.
 4. **Clay.** `visual_match`: any view with `clay_banding_ratio` above 1.60 has terraces. Fix with `sculpt_remesh`,
    `sculpt_relax(method="laplacian")` with thin tips masked, then step 3 again. `sculpt_relax` that only uses
    `taubin` keeps waves several edges long: that is its design, not a failure of the call.
@@ -82,6 +97,8 @@ Work the biggest failure first, in this order, and re-measure after each step:
     inner shells visible from below. Keep `fit_outline` broad (`sigma_px >= 6.0`) and always mask the sculpted
     face and hands, followed by Taubin `sculpt_relax` and a fresh 48-view clay pan: narrow repeated `fit_outline`
     passes stamp FRONT × LEFT cardboard boxes onto curved clay that straight-on outline scores hide.
+    The full clay gate (outline, pan, `orbit_check`, landmarks, `mesh_report`) and what a "99.99 %" clay target
+    means are in `references/clay-first.md`. Show the person the clay sheets as PNGs before moving on.
 
 6. **Paint.** `project_paint(object="CHARACTER", references={...}, priority_views=[...], palette_view="FRONT")`
    with every picture that shows the model's pose, after step 2's landmarks hold. Before painting, make sure each

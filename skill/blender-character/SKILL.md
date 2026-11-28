@@ -62,8 +62,10 @@ when you start that stage, not before. Each ends with an exit check; do the chec
    you are about to work on (see "Two connections to Blender").
 2. Find out what reference pictures exist. Ask for them if none were given.
 3. Read `references/01-concept-and-references.md` and set the references up. When the job asks for a 1:1 match
-   with the pictures, also read `references/likeness-1to1.md` now: its Landmarks step shapes the blockout, and its
-   proof is the definition of done.
+   with the pictures, also read `references/likeness-1to1.md` and `references/clay-first.md` now. The Landmarks
+   step shapes the blockout, the clay gate must pass before UVs or paint, and the proof is the definition of done.
+   Upscale small pictures to about 2K first (stage 01, requirement 7). Keep the reference beside the clay in the
+   viewport the whole time, and work in short visible steps.
 4. Save the file to a new `.blend` right away, and save again at the end of every stage under a new name
    (`character_02_blockout.blend`, `character_03_face.blend`, ...). There is no undo across tool calls; a saved
    stage is your undo.
@@ -110,6 +112,17 @@ armature or sculpt a pose into a bound mesh when the character must move: 10b tu
 
 Do them in order. Stages 02 to 05 decide the likeness; do not move past 05 with a failing outline, because every
 later stage copies the shape it is given.
+
+**Clay first, paint second.** The untextured grey clay must match the pictures from every angle before any UVs or
+paint. That means:
+- the outline `>= 0.98` on the chosen views, measured with paint off;
+- a clean 48-view clay pan (8 azimuths × elevations −35°, 0°, +35°, head and body);
+- `orbit_check` with `failed: 0`;
+- the landmarks in place.
+
+Paint hides a wrong shape only from the angles the pictures were drawn from. Read `references/clay-first.md` at
+stage 02. A "99.99 %" clay target means zero open findings on the clay pan and every clay number passed. It does not
+mean an outline score of 0.9999: the pictures themselves cap that score, so report the score reached and the cap.
 
 ## Conventions
 
@@ -229,7 +242,9 @@ is textured, a **1:1 pixel match** in those views.
 - `failed` at 0.97 is failed. Report the number. Keep working or say where it stalled and why.
 - `turnaround_sheet` and `viewport_capture` are for looking. Looking is necessary, but it is not a measurement.
 
-`outline_match` is blind inside the silhouette. From stage 09 on, read `references/likeness-1to1.md` and run its
+`outline_match` is blind inside the silhouette, and FRONT and LEFT are blind to the clay above, below and behind.
+Before UVs, pass the clay gate in `references/clay-first.md` (48-view clay pan, outline with paint off). From stage
+09 on, read `references/likeness-1to1.md` and run its
 **proof**, with the rig at its rest pose: `visual_match` per referenced view (outline, SSIM, interior edges,
 CIEDE2000 colour, untextured clay banding), `orbit_check` from every angle, `three_quarter_check` at the angles
 between neighbouring pictures (do the two pictures put the same thing on the same surface?), and an AI-vision
