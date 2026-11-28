@@ -9,8 +9,9 @@ Per video, in OUT/<video-id>/:
                                             the screen ("right here"), and at least one per --floor seconds
   index.json                                chapters, frames, and the transcript line each frame belongs to
 
-Exit code 0 on success, 2 when a video has no English captions. The material is for private study: keep it
-out of version control and do not republish it.
+Exit code 0 on success, 2 when a video has no English captions. A video with no narration (a speed-model set to
+music) has nothing to transcribe: pass --silent to keep its chapters and frames and leave the transcripts empty.
+The material is for private study: keep it out of version control and do not republish it.
 """
 from __future__ import annotations
 
@@ -98,6 +99,19 @@ def split_by_chapter(lines: list[tuple[float, str]], chapters: list[dict]) -> di
                 owner = started[-1] if started else chapters[0]
         out[owner["n"]].append((t, s))
     return out
+
+
+def read_lines(dir: Path, video_id: str, silent: bool = False) -> list[tuple[float, str]]:
+    """Transcript lines from the video's English captions (<id>.en.vtt preferred). With silent=True a video with no
+    captions has no lines; without it, missing captions raise FileNotFoundError. A silent video's auto-captions are
+    song lyrics, not teaching, so silent=True ignores any captions that are there."""
+    if silent:
+        return []
+    vtts = sorted(Path(dir).glob(f"{video_id}.en*.vtt"))
+    if not vtts:
+        raise FileNotFoundError(f"{video_id}: no English captions")
+    preferred = Path(dir) / f"{video_id}.en.vtt"
+    return parse_vtt((preferred if preferred.exists() else vtts[0]).read_text(encoding="utf-8", errors="replace"))
 
 
 def pointing_times(lines: list[tuple[float, str]]) -> list[float]:
@@ -211,18 +225,19 @@ def _fmt_clock(t: float) -> str:
 
 
 def process_video_dir(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters: str | None = None,
-                      floor_s: float = 30.0, threshold: float = SCENE_THRESHOLD, workers: int = 4) -> int:
-    """Build chapters/, frames/ and index.json from the downloaded files in `dir`. Safe to run again."""
+                      floor_s: float = 30.0, threshold: float = SCENE_THRESHOLD, workers: int = 4, silent: bool = False) -> int:
+    """Build chapters/, frames/ and index.json from the downloaded files in `dir`. Safe to run again.
+    silent=True: a video with no English captions is processed with empty transcripts instead of exiting 2."""
     if floor_s < 2.0:
         raise ValueError(f"floor_s must be >= 2.0 to avoid filename collisions, got {floor_s}")
     dir = Path(dir)
     info = json.loads((dir / f"{video_id}.info.json").read_text(encoding="utf-8"))
     vtts = sorted(dir.glob(f"{video_id}.en*.vtt"))
-    if not vtts:
-        print(f"{video_id}: no English captions (expected {video_id}.en.vtt); nothing written", file=sys.stderr)
+    if not vtts and not silent:
+        print(f"{video_id}: no English captions (expected {video_id}.en.vtt); nothing written. "
+              "Pass --silent if the video has no narration.", file=sys.stderr)
         return 2
-    preferred = dir / f"{video_id}.en.vtt"
-    lines = parse_vtt((preferred if preferred.exists() else vtts[0]).read_text(encoding="utf-8", errors="replace"))
+    lines = read_lines(dir, video_id, silent)
     chaps = chapters_from_info(info)
     video = dir / f"{video_id}.mp4"
     if not (info.get("chapters") or []) and chaps[0]["end"] <= 0:
@@ -270,6 +285,8 @@ def process_video_dir(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters
         body = [f"# {c['n']:02d} {c['title']}", "",
                 f"Source: {info.get('title', video_id)} {url} ({_fmt_clock(c['start'])} to {_fmt_clock(c['end'])})",
                 "Private study notes. Do not republish.", ""]
+        if not by[c["n"]]:
+            body += ["(No narration in this stretch: read the frames.)", ""]
         for t, s in by[c["n"]]:
             body.append(f"[{_fmt_clock(t)}] {s}")
             body += [f"    frame: {p}" for p in by_line.get(t, [])]
@@ -297,11 +314,11 @@ def protect_output(out_root: Path) -> None:
     (out_root / ".gitignore").write_text("*\n", encoding="utf-8")
 
 
-def download(url: str, out_root: Path, ffmpeg_dir: str | None) -> tuple[Path, str]:
+def download(url: str, out_root: Path, ffmpeg_dir: str | None, silent: bool = False) -> tuple[Path, str]:
     vid = _video_id(url)
     d = out_root / vid
     d.mkdir(parents=True, exist_ok=True)
-    have = (d / f"{vid}.mp4").exists() and (d / f"{vid}.info.json").exists() and any(d.glob(f"{vid}.en*.vtt"))
+    have = (d / f"{vid}.mp4").exists() and (d / f"{vid}.info.json").exists() and (silent or any(d.glob(f"{vid}.en*.vtt")))
     if have:
         print(f"{vid}: already downloaded", flush=True)
         return d, vid
@@ -323,6 +340,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--floor", type=float, default=30.0, help="at least one frame per this many seconds")
     ap.add_argument("--scene", type=float, default=SCENE_THRESHOLD, help="scene-change sensitivity (lower = more frames)")
     ap.add_argument("--workers", type=int, default=4, help="parallel ffmpeg workers for frame extraction")
+    ap.add_argument("--silent", action="store_true", help="the video has no narration: process it without captions")
     a = ap.parse_args(argv)
     ffmpeg_dir = a.ffmpeg or find_ffmpeg_dir()
     urls = [a.target]
@@ -331,12 +349,13 @@ def main(argv: list[str] | None = None) -> int:
     protect_output(Path(a.out))
     worst = 0
     for url in urls:
-        d, vid = download(url, Path(a.out), ffmpeg_dir)
+        d, vid = download(url, Path(a.out), ffmpeg_dir, a.silent)
         if not (d / f"{vid}.info.json").exists() or not (d / f"{vid}.mp4").exists():
             print(f"{vid}: download failed", file=sys.stderr)
             worst = max(worst, 1)
             continue
-        worst = max(worst, process_video_dir(d, vid, ffmpeg_dir, a.chapters, a.floor, a.scene, workers=a.workers))
+        worst = max(worst, process_video_dir(d, vid, ffmpeg_dir, a.chapters, a.floor, a.scene, workers=a.workers,
+                                                     silent=a.silent))
     return worst
 
 

@@ -2,6 +2,8 @@
 
 Course source: chapter 04 "Sculpting the Face of Your Character", 01:36:09 to 02:28:05.
 (The course records in Blender 5.0.1; code-block verification is noted on each block.)
+For a posed, render-only character built from spheres, see `speed-sculpt.md`. It does the face in the order
+sphere, face plane, sockets, nose, ears, mouth, then eyeballs, then lids [YS 00:00 to 00:09].
 
 ## Goal
 
@@ -538,6 +540,154 @@ Reader: run the exit check: `outline_match` at `0.98` for real reference views o
    (a changed picture is no longer the reference). A head-only `outline_match(object="BLK_head", ...)` against a
    head crop of a real picture is allowed as a diagnostic, never as the stage result.
 5. Save with `save_file` under a new numbered name (the course saves incrementally).
+
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Source: Nhij Quang, "Blender 3D Quick Modeling Character For Game - Girl#01", chapter 9 "Head Modeling", 00:33:20 to 00:42:03 (18 clips). Nothing is sculpted. The head is box/poly-modelled strip by strip over the turnaround sheet, using a half mesh with a Mirror modifier. Each step below lists what the frames show.
+
+### Order of work
+
+1. [NQ 00:33:20 to 00:33:30] Start from an empty mesh object (Cube.007, status bar Verts 0/0) in Edit Mode. Add a Mirror modifier: Axis X, Clipping on, Merge on at 0.001 m. Result: a half-object setup. How the empty mesh was made is not shown.
+2. [NQ 00:33:30 to 00:33:52] Switch to Right Orthographic over the side reference. Build a vertex chain along the face profile (brow, nose, mouth, chin), about 6 vertices (Verts 6/6, Edges 5/5). Extrude the chain sideways into a first column of quads and drag each vertex onto the drawing (G x5, Move Y -0.00871 m). Result: 13 verts, 3 faces.
+3. [NQ 00:33:52 to 00:34:14] Switch to Front Orthographic and slide the vertices in X so the strips follow the front outline: a centre column, a band across the eyes, and a jaw line down to the chin. Check from Top Orthographic, where the patch should read as a shallow V (face curves back). Result: 28 verts, 16 faces (status Tris 32).
+4. [NQ 00:34:14 to 00:34:36] Refine the eye-region quads in side view (Move X 0.009073, Y -0.008065 m) and even out the spacing with Vertex Slide (G G, value 0.0495). Layout: the rows around the eye are horizontal bands that follow the brow, eye and cheek lines on the reference. There are no proper radial loops around the eye yet. Result: 33 verts, 20 faces.
+5. [NQ 00:34:36 to 00:34:58] In Object Mode run Shade Smooth with Keep Sharp Edges on to read the forms (59 verts, 40 faces, 80 tris with the mirror). Back in Edit Mode, pull the centre faces under the eyes forward into a small wedge nose.
+6. [NQ 00:34:58 to 00:35:19] Extrude the centre strip down from the nose to the chin. Scale the mouth row (0.8665 uniform), extrude the mouth-row edge out to the mouth corner, and merge stray vertices (M). Result: 58 verts, 38 faces.
+7. [NQ 00:35:19 to 00:35:48] Bevel the mouth edges: Affect Edges, Width Type Offset, Width 0.0178 m, Segments 1, Shape 0.5, Loop Slide on, Miter Outer/Inner Sharp, Intersection Grid Fill, Profile Superellipse. Then move the ring vertices onto the drawn lip line (Move X 0.002674, Z 0.000243 m). Result: one edge ring around a shallow mouth slit. The mouth is geometry, but only a slit or crease, not an open mouth with an interior. 64 verts, 45 faces.
+8. [NQ 00:35:48 to 00:36:03] Fill the holes between the mouth ring, cheek and jaw with Make Face (F), switching between edge and vertex select (keys 2, X, 1, F x2). Result: 75 verts, 59 faces.
+9. [NQ 00:36:03 to 00:36:17] Extrude the top edge of the face up over the forehead, then rotate and move it in side view (Move Y 0.005544, Z 0.002016 m). Result: 85 verts, 68 faces.
+10. [NQ 00:36:17 to 00:37:01] Extrude the side boundary of the face backward as a wide strip and keep adding rows until the skull and back of the head are closed (Move Y -0.001815/-0.003388, Z -0.008448 m). Result: closed half head shell, 123 verts, 101 faces (201 tris).
+11. [NQ 00:37:01 to 00:38:21] Join the head into the body object "Cube" (inferred from the frames: the outliner loses Cube.007 and the object count goes from 1/10 to 1/9). On the neck, add a Loop Cut (1 cut, Smoothness 0, Falloff Inverse Square, Factor 0, Clamp on, Correct UVs on). Bridge head and neck by filling faces one patch at a time (F). Use the Knife (K) and Connect Vertex Path (J) where vertex counts differ, and undo once (Ctrl+Z). Result: head and body are one mirrored mesh. Edit-mode half count about 663 verts / 655 faces. Scene total 3,209 verts / 3,066 faces / 5,894 tris.
+12. [NQ 00:38:21 to 00:38:57] Ear: select 2 faces on the side of the head and use Extrude Region and Move along the Normal (0.035349 m). Shape the block into a pointed ear (Move Z 0.007778, X -0.004305 m). The ear is part of the head mesh. Result: about 675 verts.
+13. [NQ 00:38:57 to 00:40:39] Eyes. Turn on see-through (Z pie) in Front Orthographic and slide the vertices around the eye onto the drawn eye outline (Vertex Slide factor 0.527, Clamp on, Correct UVs on). Then:
+    - Open the eye area into a hole (the reference shows through) and shape the opening.
+    - Cap it again with faces, add a loop cut and scale (header Scale 2.0161).
+    - Pick the inner ring with Ctrl-click shortest path and scale it to 0.51 uniform. This makes an iris ring with a centre fan.
+    - Select the eye patch (Select Linked; Seam looks highlighted in Delimit) and Alt-loop-select the ring. Push it back into the head (Move Y 0.002605 m) so the eye sits recessed inside a rim.
+    The eye is an oval recessed patch with concentric rings, made in geometry. No separate eyeball sphere is seen. Iris colour presumably comes from the painted texture later (not shown in this chapter). Result: about 771 verts / 752 faces.
+14. [NQ 00:40:39 to 00:41:08] Upper lid/lash: Shift+Alt loop-select the upper eyelid edge and extrude it outward and forward into a thick overhanging flap. Check it in side view and wireframe. Result: about 808 verts / 784 faces.
+15. [NQ 00:41:08 to 00:42:03] Eyebrow: in see-through front view, extrude vertices along the drawn brow (E x3). Select the brow faces with Select Linked, extend with Ctrl-click extrude to cursor, and move them forward off the forehead (Move Y 0.002434, then 0.009789 m) into a raised brow block. There is one more small extrusion and crease near the eye whose purpose cannot be read. End of chapter: 854 verts / 822 faces / 1,581 tris on the body+head half.
+
+### How it looks on screen
+
+- Layout workspace. The image editor on the left holds the turnaround sheet. A copy of the sheet is also placed in the viewport behind the model; the outliner shows Empty and Empty.001, so these are probably image empties.
+- Most edits happen in Right Orthographic or Front Orthographic over the reference. Top Orthographic is used to check depth, and User Orthographic for 3/4 checks.
+- The Mirror modifier stays on the whole time (X, Clipping, Merge 0.001 m), and "Mirror Editing" shows checked in the Move redo panels.
+- Solid shading. See-through/X-ray (Z pie) is turned on when fitting the eye and brow over the front drawing.
+- Work is vertex by vertex: G, G G (vertex slide), E, F, M, J, K, Ctrl+R. No sculpt brushes, no Subdivision Surface, no Shrinkwrap.
+- The status bar counts rise slowly: about 120 verts for the half head shell before joining to the body.
+
+### Python route
+
+```python
+# not run in Blender
+import bpy, bmesh
+from mathutils import Vector
+
+# Step 1: empty half-mesh with Mirror X
+me = bpy.data.meshes.new("Head"); ob = bpy.data.objects.new("Head", me)
+bpy.context.collection.objects.link(ob)
+m = ob.modifiers.new("Mirror", 'MIRROR')
+m.use_axis[0] = True; m.use_clip = True
+m.use_mirror_merge = True; m.merge_threshold = 0.001
+```
+
+```python
+# not run in Blender
+# Step 2-3: profile chain on x=0 (y,z read from the side reference), then extrude strips outward
+bm = bmesh.new()
+profile = [(0.0, -0.08, 1.80), (0.0, -0.09, 1.76), (0.0, -0.10, 1.73), (0.0, -0.09, 1.70), (0.0, -0.07, 1.67)]  # placeholder coords
+vs = [bm.verts.new(p) for p in profile]
+edges = [bm.edges.new((vs[i], vs[i+1])) for i in range(len(vs)-1)]
+ret = bmesh.ops.extrude_edge_only(bm, edges=edges)
+new_verts = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=new_verts, vec=Vector((0.02, 0.01, 0.0)))
+# then set each new vert's x from the front reference, y from side
+bm.to_mesh(ob.data); bm.free()
+```
+
+```python
+# not run in Blender
+# Step 7: bevel the mouth edges (edit mode, mouth edges selected)
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.mesh.bevel(offset_type='OFFSET', offset=0.0178, segments=1, profile=0.5,
+                   affect='EDGES', loop_slide=True, miter_outer='SHARP', miter_inner='SHARP')
+```
+
+```python
+# not run in Blender
+# Step 8/11: fill a gap or bridge head to neck from selected border verts
+bm = bmesh.from_edit_mesh(ob.data)
+sel = [v for v in bm.verts if v.select]
+bmesh.ops.contextual_create(bm, geom=sel)          # like F
+bmesh.update_edit_mesh(ob.data)
+# join head into body (object mode): body active, both selected
+# bpy.ops.object.join()
+```
+
+```python
+# not run in Blender
+# Step 12: ear = extrude 2 side faces along their normal by 0.035
+bm = bmesh.from_edit_mesh(ob.data)
+faces = [f for f in bm.faces if f.select]
+n = sum((f.normal for f in faces), Vector()).normalized()
+ret = bmesh.ops.extrude_face_region(bm, geom=faces)
+verts = [g for g in ret["geom"] if isinstance(g, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=verts, vec=n * 0.035349)
+bmesh.update_edit_mesh(ob.data)
+```
+
+```python
+# not run in Blender
+# Step 13: iris ring = inset the eye cap, scale ring 0.51, push patch into head
+bm = bmesh.from_edit_mesh(ob.data)
+eye_faces = [f for f in bm.faces if f.select]
+bmesh.ops.inset_region(bm, faces=eye_faces, thickness=0.002, depth=0.0)
+ring = list({v for f in eye_faces for v in f.verts})
+c = sum((v.co for v in ring), Vector()) / len(ring)
+from mathutils import Matrix
+bmesh.ops.scale(bm, vec=Vector((0.51, 0.51, 0.51)), space=Matrix.Translation(-c), verts=ring)
+bmesh.ops.translate(bm, verts=ring, vec=Vector((0, 0.002605, 0)))  # +Y = into head when face looks -Y
+bmesh.update_edit_mesh(ob.data)
+```
+
+```python
+# not run in Blender
+# Step 14/15: lash flap / brow = extrude an edge loop or face strip and move it forward
+bm = bmesh.from_edit_mesh(ob.data)
+lid = [e for e in bm.edges if e.select]
+ret = bmesh.ops.extrude_edge_only(bm, edges=lid)
+bmesh.ops.translate(bm, verts=[g for g in ret["geom"] if isinstance(g, bmesh.types.BMVert)],
+                    vec=Vector((0, -0.004, 0.001)))
+bmesh.update_edit_mesh(ob.data)
+```
+
+### Settings read on screen
+
+- Mirror modifier: Axis X, Bisect off, Clipping on, Merge on, 0.001 m. Same on the body "Cube" after joining.
+- Move redo values: Y -0.00871; Y 0.004839 / Z -0.002419; X 0.009073 / Y -0.008065; X -0.00175; Y -0.000506; X 0.002674 / Z 0.000243; Y 0.005544 / Z 0.002016; Y -0.001815 / Z -0.008448; Y -0.003388; X 0.002446; Z 0.007778; X -0.004305; X 0.002188 / Z 0.001702; Y 0.001167 / Z -0.001458; X -0.000141 / Z 0.001829; Y 0.002605; X -0.000405 / Z 0.000405; Y -0.000828; Y 0.002434; Y 0.009789; Y 0.001937 (all m).
+- Vertex Slide 0.0495 (header). Vertex Slide Factor 0.527, Even off, Flipped off, Clamp on, Mirror Editing on, Correct UVs on.
+- Scale 0.8665 uniform (mouth row). Scale 0.510 uniform (iris ring). Header Scale X 2.0161 (eye cap).
+- Shade Smooth: Keep Sharp Edges on.
+- Bevel: Affect Edges, Width Type Offset, Width 0.0178 m, Segments 1, Shape 0.500, Material Index -1, Harden Normals off, Clamp Overlap off, Loop Slide on, Mark Seams off, Mark Sharp off, Miter Outer Sharp, Inner Sharp, Intersection Type Grid Fill, Face Strength None, Profile Type Superellipse.
+- Loop Cut and Slide: Number of Cuts 1, Smoothness 0.000, Falloff Inverse Square, Factor 0.000, Even off, Flipped off, Clamp on, Mirror Editing off, Correct UVs on.
+- Extrude Region and Move (ear): Orientation Normal, Move Z 0.035349.
+- Select Linked: Deselect off; Delimit list Normal/Material/Seam/Sharp/UVs, with Seam looking highlighted (low confidence).
+- Units switch between Centimeters and Millimeters in the viewport overlay (grid scale display).
+- Counts: half head shell 123 verts / 101 faces / 201 tris. After joining with the body, chapter end 854 verts / 822 faces / 1,581 tris (edit mode). Scene object-mode totals: 3,209 verts / 3,066 faces / 5,894 tris at 00:38:21.
+
+### Not visible in the frames
+
+- How the empty Cube.007 was created (delete-all on a cube, or a merged single vertex).
+- Exact keystrokes between frames (the 7-second gaps hide many single-vertex moves). The order inside each step is inferred.
+- Whether the head was joined with Ctrl+J. Only the outliner and object-count change are seen.
+- Whether the eye hole was made with Delete Faces or Dissolve.
+- Whether the eye/iris colour, pupil and lashes come from texture. Painting is not in these chapters.
+- No mouth interior, teeth or tongue are seen; nothing indicates any.
+- The purpose of the small extrusion near the eye at 00:41:52 to 00:41:59.
+- The image empties' settings (opacity, depth). The sheet appears semi-transparent behind the mesh, but no values are visible.
 
 ## Gaps
 

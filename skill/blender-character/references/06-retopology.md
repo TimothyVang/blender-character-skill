@@ -4,6 +4,14 @@ Course source: chapter 07 "Intro to Retopology (Face Retopology)", chapter 08 "R
 "Retopologizing the Clothes & Accessories", 06:02:34 to 10:44:02. The course screen shows Blender 5.0.1; everything
 below was checked in 4.5.16.
 
+On the **low-poly game route** (see "Two routes" in `SKILL.md`) skip this stage. That model is poly-modelled at
+its final resolution from the start, so there is no sculpt to retopologize and nothing to bake. Before stage 07,
+still run `mesh_report` on every piece: no holes except the intended openings, no loose verts, the Mirror modifier
+applied or kept as you plan for the export. The second course does one cleanup that belongs here: it deletes the
+faces nobody sees, small faces hidden under the belt and collar, picked in X-ray wireframe. The body drops from
+1,705 to 1,622 faces [NQ 00:53:14 to 00:54:51], read from the status bar; the delete itself is not shown, only the
+falling count.
+
 ## Goal
 
 Every part of the character exists a second time as a light, all-quad mesh whose edge loops follow the way the part

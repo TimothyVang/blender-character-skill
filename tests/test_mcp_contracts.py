@@ -9,6 +9,7 @@ import pytest
 from mcp.types import CallToolResult
 
 MCP_DIR = Path(__file__).resolve().parents[1] / "mcp" / "blender-live"
+sys.path.insert(0, str(MCP_DIR))      # outline.py and sculpt_cmds.py import projection.py from beside them
 
 
 def _load_mcp_module(name: str):
@@ -157,3 +158,66 @@ def test_components_handles_non_bool_and_preserves_zero_background():
     assert lab[0, 0] == 0 and lab[2, 0] == 0
     assert lab[0, 1] == lab[1, 0] == lab[1, 1] > 0
     assert lab[2, 2] > 0 and lab[2, 2] != lab[0, 1]
+
+
+def test_visual_match_mcp_contract_handles_pass_fail_and_errors(monkeypatch, tmp_path):
+    import base64, io
+    from PIL import Image
+
+    # Create a clean RGBA reference with two distinct interior colour bands
+    h, w = 256, 256
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    yy, xx = np.mgrid[:h, :w]
+    mask = ((xx - 128) / 55.0) ** 2 + ((yy - 128) / 95.0) ** 2 <= 1.0
+    rgba[mask, 3] = 255
+    rgba[mask & (yy < 128), :3] = (230, 210, 185)
+    rgba[mask & (yy >= 128), :3] = (35, 70, 125)
+    ref_file = tmp_path / "front.png"
+    Image.fromarray(rgba).save(ref_file)
+
+    def _to_b64(arr, mode):
+        buf = io.BytesIO()
+        Image.fromarray(arr, mode=mode).save(buf, "PNG")
+        return base64.b64encode(buf.getvalue()).decode()
+
+    sil_b64 = _to_b64((mask.astype(np.uint8) * 255), "L")
+    nz = np.sqrt(np.clip(1.0 - ((xx - 128) / 60.0) ** 2 - ((yy - 128) / 100.0) ** 2, 0.0, 1.0))
+    clay_smooth = (np.clip(50.0 + 170.0 * nz, 0, 255) * mask).astype(np.uint8)
+    clay_banded = (np.clip(50.0 + 170.0 * nz + 35.0 * np.sin(yy * np.pi / 2.0), 0, 255) * mask).astype(np.uint8)
+    mat_good = rgba[:, :, :3].copy()
+
+    monkeypatch.setenv("BLENDER_LIVE_TMP", str(tmp_path))
+    monkeypatch.setattr(srv, "call", lambda cmd, timeout=900, **kw: {
+        "ok": True,
+        "shots": [{
+            "view": "FRONT",
+            "perspective": "ORTHO",
+            "silhouette_b64": sil_b64,
+            "clay_b64": _to_b64(clay_smooth, "L"),
+            "material_b64": _to_b64(mat_good, "RGB"),
+        }],
+    })
+    ok_res = srv.visual_match(object="CHARACTER", references={"FRONT": str(ref_file)})
+    assert isinstance(ok_res, CallToolResult) and ok_res.isError is False
+    payload = json.loads(ok_res.content[0].text)
+    assert payload["views"]["FRONT"]["status"] == "passed"
+    assert Path(payload["visual_sheet_path"]).is_file()
+
+    monkeypatch.setattr(srv, "call", lambda cmd, timeout=900, **kw: {
+        "ok": True,
+        "shots": [{
+            "view": "FRONT",
+            "perspective": "ORTHO",
+            "silhouette_b64": sil_b64,
+            "clay_b64": _to_b64(clay_banded, "L"),
+            "material_b64": _to_b64(mat_good, "RGB"),
+        }],
+    })
+    fail_res = srv.visual_match(object="CHARACTER", references={"FRONT": str(ref_file)})
+    assert fail_res.isError is False
+    fail_payload = json.loads(fail_res.content[0].text)
+    assert fail_payload["views"]["FRONT"]["status"] == "failed"
+    assert "clay_banding_ratio" in fail_payload["views"]["FRONT"]["failed_checks"]
+
+    bad_res = srv.visual_match(object="CHARACTER", references={"BADVIEW": str(ref_file)})
+    assert bad_res.isError is True

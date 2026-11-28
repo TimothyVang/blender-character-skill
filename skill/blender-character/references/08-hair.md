@@ -708,6 +708,145 @@ reference picture is `not_run`: report it as "looked at, not measured", never as
 thick (my choice) so strands register in a silhouette; with millions of strands lower `Viewport Amount` to about
 0.1 first, because `outline_proxy` turns every evaluated strand into mesh.
 
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Source: chapter 10 "Hair Modeling", 00:42:03 to 00:51:20 (19 clips). The hair is built from extruded polygon strips: single-sided, one face wide, no thickness, no Solidify modifier, no curves and no particle hair. It is split into a fringe object, a mirrored cap-plus-back-hair object, and a bun made of duplicated rotated petals.
+
+### Order of work
+
+1. [NQ 00:42:03 to 00:42:13] Snap the 3D cursor to the world origin (Shift+S pie). Make a new empty mesh object (named Cube.007 again, because the old head Cube.007 was joined into the body). It has no modifiers and Verts 0/0. Object count 1/10.
+2. [NQ 00:42:13 to 00:42:57] In see-through Front Orthographic, extrude a vertex chain from the crown along the hairline and rotate it (Move X 0.055742, Z 0.090581 m; header Rotation 19.82). Adjust it in side view, with undo and Ctrl-click extrude to cursor. With see-through off, push the strip off the scalp (Move X 0.029015, Z -0.012194 m). Result: a one-row band of quads over the top of the head from the centre to the temple. 26 verts, 12 faces.
+3. [NQ 00:42:57 to 00:43:56] Bang strands: extrude band edges straight down into strips one face wide, beside and in front of the face. Taper the tips with Scale and add a loop cut along each strand (1 cut, Falloff Inverse Square, Factor about 0.088, Clamp, Mirror Editing, Correct UVs on). One long lock is pulled down past the jaw in side view (Move Y about 0.148 m). The left image editor is switched to a close front portrait. Result: 62 verts, 27 faces.
+4. [NQ 00:43:56 to 00:44:47] More fringe strands with Extrude x4 (Move X -0.034516, Z -0.11468 m). Bend them with Proportional Editing (header Proportional Size 0.3505 m). Rip (V) to split neighbouring strands; one attempt shows "Rip failed". Result: Cube.007 fringe, 87 verts, 41 faces, 82 tris. The fringe is asymmetric and has no Mirror modifier.
+5. [NQ 00:44:47 to 00:44:55] Select a side strand with Select Linked and open Add Modifier. The next frame shows a new object Cube.008 with a Mirror modifier (X, Clipping, Merge 0.001 m). Inferred: the strand was separated (P) into Cube.008, which got a Mirror. Object count 0/11.
+6. [NQ 00:44:55 to 00:45:31] Add a UV Sphere (146 verts, 304 edges, 160 faces; that matches 16 segments x 10 rings). Move it up to head height (Move Z 1.8573 m) and fit it over the skull in side view (Move Y -0.022645, Z 0.051388 m). Delete part of it (X). It then shows as part of Cube.008 and is shaped with Proportional Editing (size 0.2176 m). Result: Cube.008 = mirrored half cap plus side lock, 69 verts / 46 faces.
+7. [NQ 00:45:31 to 00:46:01] Return to Cube.007 and adjust the fringe from Front, Top and Left Orthographic so it hugs the cap (87 verts / 42 faces).
+8. [NQ 00:46:01 to 00:46:59] Bun on top, in Cube.007: model one small petal piece at the crown. Duplicate it and rotate the copy around Z in top view (Angle 82.6, then -75.5, Orientation View). Add a loop cut to bend the petals (header "Cuts: 1, Smoothness: 0.00") and move vertices (X 0.015567, Y 0.007938, X -0.010569 m). Result: a closed ring of petals forming the bun. Cube.007 is about 189 verts / 99 faces.
+9. [NQ 00:46:59 to 00:47:58] In Cube.008, duplicate (Shift+D) and extrude a strip from the cap down behind the ear (Extrude Move X -0.031752, Z 0.050802 m). Bend it with Proportional Editing (Falloff Root, Size 0.180, Connected on; Move Y -0.059278 m). Add a loop cut along it (1 cut, Factor 0). Fit the tip in see-through front view. Result: 97 verts / 64 faces.
+10. [NQ 00:47:58 to 00:49:11] Back hair: duplicate one back strand and rotate the copy around Z in top view (Angle -31.3, Orientation View). Scale the tips to a point and repeat around the back of the head. Mirror Clipping on Cube.008 is now off, so strands can cross the centre line. Circle Select (C) in see-through front view to refine. Extrude tips and rotate them outward (Angle -19.5) for flicks. Result: a bob made of vertical strips. Cube.008 is about 208 verts / 130 faces / 255 tris on the half.
+11. [NQ 00:49:11 to 00:49:55] Select one strip with Select Linked and duplicate it. A new object Cube.009 appears (18 verts, 10 faces, no modifier); it is scaled and loop-cut. Then Tab, Ctrl+Z x4, Tab, and the object count drops back to 11. Whether Cube.009 was kept, joined or undone cannot be read.
+12. [NQ 00:49:55 to 00:50:54] Add layered strands by the ear: duplicate (Add Duplicate Move X -0.044, Z -0.004552 m, Mirror Editing off) and rotate (Angle -14.2). Grow the selection with Select More (Face Step on). Extrude the strand end edge and scale it to a point for spiky tips (Move Y 0.085238, Z -0.019493 m). Fix tips from back and 3/4 views. Result: Cube.008 about 277 verts / 166 faces / 327 tris.
+13. [NQ 00:50:54 to 00:51:20] Knife cuts on the body torso (not hair). Final outliner: Model collection = Body (Mirror X, Clipping, Merge 0.001 m), Hair1, Hair2. Scene 4,405 verts / 3,889 faces / 7,520 tris. Mapping Hair1 = fringe+bun (Cube.007) and Hair2 = cap+back (Cube.008) is inferred.
+
+Piece count seen: 2 hair objects at the end (Hair1, Hair2), plus a temporary Cube.009. Strand count by eye: about 4 to 5 fringe strands, about 6 to 8 bun petals, and about 10 to 12 back/side strips on the mirrored half. These are estimates from the frames, not exact counts.
+
+### How it looks on screen
+
+- The reference panel on the left changes from the turnaround to a large front portrait and later a back view, while the viewport keeps the sheet behind the model.
+- See-through/X-ray in Front Orthographic is used to trace hair outlines. Solid view is used to check that strips sit above the head.
+- Top Orthographic is used for every duplicate-and-rotate around the head (Rotate, Axis Z, Orientation View).
+- The fringe object has no Mirror. The cap/back object uses Mirror X, with Clipping turned off later.
+- Proportional Editing (Root falloff, Connected) is used to bend long strands.
+- Strips are flat polygon cards: no Solidify, no Subdivision, no curve objects seen in the modifier stack or outliner.
+
+### Python route
+
+```python
+# not run in Blender
+import bpy, bmesh, math
+from mathutils import Vector, Matrix
+
+# Step 1: cursor to origin, empty hair object
+bpy.context.scene.cursor.location = (0, 0, 0)
+me = bpy.data.meshes.new("Hair1"); fringe = bpy.data.objects.new("Hair1", me)
+bpy.context.collection.objects.link(fringe)
+```
+
+```python
+# not run in Blender
+# Step 2-3: one strand = a strip of quads from a root edge along a list of centre points
+def strand(bm, pts, width_root=0.03, width_tip=0.002, side=Vector((1, 0, 0))):
+    rows = []
+    n = len(pts)
+    for i, p in enumerate(pts):
+        w = width_root + (width_tip - width_root) * i / (n - 1)
+        rows.append((bm.verts.new(p - side * w / 2), bm.verts.new(p + side * w / 2)))
+    for (a, b), (c, d) in zip(rows, rows[1:]):
+        bm.faces.new((a, b, d, c))
+
+bm = bmesh.new()
+strand(bm, [Vector((0.03, -0.10, 1.90)), Vector((0.05, -0.11, 1.84)), Vector((0.06, -0.10, 1.78)), Vector((0.065, -0.08, 1.72))])  # placeholder points
+bm.to_mesh(fringe.data); bm.free()
+```
+
+```python
+# not run in Blender
+# Step 6: skull cap from a UV sphere, keep upper half and +X side, mirrored
+bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=10, radius=0.11, location=(0, -0.02, 1.86))
+cap = bpy.context.active_object; cap.name = "Hair2"
+bm = bmesh.new(); bm.from_mesh(cap.data)
+bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.x < -1e-5 or v.co.z < -0.03], context='VERTS')
+bm.to_mesh(cap.data); bm.free()
+mm = cap.modifiers.new("Mirror", 'MIRROR'); mm.use_axis[0] = True; mm.use_clip = True; mm.merge_threshold = 0.001
+```
+
+```python
+# not run in Blender
+# Step 8/10: duplicate a strand/petal and rotate the copy about the head's Z axis (Top view)
+def dup_rotate(obj, deg, pivot):
+    bm = bmesh.new(); bm.from_mesh(obj.data)
+    src = [f for f in bm.faces if f.select]          # the strand faces
+    ret = bmesh.ops.duplicate(bm, geom=src)
+    verts = [g for g in ret["geom"] if isinstance(g, bmesh.types.BMVert)]
+    bmesh.ops.rotate(bm, verts=verts, cent=pivot, matrix=Matrix.Rotation(math.radians(deg), 3, 'Z'))
+    bm.to_mesh(obj.data); bm.free()
+
+for a in (-31.3, -62.6, -93.9):   # angle seen: -31.3 per copy (spacing of later copies not readable)
+    dup_rotate(cap, a, Vector((0, -0.02, 1.86)))
+```
+
+```python
+# not run in Blender
+# Step 9: bend a long strand with proportional editing (edit mode, tip verts selected)
+bpy.ops.transform.translate(value=(0, -0.059278, 0), use_proportional_edit=True,
+                            proportional_edit_falloff='ROOT', proportional_size=0.18,
+                            use_proportional_connected=True)
+# Step 10: allow strands to cross the centre line
+cap.modifiers["Mirror"].use_clip = False
+```
+
+```python
+# not run in Blender
+# Step 12: spiky tip = extrude end edge, move, scale to a point
+bm = bmesh.from_edit_mesh(cap.data)
+tip = [e for e in bm.edges if e.select]
+ret = bmesh.ops.extrude_edge_only(bm, edges=tip)
+nv = [g for g in ret["geom"] if isinstance(g, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=nv, vec=Vector((0, 0.085238, -0.019493)))
+c = sum((v.co for v in nv), Vector()) / len(nv)
+bmesh.ops.scale(bm, vec=Vector((0.05, 0.05, 0.05)), space=Matrix.Translation(-c), verts=nv)
+bmesh.update_edit_mesh(cap.data)
+```
+
+### Settings read on screen
+
+- Hair fringe object (Cube.007 to Hair1): no modifiers.
+- Cap/back object (Cube.008 to Hair2): Mirror Axis X, Merge 0.001 m. Clipping on at first, off from about 00:48:35.
+- Body at the end: Mirror X, Clipping on, Merge 0.001 m.
+- UV Sphere: 146 verts, 304 edges, 160 faces, 288 tris. Moved to Z 1.8573 m, then Y -0.022645 / Z 0.051388 m.
+- Extrude Region and Move: X 0.055742 / Z 0.090581; X -0.034516 / Z -0.11468; X -0.031752 / Z 0.050802; Y 0.085238 / Z -0.019493 (m). Flip Normals off, Dissolve Orthogonal Edges off.
+- Header Rotation 19.82 (first hairline extrude).
+- Rotate (Axis Z, Orientation View): 82.6, -75.5, -31.3, -19.5, -14.2 degrees.
+- Proportional Editing: size 0.3505 m (fringe), 0.2176 m (cap), Falloff Root, Size 0.180, Connected on (side lock).
+- Loop Cut and Slide: Number of Cuts 1, Smoothness 0, Falloff Inverse Square, Factor 0.088 (fringe, as read) and 0.000 (side lock), Clamp on, Correct UVs on.
+- Add Duplicate: Move X -0.044, Z -0.004552 m, Mirror Editing off.
+- Select More: Face Step on.
+- Scale redo values seen but hard to read: -0.156 (sign unclear), 0.053 (digit unclear), -0.688 (sign unclear).
+- Counts: fringe 87 verts / 41 faces before the bun. Cap/back half 277 verts / 166 faces / 327 tris near the end. Final scene 4,405 verts / 3,889 faces / 7,520 tris, objects Body, Hair1, Hair2.
+
+### Not visible in the frames
+
+- How each empty hair object was created (Cube.007 at 00:42:13 shows Verts 0/0).
+- Whether the strand at 00:44:47 was separated with P, or the Mirror was added some other way. Only the result (Cube.008 with Mirror) is seen.
+- Whether the sphere was joined into Cube.008 with Ctrl+J, or its geometry copied in.
+- What happened to Cube.009: it was undone or joined, but the frames do not say which.
+- When Hair1/Hair2 were renamed and when the body parts Cube.001 to Cube.006 were joined into Body. This happens between 00:51:09 and 00:51:16.
+- Normals direction, backface culling and double-sided settings for the single-sided strips.
+- Any UV, material or texture work on the hair. None is shown in this chapter.
+- Exact number of strands and petals. The counts above are estimates.
+
 ## Gaps
 
 - **Add-ons.** LoopTools (free; a Blender extension since 4.2) is used once, `LoopTools > Circle` (the operator panel

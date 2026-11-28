@@ -197,3 +197,11 @@ def test_missing_duration_probes_ffprobe_and_fails_when_unreadable(short_clip, t
     (bad / "bad.en.vtt").write_text("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nhello.\n")
     with pytest.raises(RuntimeError, match="duration"):
         cg.process_video_dir(bad, "bad", ffmpeg_dir=FFMPEG)
+
+
+def test_silent_video_without_captions_is_processed_when_allowed(tmp_path):
+    d = tmp_path / "s"; d.mkdir()
+    (d / "s.info.json").write_text('{"id": "s", "duration": 10, "chapters": null}')
+    assert cg.process_video_dir(d, "s", ffmpeg_dir=None, chapters="2", silent=True) == 0
+    body = (d / "chapters" / "01-full.md").read_text()
+    assert "no narration" in body.lower()

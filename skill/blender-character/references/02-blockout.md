@@ -600,6 +600,84 @@ reference will not reach 0.98. Report such a view as "failed at 0.98, iou N; bod
 remaining difference is hair and clothes". Never report it as passed. If the reference shows the bare body in the
 neutral pose, the gap to 0.98 is a proportion error: fix it now, while the parts are still simple.
 
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Order of work:
+1. [NQ 00:01:39 to 00:01:45] A cube is added and put in Edit Mode in Front Orthographic, X-ray on. Key overlay "Z", "X". The status bar reads Faces 0/5, so one face was already removed (likely the face on the mirror plane). The cube is scaled to 0.211 on all axes and placed on the chest. A Mirror modifier is added: Axis X, no Bisect, Clipping on, Merge on at 0.001 m.
+2. [NQ 00:01:51 to 00:02:04] Vertices are extruded and moved to trace the torso outline from chest to crotch in front view (Move Z -0.055804 m; Verts 12, Faces 8), then the depth is set in Right Orthographic (Verts 16, Faces 11). Shift-select and Move Y -0.098438 m.
+3. [NQ 00:02:10 to 00:02:29] The leg is extruded down from the bottom of the torso: Extrude Region and Move, Orientation Normal, Move Z 0.36021 m (sign not clear). More extrusions down to the knee and ankle in Right Orthographic ("S", "1" on the overlay). The knee/shin ring is rotated 9.73 degrees (Global). Small fix Move Z 0.008371 m. Counts go Verts 28, 32, 36, 44 and Faces 23, 27, 31, 39.
+4. [NQ 00:02:35 to 00:02:42] Ctrl Z x2 (undo). Solid view check. Loop Cut and Slide: Number of Cuts 1, Smoothness 0.000, Falloff Inverse Square, Factor 0.000, Clamp on, Correct UVs on. Result Verts 74, Edges 142, Faces 69.
+5. [NQ 00:02:48 to 00:03:01] Viewed from below; crotch and inner-leg vertices are selected and moved (Move Y 0.005244 m). Verts 98, Edges 189, Faces 92.
+6. [NQ 00:03:07] Object Mode, W menu, Shade Smooth with Keep Sharp Edges on. Status Verts 184, Faces 184, Tris 368 (mirror applied in the count).
+7. [NQ 00:03:13 to 00:03:17] Edit Mode, a leg loop is scaled 0.785 uniform. Verts 107, Faces 100.
+
+How it looks on screen:
+- Front Orthographic and Right Orthographic are used in turn, with X-ray on while tracing over the reference, solid view to check volume.
+- Only one half is edited; the Mirror modifier (X) with Clipping keeps the centre seam closed. Which side is the real half is not readable.
+- Mirror Editing is on in every Move/Resize panel.
+- The mesh stays very low: the whole lower body is under 110 vertices (half side) at the end of the chapter.
+- Legs are 4-sided tubes first, then one vertical loop cut makes them 8-sided.
+
+Python route:
+```python
+# not run in Blender
+import bpy, bmesh
+from math import radians
+from mathutils import Matrix, Vector
+
+bpy.ops.mesh.primitive_cube_add(size=2, location=(0.06, 0, 1.25))  # chest height read from reference
+body = bpy.context.object
+body.scale = (0.211, 0.211, 0.211)
+bpy.ops.object.transform_apply(scale=True)
+
+m = body.modifiers.new("Mirror", 'MIRROR')
+m.use_axis = (True, False, False)
+m.use_clip = True
+m.use_mirror_merge = True
+m.merge_threshold = 0.001
+
+bm = bmesh.new(); bm.from_mesh(body.data)
+# step 1: remove the face on the mirror plane so the halves weld
+inner = [f for f in bm.faces if f.normal.x < -0.9]
+bmesh.ops.delete(bm, geom=inner, context='FACES')
+# step 1b: put the cube's inner verts on x = 0
+for v in bm.verts:
+    if v.co.x < body.location.x:
+        v.co.x = -body.location.x  # local coords so world x becomes 0
+# step 3: extrude the bottom face down for the leg
+bottom = min(bm.faces, key=lambda f: f.calc_center_median().z)
+ret = bmesh.ops.extrude_face_region(bm, geom=[bottom])
+new_verts = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=new_verts, vec=Vector((0, 0, -0.36)))
+bm.to_mesh(body.data); bm.free()
+
+# step 6
+bpy.ops.object.shade_smooth(keep_sharp_edges=True)
+```
+For step 4 (one loop cut around the legs) use `bmesh.ops.subdivide_edges(bm, edges=ring_edges, cuts=1, use_grid_fill=True)` on the edge ring that crosses the leg, then move the new verts outward to round the section. For step 7 use `bmesh.ops.scale(bm, vec=(0.785,)*3, space=Matrix.Translation(-center), verts=loop_verts)`.
+
+Settings read on screen:
+- Resize 0.211 (x, y, z)
+- Mirror: Axis X, Bisect off, Clipping on, Merge on, 0.001 m
+- Move Z -0.055804 m; Move Y -0.098438 m
+- Extrude Region and Move: Move Z 0.36021 m, Orientation Normal
+- Rotate 9.73 degrees, Orientation Global
+- Move Z 0.008371 m
+- Loop Cut and Slide: Cuts 1, Smoothness 0.000, Falloff Inverse Square, Factor 0.000, Clamp on, Correct UVs on
+- Move Y 0.005244 m
+- Shade Smooth: Keep Sharp Edges on
+- Resize 0.785 (x, y, z)
+- Counts: Verts 8 -> 12 -> 16 -> 28 -> 44 -> 52 -> 74 -> 98 -> 107 (half mesh); 184 verts in Object Mode with mirror
+
+Not visible in the frames:
+- Which face was deleted to get 5 faces, and what "Z", "X" on the overlay did exactly (shading pie and delete are likely).
+- The exact world location of the starting cube.
+- The rotation axis for the 9.73 degree rotate (the Axis row is hidden by the overlay).
+- Whether the leg extrusions were made with E repeatedly or with a different tool between 00:02:17 and 00:02:23.
+- The arms: they are not built in this chapter.
+
 ## Gaps
 
 - Add-on: "Extra Mesh Objects" (free, Blender's extension site) supplies `Round Cube`; not installed in the reader's

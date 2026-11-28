@@ -75,3 +75,24 @@ def test_clips_and_manifest(clip_dir):
     assert mc.make_clips(clip_dir, "clip", ffmpeg_dir=FFMPEG, height=240, workers=2, encoder="libx264") == 0
     assert (clip_dir / rows[0]["file"]).stat().st_mtime == first_mtime          # not cut again
     assert (clip_dir / "clips" / ".gitignore").read_text().strip() == "*"
+
+
+def test_silent_chapters_are_covered_by_equal_windows():
+    segs = mc.segments({1: [], 2: []}, CH, min_s=8, max_s=30, cover_silent=True)
+    for c in CH:
+        mine = [s for s in segs if s["chapter_n"] == c["n"]]
+        assert mine[0]["start"] == c["start"] and mine[-1]["end"] == c["end"]
+        assert all(s["end"] - s["start"] <= 30 + 1e-6 and s["text"] == "" for s in mine)
+    assert len([s for s in segs if s["chapter_n"] == 1]) == 4          # 100 s -> 4 x 25 s
+    assert mc.segments({1: [], 2: []}, CH) == []                       # default: narrated courses unchanged
+
+
+def test_stage_tags_for_a_box_modelling_speed_model():
+    expect = {"Image Reference": "01-concept-and-references", "Base Shape": "02-blockout",
+              "Shoe Modeling": "05-clothes-accessories", "Shorts Modeling": "05-clothes-accessories",
+              "Chest Modeling": "04-sculpt-body", "Cloth Modeling": "05-clothes-accessories",
+              "Hand Modeling": "04-sculpt-body", "Head Modeling": "03-sculpt-face", "Hair Modeling": "08-hair",
+              "UV Unwrap": "07-uv", "Hand Texture Painting": "09-shading-texturing",
+              "Mixamo Rigging": "10-rigging-posing", "Import to Godot": "11-lighting-presenting"}
+    assert {t: mc.stage_for(t) for t in expect} == expect
+    assert mc.stage_for("<Untitled Chapter 1>") is None
