@@ -5,7 +5,7 @@
 Newline-delimited JSON over TCP. A socket thread queues each request; a persistent bpy.app.timers pump runs it on
 Blender's main thread (bpy is not thread-safe) and hands the reply back. Loopback only. Survives file loads.
 The commands live in live_core.py (core) and sculpt_cmds.py (sculpt, paint, review); long ones run in slices so
-Blender keeps redrawing. blender-mcp-plus serves the same commands from its addon.
+Blender keeps redrawing.
 """
 import hmac, json, os, queue, socket, threading
 

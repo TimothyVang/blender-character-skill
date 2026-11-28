@@ -1,5 +1,5 @@
 """blender-live core commands, run on Blender's main thread. No side effects on import: the blender-live bridge
-(bridge.py) and the blender-mcp-plus addon both serve these.
+(bridge.py) serves these.
 
 Commands: ping, exec, scene_tree, object_info, capture, motion_preview, render, set_frame, open_file, save_file.
 Captures go to BLENDER_LIVE_TMP, default <workspace>/.scratch/tmp/blender-live/<pid> (never the system temp folder).

@@ -1,8 +1,9 @@
 Finish the 1:1 match of the Ghibli-style girl in
 .scratch/ghibli-character/ghibli_27f_holes.blend with her Midjourney pictures, using the blender-character
-skill and the blender-mcp-plus MCP tools (watch, scene_observe/scene_act, project_paint, visual_match, ...). Read
-skill://blender-character, then its references/likeness-1to1.md, before the first change. Blender: the installed
-blender_mcp_plus addon serves port 9879 and arms the scene relay itself; open the file, go to frame 1 (the rig's
+skill, the blender-live MCP tools (project_paint, visual_match, ...) and the blender_scene relay (blender_observe,
+blender_act). Read skill://blender-character, then its references/likeness-1to1.md, before the first change.
+Blender: start it with blender_launch (the blender-live bridge on port 9876; the relay attaches by itself); open
+the file, go to frame 1 (the rig's
 action poses an arm on other frames), set undo_steps 8 and undo_memory_limit 2048.
 
 Pictures: .scratch/ghibli-character/refs/{front,left,right,back}_clean.png as FRONT, LEFT, RIGHT, BACK. Gated
