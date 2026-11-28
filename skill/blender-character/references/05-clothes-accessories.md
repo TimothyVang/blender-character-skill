@@ -606,6 +606,477 @@ knee boots, hair tied in a bun): the fold positions in step 5, the 11 pleats, th
 6. Delete `BODY_TMP` (`bpy.data.objects.remove(bpy.data.objects["BODY_TMP"])`) and save as
    `character_05_clothes.blend`.
 
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+### Shoes and shorts
+
+Source: Nhij Quang, "Blender 3D Quick Modeling Character For Game - Girl#01", chapters 4 "Shoe Modeling" [NQ 00:03:17 to 00:09:58] and 5 "Shorts Modeling" [NQ 00:09:58 to 00:13:58]. Blender 4.2.1 LTS. Silent video; everything below comes from on-screen text and the shape of the mesh.
+
+Objects at the start: `Cube` (the body, with a Mirror modifier) and two empties (`Empty`, `Empty.001`) that hold the reference images. At the end: `Cube` (body), `Cube.001` (shoe + leg warmer + ankle ribbons), `Cube.002` (shorts), `Cube.003` (waistband + belt loops).
+
+#### Order of work
+
+1. [NQ 00:03:17 to 00:03:49] Sole side profile, inside the body object.
+   - Edit Mode on `Cube`, Right Orthographic, X-ray on, side reference image behind.
+   - Mirror modifier at this point: Axis X, Clipping on, Merge on, 0.001 m.
+   - Selected ankle vertices scaled flat: Resize X 1.000, Y 1.000, Z 0.000.
+   - Traced the sole outline by extruding vertices one at a time (overlay "E x10"). One redo read: Move X 0 m, Y -0.018165 m, Z 0.03364 m.
+   - Filled faces between the traced vertices with F ("F x2"), then moved vertices onto the heel and the arch gap ("G x2").
+   - Result: Verts 130, Faces 105, Tris 210 (whole `Cube` in Edit Mode, mirror not counted).
+
+2. [NQ 00:03:56 to 00:04:39] Turned the profile into a 3D sole ring.
+   - User Orthographic, wireframe. Small moves with Mirror Editing (Move Y 0.000389, Z -0.000389).
+   - Merged end vertices with M > At Center (UVs off).
+   - Seen as a closed strip ring around the foot in solid view.
+   - Selected the top rim, extruded it in place (E, Move 0/0/0) and scaled it in (S, 0.9089 on X/Y/Z) to form an inner lip.
+   - Result: Verts 172, Faces 152, Tris 302.
+
+3. [NQ 00:04:39 to 00:05:36] Shoe upper.
+   - Back in Right Orthographic over the reference, extruded vertices up from the sole rim and placed them on the drawing ("G x2").
+   - Orbited to check the open shell.
+   - Selected a connected part with L (Delimit: Normal), merged vertices with M at the collar, and shaped the toe and tongue.
+   - Result: Faces 192, Tris 383.
+
+4. [NQ 00:05:43 to 00:06:33] Collar, footprint and an extra loop.
+   - Instep moves (Move Y 0.011897, Z 0.000541).
+   - Extruded the collar upward: Move X 0, Y -0.002336, Z 0.05373.
+   - In Front Orthographic, moved the shoe in X with proportional editing to line it up under the leg (the mirrored second shoe is visible): Move X -0.02422; Proportional Editing on, Falloff Sharp, Size 0.180, Connected on.
+   - Filled seven holes ("F x7").
+   - Added one loop cut ("Ctrl + R"): Cuts 1, Smoothness 0, Falloff Inverse Square, Factor 0, Clamp on, Correct UVs on.
+   - Placed the new loop on the panel lines ("G x8").
+   - Result: Verts 290, Faces 237, Tris 471.
+
+5. [NQ 00:06:41 to 00:07:02] Ankle strap.
+   - Extruded an edge path around the ankle.
+   - Object Mode check: `Cube` Verts 634, Faces 538, Tris 1,070 (Object Mode counts include the mirror).
+   - Extruded the strap faces and moved them Z -0.003709 to give the strap thickness.
+   - Result: Verts 353, Faces 297, Tris 587.
+
+6. [NQ 00:07:09 to 00:07:31] Shoe split into its own object.
+   - All shoe faces selected (Faces 201/297) and moved in Front Orthographic (Move X -0.27958; purpose not clear).
+   - At 00:07:24 the outliner shows a new `Cube.001` with its own Mirror modifier: Verts 247, Faces 201, Tris 395. This is the separated shoe; the P key itself is not on screen.
+   - Box-selected the bottom of the shoe and scaled it X 0.726, Y 1, Z 1.
+
+7. [NQ 00:07:38 to 00:08:00] Leg warmer tube on `Cube.001`.
+   - Object Mode check of the shaded shoe.
+   - In Front Orthographic, wireframe: extruded the collar loop up the shin to just below the knee ("Z", "E").
+   - Rotated the top ring to match the slanted top edge of the red warmer: Angle -14.6 deg, Axis Z, Orientation View, in Right Orthographic. The front view header later shows "Rotation -13.25".
+   - Result: `Cube.001` Verts 268, Faces 223, Tris 439.
+
+8. [NQ 00:08:07 to 00:09:18] Knee band and diagonal edge on the body `Cube`.
+   - Bevel on an edge loop at the knee: Affect Edges, Width Type Offset, Width about 0.00106 m (small text), Segments 1, Shape 0.500, Loop Slide on, Miter Outer/Inner Sharp, Intersection Grid Fill, Profile Superellipse.
+   - Loop cut: Cuts 1, Factor 0.515, Falloff Inverse Square, Clamp on, Correct UVs on.
+   - Rotated the loop -12.2 deg about Z (Global).
+   - Alt-click loop select, then scaled the loop 1.084 uniform to raise a ridge.
+   - Front view moves (Move X 0.001615).
+   - Knife cuts on the shin for the slanted edge of the warmer, followed by vertex moves.
+   - Result: `Cube` Verts 175, Faces 168, Tris 330.
+
+9. [NQ 00:09:25 to 00:09:58] Ankle ribbon and smoothing on `Cube.001`.
+   - Scaled a small selected piece 0.559 uniform.
+   - Added a loop cut to the thin ribbon that sticks out at the ankle and moved it Z 0.009812.
+   - Selected the ribbon with L ("L x2") and duplicated it (Shift D, Move 0/0/0) for a second tail.
+   - In Object Mode: Shade Smooth with Keep Sharp Edges on.
+   - Result: `Cube.001` Faces 247, Tris 487 (Edit Mode).
+
+10. [NQ 00:09:58 to 00:10:58] Pelvis cleanup on the body `Cube` before the shorts.
+    - Saved the file ("Saved female_char1.blend").
+    - Dissolve Edges at the crotch (Dissolve Vertices on, Face Split off).
+    - Moved hip, buttock and crotch vertices in Right, Back and User Orthographic views, using a front/back turnaround as the reference.
+    - Mirror Clipping is on again here.
+    - Result: `Cube` Verts 207, Edges 406, Faces 199, Tris 388.
+
+11. [NQ 00:11:01 to 00:11:24] Shorts copied from the body.
+    - Selected the body faces from waist to upper thigh: Verts 48, Faces 37.
+    - Next frame: a new object `Cube.002` with exactly Verts 48, Edges 85, Faces 37, Tris 72, and its own Mirror modifier with Clipping on. It is a copy of those faces (duplicate + separate; the keys are not on screen).
+    - Moved slightly (Move X 0.001045).
+    - Then edited `Cube` and `Cube.002` together in multi-object Edit Mode (Objects 2/5, combined Verts 255, Faces 236).
+
+12. [NQ 00:11:31 to 00:12:24] Shaping the shorts `Cube.002`.
+    - Moved the hem down: Move Z -0.018813.
+    - Single-vertex moves at the crotch and hem: (0.005443, 0, -0.003024) and (-0.009467, -0.002507, 0.003958).
+    - Loop cut near the hem: Cuts 1, Factor 1.000, Edge Slide -0.2570, Clamp, Mirror Editing and Correct UVs on.
+    - A rolled hem cuff is visible from 00:12:09.
+    - Beveled the vertical side/front edges: Offset 0.00285 m, Segments 1, Profile 0.5. Result: `Cube.002` Verts 88, Faces 75, Tris 148.
+    - Separated the waistband with P into `Cube.003`: Verts 20, Edges 28, Faces 9, Tris 18.
+
+13. [NQ 00:12:31 to 00:13:01] Waistband and belt loops on `Cube.003`.
+    - Loop cut (Edge Slide -0.2735).
+    - Extruded belt-loop flaps: Move X -0.069724, Y 0, Z 0.053763.
+    - Rotated one loop 7.1 deg (Axis Z, Orientation View).
+    - Checked the back ("Tab x3").
+    - Selected a loop piece with Select Linked (Delimit Seam) and duplicated it (Shift D; header D -0.04529, 0.1463, -0.03634) to another place on the band.
+    - Result: `Cube.003` Faces 47.
+
+14. [NQ 00:13:09 to 00:13:58] Pockets on the shorts `Cube.002`.
+    - Selected side faces and extruded them (E) for the side pocket flaps.
+    - Knife cuts, then a move of X -0.005316.
+    - In face mode ("3", Shift-click), selected the back pocket faces. The back pocket then stands out from the shorts.
+    - More Knife cuts and moves (Move Y 0.012181, Z -0.00462).
+    - Result at chapter end: `Cube.002` Verts 131, Edges 250, Faces 119, Tris 234.
+
+#### How it looks on screen
+
+- Clothes are box/poly-modelled by hand over orthographic reference images: Right Orthographic for profiles, Front Orthographic for width, and Back Orthographic for the shorts. X-ray (see-through) is on for tracing, and solid shading plus an orbit is used for checking.
+- A Mirror modifier (Axis X, Merge 0.001 m) sits on every object: `Cube`, `Cube.001`, `Cube.002` and `Cube.003`. Only one side is modelled, and Mirror Editing is ticked in almost every Move redo panel. Clipping is on at 00:03:20 and from 00:10:09 on. It is off while the shoe and leg warmer are built, which fits the shoe sitting away from the centre line.
+- The shoe is built inside the body mesh first, starting from the ankle. It is then split off as `Cube.001`, the first new mesh object in the outliner.
+- The shorts are a copy of the body faces that the shorts cover, made into their own object (`Cube.002`). The waistband is split off again with P (`Cube.003`). Separate pieces are kept as separate objects or as unconnected islands inside one object. Nothing is joined back to the body.
+- Detail is added with loop cuts (one cut each time), bevels with one segment, and the Knife tool for diagonal panel lines. Most of the time goes into many small single-vertex G moves.
+- Small extra parts (belt loops, ankle ribbon) are made once and copied with Select Linked + Shift D.
+- Object Mode with smooth shading is used to check the silhouette. The shoe gets Shade Smooth with Keep Sharp Edges.
+- Poly budget stays low: the whole shoe + warmer object is under 320 verts per mirrored half, and the shorts are 131 verts per half at chapter end.
+
+#### Python route
+
+Each step below assumes Edit Mode on the named object and Blender 4.2+. Where a mouse loop cut or knife was used, the bmesh route is given instead.
+
+Mirror modifier as seen on screen:
+```python
+# not run in Blender
+import bpy
+obj = bpy.data.objects["Cube"]
+m = obj.modifiers.get("Mirror") or obj.modifiers.new("Mirror", 'MIRROR')
+m.use_axis = (True, False, False)
+m.use_clip = True            # off while the shoe was built, on for the shorts
+m.use_mirror_merge = True
+m.merge_threshold = 0.001
+```
+
+Step 1, flatten + trace a sole profile from given side-view points (Y forward, Z up):
+```python
+# not run in Blender
+import bpy, bmesh
+obj = bpy.context.edit_object
+bm = bmesh.from_edit_mesh(obj.data)
+x = 0.09                                   # half-distance of the foot from centre; measure from the front reference
+pts_yz = [(-0.06, 0.0), (-0.03, 0.0), (0.0, 0.005), (0.04, 0.0), (0.08, 0.01)]  # placeholder, trace from the reference
+verts = [bm.verts.new((x, y, z)) for y, z in pts_yz]
+for a, b in zip(verts, verts[1:]):
+    bm.edges.new((a, b))
+bmesh.update_edit_mesh(obj.data)
+# flatten a selection on Z as the artist did with S Z 0
+bpy.ops.transform.resize(value=(1.0, 1.0, 0.0), orient_type='GLOBAL')
+```
+
+Step 2, merge at center and extrude-in-place + scale for the inner lip:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.merge(type='CENTER')
+# ...select the top rim loop, then:
+bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0, 0, 0)})
+bpy.ops.transform.resize(value=(0.9089, 0.9089, 0.9089))
+```
+
+Step 4, collar extrude and proportional move:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (0.0, -0.002336, 0.05373)})
+bpy.ops.transform.translate(value=(-0.02422, 0, 0), use_proportional_edit=True,
+                            proportional_edit_falloff='SHARP', proportional_size=0.18,
+                            use_proportional_connected=True)
+bpy.ops.mesh.edge_face_add()   # F: fill a selected hole
+```
+
+Loop cut without a mouse (steps 4, 8, 12, 13): subdivide the edge ring once.
+```python
+# not run in Blender
+import bmesh, bpy
+obj = bpy.context.edit_object
+bm = bmesh.from_edit_mesh(obj.data)
+ring = [e for e in bm.edges if e.select]   # select the edges the cut must cross
+bmesh.ops.subdivide_edges(bm, edges=ring, cuts=1, use_grid_fill=True)
+bmesh.update_edit_mesh(obj.data)
+```
+
+Step 6, split the shoe off the body (faces selected):
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.separate(type='SELECTED')       # new object appears as Cube.001
+bpy.ops.transform.resize(value=(0.726, 1.0, 1.0))  # on the sole-bottom selection of Cube.001
+```
+
+Step 7, slant the warmer top (right view, so the view axis is global X):
+```python
+# not run in Blender
+import bpy, math
+bpy.ops.transform.rotate(value=math.radians(-14.6), orient_axis='X', orient_type='GLOBAL')
+```
+Check the sign against the reference after running. The artist rotated about the view axis in Right Orthographic.
+
+Step 8, knee band bevel, loop scale, knife:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.bevel(offset_type='OFFSET', offset=0.00106, segments=1, profile=0.5,
+                   affect='EDGES', loop_slide=True)
+bpy.ops.transform.resize(value=(1.084, 1.084, 1.084))   # on the selected knee loop
+bpy.ops.mesh.vert_connect_path()                         # knife substitute: select 2+ verts, connect
+```
+
+Step 9, duplicate a ribbon island and smooth-shade:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.select_linked()
+bpy.ops.mesh.duplicate_move(TRANSFORM_OT_translate={"value": (0, 0, 0)})
+bpy.ops.object.mode_set(mode='OBJECT')
+bpy.ops.object.shade_smooth(keep_sharp_edges=True)
+```
+
+Step 10, crotch cleanup:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.dissolve_edges(use_verts=True, use_face_split=False)
+```
+
+Step 11, shorts from body faces (body faces for the shorts selected on `Cube`):
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.duplicate()
+bpy.ops.mesh.separate(type='SELECTED')   # -> Cube.002 (48 verts / 37 faces in the video)
+# the copy keeps the Mirror modifier because separate copies the object's modifiers
+```
+
+Step 12, hem, seam bevel, waistband split (in `Cube.002`):
+```python
+# not run in Blender
+import bpy
+bpy.ops.transform.translate(value=(0, 0, -0.018813))     # hem verts selected
+bpy.ops.mesh.bevel(offset=0.00285, segments=1, profile=0.5, affect='EDGES')  # side edges selected
+bpy.ops.mesh.separate(type='SELECTED')                   # waistband faces selected -> Cube.003
+```
+
+Step 13, belt loops:
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value": (-0.069724, 0.0, 0.053763)})
+bpy.ops.mesh.select_linked(delimit={'SEAM'})
+bpy.ops.mesh.duplicate_move(TRANSFORM_OT_translate={"value": (-0.04529, 0.1463, -0.03634)})
+```
+
+Step 14, pockets: select the pocket faces, then extrude them a little along their normals.
+```python
+# not run in Blender
+import bpy
+bpy.ops.mesh.extrude_region_shrink_fatten(TRANSFORM_OT_shrink_fatten={"value": 0.004})  # depth not read on screen
+```
+
+#### Settings read on screen
+
+- Mirror modifier: Axis X, Bisect off, Clipping on (00:03:20, 00:10:09 onward) / off (00:04:03 to 00:09:54), Merge on 0.001 m.
+- Resize (sole flatten): 1.000, 1.000, 0.000, Global.
+- Extrude Region and Move (sole trace): 0, -0.018165, 0.03364 m.
+- Merge: At Center, UVs off.
+- Extrude + Resize (sole lip): Move 0/0/0; Scale 0.9089 uniform.
+- Select Linked: Delimit Normal (shoe); Delimit Seam (belt loops).
+- Move (instep): 0, 0.011897, 0.000541.
+- Extrude (collar): 0, -0.002336, 0.05373 m.
+- Proportional move: X -0.02422; Falloff Sharp; Size 0.180 (header 0.1799 m); Connected on.
+- Loop Cut and Slide (shoe): Cuts 1, Smoothness 0, Inverse Square, Factor 0.000, Clamp on, Correct UVs on.
+- Strap extrude: Z -0.003709.
+- Shoe move before split: X -0.27958; after split: X -0.003229.
+- Shoe sole narrowing: Scale X 0.726.
+- Warmer top rotate: -14.6 deg (Axis Z, View); front view header -13.25.
+- Knee bevel: Edges, Offset, width about 0.00106 m, Segments 1, Shape 0.5, Material Index -1, Loop Slide on, Miter Sharp/Sharp, Grid Fill, Face Strength None, Superellipse.
+- Knee loop cut: Factor 0.515; knee rotate -12.2 deg Z Global; knee loop scale 1.084; move X 0.001615.
+- Small piece scale: 0.559 uniform; ribbon move Z 0.009812; Duplicate Mode 1.
+- Shade Smooth: Keep Sharp Edges on.
+- Dissolve Edges: Dissolve Vertices on, Face Split off.
+- Shorts: Move X 0.001045; hem Z -0.018813; vertex moves (0.005443, 0, -0.003024) and (-0.009467, -0.002507, 0.003958); loop cut Factor 1.000 (Edge Slide -0.2570); bevel Offset 0.00285 m, Segments 1, Profile 0.5.
+- Waistband: Edge Slide -0.2735; belt loop extrude (-0.069724, 0, 0.053763); rotate 7.1 deg Z View; duplicate offset (-0.04529, 0.1463, -0.03634).
+- Pockets: Move X -0.005316; Move (0, 0.012181, -0.00462).
+- Counts: listed per step above. Edit Mode counts are for one mirrored half. At 00:06:48, Object Mode showed 634 verts / 538 faces / 1,070 tris for `Cube`.
+
+#### Not visible in the frames
+
+- The keystroke that split off `Cube.001` and `Cube.002` (P or a duplicate + separate). Only the result appears in the outliner and status bar. P is seen only for `Cube.003`.
+- Why the whole shoe was moved X -0.27958 at 00:07:09.
+- What the small piece scaled by 0.559 at 00:09:25 is.
+- Whether the knee band on the body `Cube` is the top band of the warmer or part of the leg/sock. It sits just above the `Cube.001` warmer tube and follows the dark band in the drawing.
+- Extrude depths for the pockets and the hem cuff. The cuff is first seen finished at 00:12:09.
+- Any Solidify modifier: none is shown. Shell thickness comes only from extrusions.
+- UVs, seams and materials: none are set in these chapters.
+- The exact text of the knee bevel width (small, read as about 0.00106 m).
+- Total time spent per sub-part between the sampled frames. Four frames per ~29 s clip miss many small moves.
+
+### Crop top with halter straps, stand collar, cropped jacket with puffed sleeves
+
+Source: Nhij Quang, "Blender 3D Quick Modeling Character For Game - Girl#01", chapter 7 "Cloth Modeling", 00:16:22 to 00:28:32, Blender 4.2.1 LTS. No narration; everything below is read from the screen. Object names are the artist's: body = `Cube`, shorts = `Cube.002`, crop top = `Cube.004`, collar = `Cube.005`, jacket = `Cube.006`.
+
+#### Order of work
+
+1. [NQ 00:16:22 to 00:16:54] Start the crop top (`Cube.004`) as a single row of 9 vertices across the chest just under the bust (status: Verts 9/9, Edges 8/8, Faces 0/0). A Mirror modifier is already on it: Axis X, Clipping on, Merge 0.001 m. In Right Orthographic with X-ray, extrude edges and place vertices to trace the cup outline over the side reference. Move X -0.017426 m tucks the under-cup row in. Result: Verts 23, Faces 12.
+2. [NQ 00:16:54 to 00:17:53] Fill the cup as a quad grid that wraps over the breast. Rotate a 4-vertex group 36.3 deg (Axis Z, Orientation View, in side view). Move single vertices (Move Y -0.01795 m, Move X 0.032056 m). Select the face row under the cups and Edge Slide a loop (Factor about 0.330, Clamp on, Correct UVs on) to set the underband. Result: Verts 40, Faces 28.
+3. [NQ 00:17:53 to 00:18:22] Duplicate the underband face row in place (Shift+D, move 0,0,0) to make a band piece layered over the top. Remove the centre so two side blocks are left with a gap at the front. The band ends get side faces (thickness). Move X -0.00525 m on the band end. Result: Verts 89, Faces 75.
+4. [NQ 00:18:22 to 00:18:58] Pull the top-centre vertex down to make a V notch between the cups. Loop cut (Cuts 1, Smoothness 0.00) and shape a diamond ornament in the front gap. Extrude it along Normal by Z -0.010695 m, scale 0.8315, then move Y 0.001945 m so it sits in front of the band. Result: Verts 101, Faces 82.
+5. [NQ 00:18:58 to 00:20:04] Set snapping to Face (Snap Base Closest; the Snap Target list is open on Face, with Increment active before) and turn snapping on. Extrude single vertices from the cup tops up to the neck to draw the halter straps (Move 0.027218, -0.030518, -0.041734 m; then -0.019363, 0.054804, -0.059674 m). Turn the lines into strap faces. Select Linked with Delimit Normal, add one loop cut down the strap, and shape the strap loops in wireframe X-ray. Result: two straps cross from the cups to the back of the neck. Top: Verts about 185, Faces about 159. Scene: Verts 1,837, Faces 1,663, Tris 3,262.
+6. [NQ 00:20:04 to 00:21:32] Collar (`Cube.005`). In the body's Edit Mode, Alt-click the top loop of the neck. A new object `Cube.005` then holds a half ring around the neck (Verts 10, Faces 4). This is probably a duplicate of the neck faces split off with Separate (inferred). Move X 0.004536 m. Extrude up and scale the top loop 0.953 for a tapered stand collar. Undo 9 times and redo the front. Extrude the front lower edge down onto the chest as a flap (Move Z -0.002622 m), shape it into a V point, and Knife-cut extra edges. Result: Verts 29, Faces 19.
+7. [NQ 00:21:32 to 00:22:08] Jacket (`Cube.006`). In the body's Edit Mode with X-ray in Front Ortho, circle-select the upper torso and shoulder faces (15 faces). They become the new object `Cube.006`; duplicate plus separate is inferred. Delete faces until only a shoulder yoke is left (Verts 15, Faces 9). Move the border so the yoke sits off the body.
+8. [NQ 00:22:08 to 00:23:14] Sleeve. Rotate the arm-hole edges 40.2 deg (Axis Z, View, Front Ortho X-ray) to follow the arm. Extrude the arm-hole loop down the arm (Move X 0.034113, Z -0.18871 m). Scale the end loop 0.842. Add loop cuts and rotate them about 23.5 deg (approx. read) to follow the bell sleeve. Move the end to the wrist (0.002508, 0, -0.005017 m). Extrude a narrower cuff and move it (0.001254, 0, -0.013796 m; then -0.00672, 0, 0.025521 m). Add cuff loop cuts. Result: Verts 85, Faces 77, Tris 152.
+9. [NQ 00:23:14 to 00:25:03] Refine the sleeve and the jacket front. Move vertices in front X-ray, loop cut, and scale a loop 0.941. Knife-cut the shoulder and upper sleeve. Move vertices on the open front edge (0.011593, 0, 0.038306 m; 0.027722, 0, 0.00252 m). Scale a sleeve loop 0.857. Select the inner cuff end loop and Merge At Center to close the hand opening. Raise an edge 0.007819 m. Review in Object Mode against the front reference. Result: Cube.006 Verts 137, Faces 136. Scene: Verts 2,266, Faces 2,088, Tris 4,054.
+10. [NQ 00:25:03 to 00:26:09] Folds on the puffed sleeve. Select vertex rows in X-ray and Bevel (Offset 0.0078 m, Segments 1, Profile 0.5) to double an edge into a fold line. Then hand-move single vertices to shape the puff. Result: Verts 158, Faces 163.
+11. [NQ 00:26:09 to 00:27:37] Back of the jacket. Swap the reference image to the side/back turnaround. Move back loops (Y 0.002172 m and others). On the collar, rotate the back vertices about 33.6 deg (approx. read, Right Ortho, Axis Z View) so the collar leans back, and nudge its base. Extrude the jacket's back hem edges down (Move Y 0.050081, Z -0.24895 m) for a long back panel; the centre back stays open as a vertical slot. Vertex Slide 0.1843 (Even off, Clamp on) in Back Ortho. Result: Cube.006 Verts 171, Faces 175.
+12. [NQ 00:27:37 to 00:28:32] Upper-arm patch. Review from the side ("Shift + N" is on the key overlay, probably Recalculate Normals; inferred). Loop cut the outer upper sleeve (Cuts 1, Smoothness 0, Falloff Inverse Square, Factor 0, Clamp on, Correct UVs on). Scale it 0.727, Knife the outline, and bevel an edge (Affect Edges, Width Type Offset, Width 0.00226 m, Segments 1, Shape 0.5, Loop Slide on, Miter Sharp/Sharp, Intersection Grid Fill, Profile Superellipse). Tab out and select `Cube.002` (the shorts) for the next part. Scene at the end: Verts 2,428, Faces 2,260, Tris 4,366, 9 objects.
+
+#### How it looks on screen
+
+- Every garment is its own object and carries the same Mirror modifier: Axis X, Clipping on, Merge 0.001 m. Only the +X half is edited, and Mirror Editing is ticked in the redo panels.
+- No Solidify modifier appears in this chapter. The cloth is modelled as single-layer low-poly shells sitting just off the body. Thickness shows only where the artist extruded side faces (band ends, diamond ornament, collar flap).
+- Pieces are started two ways. One is from scratch: a row of vertices, then extruding edges or vertices. The other is by copying body faces: the neck loop for the collar, the upper-torso faces for the jacket.
+- Work alternates between Front and Right Orthographic with X-ray over the concept image and a User Orthographic solid view to check shape. The reference image on the left is switched to the side/back turnaround when the back is done.
+- Snapping to Face is turned on before drawing the straps, so new vertices land on the body.
+- Most edits are small single-vertex moves of a few millimetres to a few centimetres, plus loop cuts (Ctrl+R), Knife (K), Rotate, Resize and Bevel. The redo panel is used to read values but rarely edited.
+- Open ends are closed with Merge At Center (sleeve end), not by filling.
+- Polygon counts stay very low: top about 160 faces, collar under 30, jacket with sleeves about 215 faces (half side, before mirroring).
+
+#### Python route
+
+All blocks assume `import bpy, bmesh` and `from mathutils import Vector, Matrix`. They also assume `bm` is the garment's bmesh (`bmesh.from_edit_mesh(ob.data)` in Edit Mode, or `bmesh.new()` + `bm.from_mesh`). Selections such as `edge_row` and `armhole_edges` stand for lists you build by position.
+
+Step 1: crop-top object from a vertex row, with Mirror.
+```python
+# not run in Blender
+import bpy, bmesh
+me = bpy.data.meshes.new("Top")
+ob = bpy.data.objects.new("Top", me)
+bpy.context.collection.objects.link(ob)
+bm = bmesh.new()
+z = 1.18; y = -0.09  # under-bust height / front offset: read from your body mesh
+xs = [0.0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.14, 0.15]
+vs = [bm.verts.new((x, y, z)) for x in xs]
+for a, b in zip(vs, vs[1:]):
+    bm.edges.new((a, b))
+bm.to_mesh(me); bm.free()
+m = ob.modifiers.new("Mirror", 'MIRROR')
+m.use_axis = (True, False, False); m.use_clip = True
+m.use_mirror_merge = True; m.merge_threshold = 0.001
+```
+
+Steps 1 to 2: grow the cup by extruding edges and placing the new vertices just off the body. The artist does this by eye; the snapping in step 5 does the same job.
+```python
+# not run in Blender
+import bmesh
+from mathutils.bvhtree import BVHTree
+def offset_to_body(verts, body_ob, gap=0.004):
+    bvh = BVHTree.FromObject(body_ob, bpy.context.evaluated_depsgraph_get())
+    for v in verts:
+        co, n, _, _ = bvh.find_nearest(v.co)
+        if co: v.co = co + n * gap
+ret = bmesh.ops.extrude_edge_only(bm, edges=edge_row)
+new = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=new, vec=(0, 0, 0.03))
+offset_to_body(new, bpy.data.objects["Cube"])
+```
+
+Step 4: diamond ornament extrude along normal and scale.
+```python
+# not run in Blender
+import bmesh
+from mathutils import Vector, Matrix
+r = bmesh.ops.extrude_face_region(bm, geom=diamond_faces)
+nv = [g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)]
+n = diamond_faces[0].normal.copy()
+bmesh.ops.translate(bm, verts=nv, vec=n * 0.010695)
+c = sum((v.co for v in nv), Vector()) / len(nv)
+bmesh.ops.scale(bm, verts=nv, vec=(0.8315,)*3, space=Matrix.Translation(-c))
+```
+
+Step 5: face snapping, select linked by normal, one loop cut.
+```python
+# not run in Blender
+ts = bpy.context.scene.tool_settings
+ts.use_snap = True
+ts.snap_elements = {'FACE_PROJECT'}
+bpy.ops.mesh.select_linked(delimit={'NORMAL'})
+bmesh.ops.subdivide_edges(bm, edges=strap_ring_edges, cuts=1, use_grid_fill=True)
+```
+
+Steps 6 to 7: copy body faces into a new garment object (collar from the neck ring, jacket from the upper torso).
+```python
+# not run in Blender
+body = bpy.data.objects["Cube"]
+bpy.context.view_layer.objects.active = body
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.mesh.select_all(action='DESELECT')
+bm = bmesh.from_edit_mesh(body.data)
+for f in bm.faces:
+    f.select = f.calc_center_median().z > 1.20 and f.calc_center_median().x >= 0  # pick your region
+bmesh.update_edit_mesh(body.data)
+bpy.ops.mesh.duplicate()
+bpy.ops.mesh.separate(type='SELECTED')
+bpy.ops.object.mode_set(mode='OBJECT')
+```
+
+Step 8: sleeve from the arm-hole loop.
+```python
+# not run in Blender
+r = bmesh.ops.extrude_edge_only(bm, edges=armhole_edges)
+nv = [g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=nv, vec=(0.034113, 0, -0.18871))
+c = sum((v.co for v in nv), Vector()) / len(nv)
+bmesh.ops.scale(bm, verts=nv, vec=(0.842,)*3, space=Matrix.Translation(-c))
+```
+
+Step 9: close the cuff end.
+```python
+# not run in Blender
+c = sum((v.co for v in cuff_loop), Vector()) / len(cuff_loop)
+bmesh.ops.pointmerge(bm, verts=cuff_loop, merge_co=c)
+```
+
+Steps 10 and 12: bevel a fold or patch edge.
+```python
+# not run in Blender
+bmesh.ops.bevel(bm, geom=fold_edges, offset=0.0078, offset_type='OFFSET',
+                segments=1, profile=0.5, affect='EDGES', loop_slide=True)
+```
+
+Step 11: long back panel.
+```python
+# not run in Blender
+r = bmesh.ops.extrude_edge_only(bm, edges=back_hem_edges)
+nv = [g for g in r["geom"] if isinstance(g, bmesh.types.BMVert)]
+bmesh.ops.translate(bm, verts=nv, vec=(0, 0.050081, -0.24895))
+```
+
+#### Settings read on screen
+
+- Mirror modifier on Cube.004, Cube.005, Cube.006 (and on Cube, Cube.002): Axis X, Clipping on, Merge on, 0.001 m.
+- Move X -0.017426 m (under-cup row); Move Y -0.01795 m; Move X 0.032056 m.
+- Rotate 36.3 deg, Axis Z, Orientation View (cup, side view).
+- Edge Slide Factor about 0.330, Clamp on, Mirror Editing on, Correct UVs on.
+- Duplicate (Extrude/Duplicate and Move) 0, 0, 0; band end Move X -0.00525 m.
+- Loop Cut: Cuts 1, Smoothness 0.00 (several times). Last one: Falloff Inverse Square, Factor 0.000, Clamp on, Correct UVs on.
+- Diamond: Extrude Region and Move Z -0.010695 m, Orientation Normal; Scale 0.8315; Move Y 0.001945 m.
+- Snapping: Snap Base Closest; Snap Target list open on Face (Increment active before); Affect Move.
+- Strap vertex extrudes: (0.027218, -0.030518, -0.041734) m and (-0.019363, 0.054804, -0.059674) m.
+- Select Linked Delimit: Normal.
+- Collar: Move X 0.004536 m; Resize 0.953; flap Move Z -0.002622 m; tweak (0.000429, -0.002657, -0.001149) m; back Rotate about 33.6 deg, Axis Z, View.
+- Jacket: Rotate 40.2 deg, Axis Z, View; sleeve Extrude (0.034113, 0, -0.18871) m; Resize 0.842; Rotate about 23.5 deg; Move (0.002508, 0, -0.005017) m; cuff (0.001254, 0, -0.013796) m and (-0.00672, 0, 0.025521) m; Resize 0.941; Resize 0.857; Move (0.011593, 0, 0.038306) m; Move (0.027722, 0, 0.00252) m; Merge Type At Center; Move Z 0.007819 m.
+- Sleeve fold Bevel: Offset 0.0078 m, Segments 1, Profile 0.5.
+- Back panel: Extrude (0, 0.050081, -0.24895) m; Vertex Slide 0.1843, Even off, Clamp on.
+- Upper-arm patch: Resize 0.727; Bevel Affect Edges, Width Type Offset, Width 0.00226 m, Segments 1, Shape 0.500, Material Index -1, Loop Slide on, Miter Outer Sharp, Inner Sharp, Intersection Grid Fill, Face Strength None, Profile Superellipse.
+- Counts: top ends around Verts 185 / Faces 159; collar Verts 40 / Faces 28; jacket Verts 213 / Faces 215; scene at end Verts 2,428, Faces 2,260, Tris 4,366.
+
+#### Not visible in the frames
+
+- How `Cube.004` was created (which primitive was added and how it was reduced to the 9-vertex row). The row is already there at 00:16:25.
+- Whether `Cube.005` and `Cube.006` were made with Shift+D then P (Separate), or with Ctrl+C/V or another method. Only the before (selected body faces) and after (new object) are visible.
+- The exact way the band centre was removed in step 3 and the strap faces were filled in step 5 (delete, dissolve, F fill or grid fill).
+- Whether Face snapping stayed on for the jacket work.
+- Values of moves done by mouse drag with no redo panel in the frame, and several angles read only roughly (23.5 deg, 33.6 deg, edge slide 0.330).
+- Whether Shift+N at 00:27:37 recalculated normals (the header shows Object Mode in that frame).
+- Any materials, UV seams, or shading/auto-smooth settings for the clothes. None are shown in this chapter.
+- How the jacket front edge, the open centre back slot and the inner side of the garments look in final form. Backfaces and inner surfaces are not shown closely.
+
 ## Gaps
 
 - **Multires.** The course's fold workflow sits on `Multires` levels, which `sculpt_strokes` cannot reach. Real

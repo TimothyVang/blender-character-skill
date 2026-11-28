@@ -10,6 +10,10 @@ weights; eyes, teeth, tongue, hair, clothes and boots follow it too, each by the
 set of test poses deforms without spikes, collapsed joints or parts left behind, and at least two presentation
 poses are stored.
 
+If the character will be animated, not only posed, continue with `rig-for-animation.md` (stage 10b) after step 13:
+IK/FK snapping, corrective shape keys driven by the joints, a test cycle checked frame by frame, actions on the NLA
+and a baked copy for export. Do not apply the armature or sculpt a pose into the bound mesh in that case.
+
 ## Starting state
 
 - Finished, textured meshes in a neutral A-pose or T-pose, facing -Y, feet on Z = 0, object scale applied
@@ -898,6 +902,102 @@ My notes, not from the course; a later pass will work these out.
 - `Surface Deform`, `Mask` and `Data Transfer` modifiers do not export; boots and skirt need real skin weights.
 - Hair: curves and Geometry Nodes hair do not export as is; needs hair cards or a groom export.
 - Root: Rigify's `root` control is not a deform bone; Unreal expects a root joint at the origin.
+
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Source: chapter 13 "Mixamo Rigging", 01:11:28 to 01:13:19. Mixamo is a website; the upload form, marker placement and Skeleton LOD screens are not in these frames.
+
+Order of work
+1. [NQ 01:11:28 to 01:11:45] Work on copies of the meshes: Body.001, Hair1.001, Hair2.001. In Edit Mode, front orthographic, select the arms and sleeves and rotate them up so the arms point straight out (a rotate value of 9.77 is visible). The reference sheet stays open in an Image Editor on the left. Result: textured T-pose. Material texture node reads female_char1, Linear, Flat, Repeat, Single Image, sRGB, Alpha Straight; Backface Culling off.
+2. [NQ 01:11:52 to 01:12:06] Mixamo: the character FEMALE_CHAR1 is uploaded; the AUTO-RIGGER dialog shows "Processing upload", then "Auto-Rigging...", then "Review" with the rigged T-pose. Artist clicks Next.
+3. [NQ 01:12:13 to 01:12:33] Pick animations in Mixamo. Search "run", choose Running: Overdrive 50, Character Arm-Space 50, Mirror off, In Place on. Download gives Running.fbx. Search "idle", choose Dwarf Idle: Overdrive 50, Character Arm-Space 50, Mirror off. Download gives Dwarf Idle.fbx.
+4. [NQ 01:12:40 to 01:12:54] In a new Blender scene import the Mixamo FBX. Outliner: Armature with Animation, Pose, Armature, Body.001, Hair1.001, Hair2.001. Scene 4,458 verts / 3,805 faces / 7,372 tris. In the Shading workspace an Image Texture node is added to the hair material ("Shader") and the texture is reopened, then linked to the Principled BSDF. Result: textured, rigged character in Blender.
+5. [NQ 01:13:01 to 01:13:08] Animation workspace, Pose Mode on the Armature. Action Editor shows action "Idle" with mixamorig:Hips, Spine, Spine1, Spine2, Neck, Head, LeftShoulder, LeftArm, LeftForeArm, LeftHand channels. Armature transform: Rotation X 90°, Scale 0.010 (as imported). 65 bones. End frame set (201 shown; 250 typed in one frame).
+6. [NQ 01:13:15 to 01:13:19] File > Export > FBX into the Godot project folder (contains .godot, Asset, Scene). Options: Path Mode Auto, Batch Mode Off, Limit to (Selected Objects, Visible Objects, Active Collection) all off, Object Types all on (Empty, Camera, Lamp, Armature, Mesh, Other), Custom Properties off, Scale 1.00, Apply Scalings All Local, Forward -Z Forward, Up Y Up. File name field still "untitled.fbx" in the frame; in Godot the file is female_char1.fbx.
+
+How it looks on screen
+- Mesh copies (.001) are used for the rig, keeping the originals.
+- Arms are posed out to a T-pose in Edit Mode before upload.
+- Animations are previewed on the character in Mixamo before download.
+- The run is downloaded with In Place on.
+- The texture has to be relinked by hand after the round trip through Mixamo.
+- Export goes straight into the game project folder.
+
+Python route
+Mixamo has no public API. The agent can prepare the upload file and handle the downloads; a person (or a browser session they are signed into) must do the Mixamo steps.
+```python
+# not run in Blender
+import bpy
+# Export the T-posed meshes for Mixamo upload (export settings for this upload
+# are not shown in the video; embedding the texture is a guess).
+bpy.ops.export_scene.fbx(
+    filepath="//female_char1_mixamo_upload.fbx",
+    use_selection=True,
+    object_types={'MESH'},
+    path_mode='COPY',
+    embed_textures=True,
+)
+```
+Hand to a person or a signed-in browser:
+- mixamo.com > Upload Character > choose the FBX > wait for Auto-Rigging > Review > Next.
+- Animations: search "run", pick "Running", tick In Place, Download. Search "idle", pick "Dwarf Idle", Download. Leave Overdrive 50 and Character Arm-Space 50.
+- Return the downloaded FBX files to the agent.
+```python
+# not run in Blender
+import bpy
+bpy.ops.import_scene.fbx(filepath=r"C:\path\Running.fbx")
+arm = next(o for o in bpy.context.scene.objects if o.type == 'ARMATURE')
+# Expect rotation_euler.x = 90 deg and scale 0.01, as seen on screen.
+
+# Relink the texture on each imported material
+img = bpy.data.images.load(r"C:\path\female_char1.png", check_existing=True)
+for ob in arm.children:
+    for slot in ob.material_slots:
+        nt = slot.material.node_tree
+        bsdf = nt.nodes.get("Principled BSDF")
+        tex = nt.nodes.new("ShaderNodeTexImage")
+        tex.image = img
+        nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+
+arm.animation_data.action = bpy.data.actions.get("Idle") or arm.animation_data.action
+bpy.context.scene.frame_end = 201
+
+bpy.ops.export_scene.fbx(
+    filepath=r"C:\path\GodotProject\Asset\3d\female_char1.fbx",
+    path_mode='AUTO',
+    batch_mode='OFF',
+    use_selection=False,
+    use_visible=False,
+    use_active_collection=False,
+    object_types={'EMPTY', 'CAMERA', 'LIGHT', 'ARMATURE', 'MESH', 'OTHER'},
+    use_custom_props=False,
+    global_scale=1.0,
+    apply_scale_options='FBX_SCALE_NONE',  # "All Local" in the UI
+    axis_forward='-Z',
+    axis_up='Y',
+)
+```
+The Godot scene later shows both Armature|Run and Armature|Idle, so both actions end up in the exported file. How they were combined is not shown; one way is to import both FBX files and keep both actions on the one armature (for example as NLA strips) before export.
+
+Settings read on screen
+- Mesh copies: Body.001, Hair1.001, Hair2.001.
+- Edit-mode rotate value seen: 9.77.
+- Texture node: female_char1, Linear, Flat, Repeat, Single Image, sRGB, Alpha Straight.
+- Mixamo Running: Overdrive 50, Character Arm-Space 50, Mirror off, In Place on.
+- Mixamo Dwarf Idle: Overdrive 50, Character Arm-Space 50, Mirror off.
+- Downloads: Running.fbx, Dwarf Idle.fbx.
+- Imported armature: Rotation X 90°, Scale 0.010, 65 bones, mixamorig: bone names, action "Idle".
+- FBX export: Path Mode Auto, Batch Mode Off, Limit to all off, Object Types all on, Custom Properties off, Scale 1.00, Apply Scalings All Local, Forward -Z, Up Y.
+
+Not visible in the frames
+- The FBX export settings used for the Mixamo upload.
+- Mixamo marker placement (chin, wrists, elbows, knees, groin), Symmetry and Skeleton LOD choice.
+- Mixamo download options (format, Skin with/without, frames per second, keyframe reduction).
+- The FBX import options in Blender.
+- How the Run and Idle actions were merged into one file, and the export file name at the moment of saving.
+- The Bake Animation / Add Leaf Bones / Armature section of the export dialog (not scrolled into view).
 
 ## Gaps
 

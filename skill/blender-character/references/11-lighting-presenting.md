@@ -660,6 +660,64 @@ realistic head can use 85 mm. For a pose that looks to one side, key from that s
    against it as extra information.
 7. Files saved: the `.blend`, the stills, and the PNG sequence or a note that the sequence was not rendered.
 
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Source: chapter 14 "Import to Godot", 01:13:19 to 01:15:28. Godot 4.3.stable, Forward+ renderer. The Import dock tab exists but is never opened in these frames.
+
+Order of work
+1. [NQ 01:13:19 to 01:13:28] The FBX female_char1.fbx and the texture female_char1.png are in res://Asset/3d/ of an existing game project (other files there: anim.fbx, asset.fbx, base_char_3.fbx, building1.fbx, building1.png, tent.fbx, tree_asset.fbx, untitled.fbx). The FBX is instanced in the Root scene as "MainChar": Armature > Skeleton3D > Hair1_001, Hair2_001, Body_001, plus AnimationPlayer. Skeleton3D bones start at mixamorig_Hips. Skeleton3D: Motion Scale 1, Show Rest Only off, Callback Mode Process Idle, Animate Physical Bones On.
+2. [NQ 01:13:28 to 01:13:41] Select Body_001 and set the mesh material: Albedo Color white, Albedo Texture set to the character texture, Texture Force sRGB Off, Disable Ambient Off, Disable Fog Off, Rim Enabled On, Rim 0.08, Tint 0.3. Result: textured character in T-pose on the green ground with a cast shadow.
+3. [NQ 01:13:48 to 01:14:33] Select AnimationPlayer: Current Animation Armature|Idle, Speed Scale 1, Active On, Deterministic off, Reset on Save On, Root Node MainChar. Play Armature|Idle (6.6667 s) and orbit around it, then switch to Armature|Run (0.7 s) and watch it.
+4. [NQ 01:14:39 to 01:15:28] Toggle viewport View options (View Origin and View Grid checked in the menu), watch the in-place run from several angles, then switch back to Armature|Idle for a final look from side and front.
+Result: the Mixamo-rigged character is in the game scene with a textured rim-lit material and two working animations.
+
+How it looks on screen
+- The character goes into an existing scene (Root with UI, Environment, Camera > CamGimbal > Camera3D > PixelShader, Game > World > Ground) rather than a new test scene.
+- The imported FBX node is renamed MainChar.
+- Material is edited per mesh in the Inspector, not in a shader.
+- Animations are checked with the bottom Animation panel and its dropdown.
+- Animation snap is 0.0333 s (30 fps).
+
+Python route
+Godot is not driven from Blender. What the agent can do from Python is write the files the Godot project needs; the import and play test happen in Godot (by a person, or by running godot --headless with a GDScript).
+```python
+# not run in Blender
+import shutil
+proj = r"C:\path\GodotProject\Asset\3d"
+shutil.copy(r"C:\path\female_char1.fbx", proj)
+shutil.copy(r"C:\path\female_char1.png", proj)
+```
+Godot side (GDScript, not Python), matching the values seen:
+```gdscript
+# not run in Godot
+var mat := StandardMaterial3D.new()
+mat.albedo_texture = load("res://Asset/3d/female_char1.png")
+mat.rim_enabled = true
+mat.rim = 0.08
+mat.rim_tint = 0.3
+$MainChar/Armature/Skeleton3D/Body_001.material_override = mat
+$MainChar/AnimationPlayer.play("Armature|Idle")
+```
+If Godot's FBX import is not available, the same export can be done as glTF with bpy.ops.export_scene.gltf(export_format='GLB', export_animations=True); this is an alternative, not what the video shows.
+
+Settings read on screen
+- Godot 4.3.stable, Forward+.
+- Files: res://Asset/3d/female_char1.fbx, female_char1.png.
+- Scene path: Root > MainChar > Armature > Skeleton3D > Hair1_001, Hair2_001, Body_001; MainChar > AnimationPlayer.
+- Skeleton3D: Motion Scale 1, Show Rest Only off, Callback Mode Process Idle, Animate Physical Bones On.
+- Body_001 material: Albedo Color white, Albedo Texture set, Texture Force sRGB Off, Disable Ambient Off, Disable Fog Off, Rim Enabled On, Rim 0.08, Rim Tint 0.3.
+- AnimationPlayer: Speed Scale 1, Active On, Deterministic off, Reset on Save On, Root Node MainChar.
+- Animations: Armature|Idle 6.6667 s, Armature|Run 0.7 s; snap 0.0333 s.
+
+Not visible in the frames
+- Godot's Import dock settings for the FBX (FBX importer type, loop modes, root motion, mesh/material extraction).
+- Whether the material is a material_override, a surface override or saved as a resource.
+- Whether loop was set on Idle and Run (the loop icon state is too small to read reliably).
+- Lighting and environment settings (DirectionalLight, WorldEnvironment) were not opened.
+- Any in-game play test (the game was not run in these frames).
+
 ## Gaps
 
 - Add-ons and outside programs: the Poly Haven asset-browser add-on (paid; the HDRIs themselves are free at

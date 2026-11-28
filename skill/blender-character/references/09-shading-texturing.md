@@ -2,6 +2,8 @@
 
 Course source: chapter 12 "Shading & Texturing Your Character", 14:24:52 to 17:25:10.
 The course records in Blender 5.0.1; everything below is written and checked for Blender 4.5.16.
+A character that will never be UV-unwrapped (render-only, `speed-sculpt.md`) can be coloured on its vertices
+instead; that file has the snippet.
 
 ## Goal
 Every part has a named material that says what it is made of: skin with subsurface scattering and broken-up colour,
@@ -601,18 +603,175 @@ this one: palette, pink iris, exact ramp stops, the Multiply 0.404 / eye-tuned O
    mask image has `colorspace_settings.name == "Non-Color"`; each normal map has red/green deviation above 0.
 2. `viewport_capture(view=..., shading="MATERIAL")` of the whole character from `FRONT`, `BACK`, `LEFT`, and `RIGHT`
    (`turnaround_sheet` uses fixed clay shading and does not show materials): no part grey or checkered, no seams in colour maps, no black patches from failed bakes.
-3. `outline_match(object="CHARACTER", threshold=0.98)` again on the whole character, because `Apply Base` in
-   step 9 moves garment meshes. Under 0.98 is failed; a view with no reference picture is "looked at, not measured", never passed.
+3. The 1:1 **proof** in `references/likeness-1to1.md` on the whole character, because `Apply Base` in step 9 moves
+   garment meshes and outline overlap alone misses terraces, flat forms and wrong colours: `outline_match`,
+   `visual_match` on every view with a straight-on reference picture, `orbit_check`, `three_quarter_check` for every
+   pair of neighbouring pictures, and the eye review. A view with no reference picture is "looked at, not measured",
+   never passed.
 4. Cycles `render_image` from the front against the concept through `compare_images`; state per part (skin, hair,
-   each garment, eyes) whether the colour agrees. "Looks close" is not a result.
+   each garment, eyes) whether the colour agrees, using the `inks` hex table from `visual_match`. "Looks close" is
+   not a result.
 5. `mesh_report` on each baked garment: the face count is back to the retopology count.
 
-Failed: any count in item 1 off, a measured outline view under 0.98, or a nameable colour difference from the concept.
+Failed: any count in item 1 off, any `visual_match` gate failing on a measured view, an `orbit_check` angle failing,
+a `three_quarter_check` pair failing, an open eye-review finding, or a nameable colour difference from the concept.
+
+## Painting the concept pictures on (matching 2D concept art 1:1)
+When the person supplies straight-on pictures and wants the model to look like them pixel for pixel (painted
+shading, collars, laces, bangs, eyes) rather than like the course's procedural materials, project the pictures
+instead of building steps 2 to 8:
+
+1. Outline first: every chosen view passes `outline_match` (use `fit_outline` for the last few percent).
+2. Every mesh to paint has a non-overlapping UV map (stage 07; `uv.smart_project` is enough for projected paint).
+3. `project_paint(object="CHARACTER", references={...}, priority_views=["FRONT"], save_dir=<folder>)`. Each visible
+   mesh gets `PROJ_<mesh>` (2048 px; 512 px for meshes under 2000 faces) and one emission material showing it
+   unchanged; the old materials keep a fake user. The pictures already carry their own cel shading, so the
+   emission material is the look; under Cycles keep the scene's view transform at `Standard` for the colours to
+   match the pictures.
+4. Read `cross_view` and run the proof. Re-run `project_paint` after every change to shape: paint follows the
+   surface it was projected on.
+
+Projected paint never excuses the geometry: `visual_match` scores the untextured clay separately, so terraces and
+flat slabs still fail under a perfect texture.
+
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Source: Nhij Quang, "Blender 3D Quick Modeling Character For Game - Girl#01", chapter 12 "Hand Texture Painting", 00:55:02 to 01:11:28, Blender 4.2.1 LTS, 33 study sheets. The video is silent. Everything below comes from the panels and the model on screen.
+
+What the method comes down to: one shared colour atlas image (`female_char1`). Flat colour blobs are painted roughly over the UV islands. Then UV islands are moved and scaled onto whichever blob has the colour they need. The body material shows the image unlit (Image Texture straight into Surface). Shadows are soft rose strokes painted into the skin, not lighting. Hair uses the same atlas through a small toon node chain.
+
+### Order of work
+
+1. [NQ 00:55:02 to 00:55:20] Setup (already in place when the chapter starts). Texture Paint workspace. Left: Image Editor in Paint mode on image `female_char1`, filled with one flat peach skin colour. Top right: 3D viewport. Bottom right: a second Image Editor showing the concept picture `781797044449899121.png` as a colour reference. The image list also contains `Render Result` and `Test`. The artist tests the brush with black strokes, which are gone by 00:55:13 (probably an undo). Image size was not shown. The texture is square.
+2. [NQ 00:55:20 to 00:57:27] Shorts. Navy blob over the shorts island (radius 74 px). In UV Editing, he straightens the island's rows (UV > Straighten X, and loop-select plus align) so bands run straight. Then: a red band (radius 20 px, Falloff curve set to Custom), a solid red fill (10 px), yellow trim lines (10 px, cleaned at 5 px), and red side panels (37 px). He moves the shorts UV rows in Y so the band lands on the right faces.
+3. [NQ 00:56:57 to 00:58:57] Belt and boots. Charcoal belt strap with a brown diamond buckle. Boots get navy (29 px), then red front panels and red shoe accents. He re-unwraps the boot cuff faces (UV > Unwrap) and scales the new island onto a red patch. A yellow band goes around the boot cuff.
+4. [NQ 00:59:04 to 01:00:04] Top and accessories. Navy chest cups with red corners. Tan-brown pouch and straps (6, 4 and 3 px brushes). Brown belt tabs.
+5. [NQ 01:00:04 to 01:02:56] Jacket. One large teal blob (88 px) is painted in free space, and the jacket UV island is moved over it (UV Rip Move visible). Red back yoke (88 px). Red and navy cuffs (38 px). A yellow V line on the back panel with teal inside it (3 to 7 px). Navy and red collar and lapels with teal and yellow trim (10 to 20 px). Dark charcoal inner panels (4 px outline, then 16 px fill).
+6. [NQ 01:03:03 to 01:05:25] Face. Eyebrows and lash lines are separate dark geometry, not paint. He scales the eye's inner UV ring up (Resize) to get more pixels. Eye from outside in: dark maroon surround, pale grey sclera crescent, cream iris, dark purple top of iris at strength 0.568, orange on the iris sides, navy pupil, soft blue streak at strength 0.5, 1 px light highlights. Then blush (pink, 60 px), the nose as a small pink-red mark (10 px, then 4 px), and the mouth as a short dark-rose stroke (4 px).
+7. [NQ 01:05:33 to 01:07:55] Painted skin shading (this is where lighting is painted in). Falloff preset set to Smooth. Muted rose strokes go on the skin islands: under the head and neck (20 px, then softened at 113 px), navel and belly or rib creases (10 to 20 px), and broad bands under the chest, at the waistband and near clothing edges (83 px at strength 1.0, 0.8 and 0.7). Skin colour at strength 0.3 softens them. Fingertips: large soft rose spots (100 to 170 px) are painted in empty space, and the hand UV island is moved and scaled so the fingertips land on the pink. Some islands are realigned (Align Horizontally, Move) to sit on the shadow bands.
+8. [NQ 01:08:02 to 01:09:24] Materials, hair and save.
+   - Body material: Surface = Image Texture `female_char1` linked directly. Settings: Linear, Flat, Repeat, Single Image, sRGB, Alpha Straight. There is no BSDF, so the body is unlit and flat.
+   - Hair material `Hair`: Principled BSDF -> Shader to RGB -> Color Ramp -> Mix (Color, blend Mix, Clamp Factor on, Factor 0.925, A = Color Ramp, B = `female_char1`) -> Material Output.
+   - Hair1 and Hair2 UVs are moved onto the navy patch, with some strands onto the red patch for red streaks.
+   - Material settings: Render Method Dithered, Light Probe Volume on, Transparent Shadows on, Displacement Bump Only.
+   - Render engine EEVEE, viewport samples 16, render samples 64.
+   - The status bar shows the image saved as `female_char1.png`.
+9. [NQ 01:09:32 to 01:11:28] Late fixes. New pocket and flap geometry is added on the hips. These parts are coloured mostly by moving or scaling their UVs into existing blobs (Resize 0.799), with a few new navy and dark maroon blobs (30 px, strength 0.5 and 1.0).
+
+Result: a flat-shaded anime look with hard colour blocks, soft rose skin shadows, a painted face, and dark navy hair with red streaks, all from one texture.
+
+### How it looks on screen
+
+- He paints almost only in the 2D Image Editor with the UV wireframe on top. The 3D viewport is used to check the result and to select faces. No painting directly on the model was seen.
+- Blobs are rough and run past the island edges, because the island only has to sit inside the blob. Many parts are coloured by moving UVs, not by painting: unwrap, then resize or move the island onto a colour. This repeats all chapter (boots, jacket, hands, hair, pockets).
+- He goes back and forth between Texture Paint and UV Editing many times.
+- One brush throughout: TexDraw, Blend Mix, strength 1.0 for flat colours. Lower strength (0.3 to 0.8) and big radii are used only for shading and eye gradients.
+- The colour palette grows as he goes (peach, white, red, yellow, brown, navy, teal, charcoal, rose).
+- The reference picture is always open in a second Image Editor, zoomed to the part being painted.
+- No stencil, no texture mask, no face-selection paint mask and no symmetry/mirror painting were visible. The edges are hard pixel steps, which points to a fairly low-resolution image.
+- He fixes geometry while texturing (Unwrap, new pocket pieces).
+
+### Python route
+
+The skill's MCP server already has a `project_paint` tool that paints reference pictures onto UVs. Use it for the face (eyes, blush, mouth) if a clean front reference exists. Use the flat-fill route below for clothing blocks, which matches what the artist does.
+
+```python
+# not run in Blender
+import bpy, numpy as np
+SIZE = 1024  # size not visible in the video; choose it
+img = bpy.data.images.new("female_char1", SIZE, SIZE, alpha=False)
+px = np.empty((SIZE, SIZE, 4), np.float32)
+px[:] = (0.98, 0.80, 0.70, 1.0)          # skin base, linear values: sample from reference
+img.pixels.foreach_set(px.ravel())
+img.update()
+```
+
+```python
+# not run in Blender -- unlit body material, like the video (Image -> Surface)
+mat = bpy.data.materials.new("Body"); mat.use_nodes = True
+nt = mat.node_tree; nt.nodes.clear()
+tex = nt.nodes.new("ShaderNodeTexImage"); tex.image = img; tex.interpolation = 'Linear'
+out = nt.nodes.new("ShaderNodeOutputMaterial")
+nt.links.new(tex.outputs["Color"], out.inputs["Surface"])   # or route through an Emission shader
+```
+
+```python
+# not run in Blender -- hair toon chain seen at 01:08:10
+h = bpy.data.materials.new("Hair"); h.use_nodes = True; n = h.node_tree
+bsdf = n.nodes["Principled BSDF"]; out = n.nodes["Material Output"]
+s2r = n.nodes.new("ShaderNodeShaderToRGB")
+ramp = n.nodes.new("ShaderNodeValToRGB")
+mix = n.nodes.new("ShaderNodeMix"); mix.data_type = 'RGBA'; mix.blend_type = 'MIX'
+mix.clamp_factor = True; mix.inputs[0].default_value = 0.925
+t = n.nodes.new("ShaderNodeTexImage"); t.image = img
+n.links.new(bsdf.outputs[0], s2r.inputs[0])
+n.links.new(s2r.outputs["Color"], ramp.inputs["Fac"])
+n.links.new(ramp.outputs["Color"], mix.inputs[6])   # A (RGBA)
+n.links.new(t.outputs["Color"], mix.inputs[7])      # B (RGBA)
+n.links.new(mix.outputs[2], out.inputs["Surface"])  # Result (RGBA)
+h.surface_render_method = 'DITHERED'
+```
+
+```python
+# not run in Blender -- fill a set of faces' UV area with one flat colour
+import bmesh
+def fill_faces(obj, face_ids, rgb, pad=2):
+    me = obj.data; bm = bmesh.new(); bm.from_mesh(me)
+    uv = bm.loops.layers.uv.active; bm.faces.ensure_lookup_table()
+    a = np.array(img.pixels[:], np.float32).reshape(SIZE, SIZE, 4)
+    yy, xx = np.mgrid[0:SIZE, 0:SIZE]
+    for fi in face_ids:
+        poly = np.array([l[uv].uv for l in bm.faces[fi].loops]) * SIZE
+        # triangle-fan point-in-triangle test over the face bbox
+        x0, y0 = np.floor(poly.min(0)).astype(int) - pad
+        x1, y1 = np.ceil(poly.max(0)).astype(int) + pad
+        x0, y0 = max(x0, 0), max(y0, 0); x1, y1 = min(x1, SIZE), min(y1, SIZE)
+        X, Y = xx[y0:y1, x0:x1] + 0.5, yy[y0:y1, x0:x1] + 0.5
+        m = np.zeros_like(X, bool)
+        for i in range(1, len(poly) - 1):
+            p0, p1, p2 = poly[0], poly[i], poly[i + 1]
+            d = lambda a_, b_: (X - b_[0]) * (a_[1] - b_[1]) - (a_[0] - b_[0]) * (Y - b_[1])
+            s1, s2, s3 = d(p0, p1), d(p1, p2), d(p2, p0)
+            m |= ~(((s1 < 0) | (s2 < 0) | (s3 < 0)) & ((s1 > 0) | (s2 > 0) | (s3 > 0)))
+        a[y0:y1, x0:x1][m, :3] = rgb
+    img.pixels.foreach_set(a.ravel()); img.update(); bm.free()
+```
+
+Pick the face sets with material slots, face maps/attributes, or `bm.faces` selected by island. Dilate each mask by 2 to 4 px (`scipy.ndimage.binary_dilation`, or repeated numpy shifts) to avoid seams. For soft skin shadows, build the mask, blur it with a Gaussian (sigma of about 2 to 4 % of the image width), then do `a[...,:3] = lerp(a, rose, mask*0.7)`. Save with `img.filepath_raw = "//female_char1.png"; img.file_format = 'PNG'; img.save()`.
+
+The artist's habit of colouring by UV placement also works from Python: paint a swatch strip once, then move each island's UVs into the swatch of the colour it needs. This is cheap and exact for flat parts.
+
+### Settings read on screen
+
+- Brush: TexDraw, Blend Mix, Anti-Aliasing on, Accumulate off, Cursor on.
+- Strength: 1.000 for flat colour; 0.568 and 0.500 on the eye; 0.800, 0.700 and 0.300 on skin shading.
+- Radius (px) seen: 166, 113, 100, 88, 83, 74, 60, 58, 50, 38, 37, 30, 29, 20, 18, 16, 10, 9, 7, 6, 5, 4, 3, 1.
+- Falloff: a Custom S-curve early on; preset list open with Smooth selected at 01:05:33.
+- Image: `female_char1`, square, saved as `female_char1.png`. Reference image `781797044449899121.png`. Other images in the file: `Render Result`, `Test`.
+- Body material: Surface = Image Texture `female_char1` direct. Linear, Flat, Repeat, Single Image (shown as Generated at 00:55:28, Single Image by 01:08:02), sRGB, Alpha Straight, Vector Default.
+- Hair material: Principled BSDF -> Shader to RGB -> Color Ramp -> Mix (Color/Mix, Clamp Factor on, Clamp Result off, Factor 0.925, A Color Ramp, B female_char1) -> Output. Render Method Dithered.
+- Material settings: Backface Culling Camera off, Shadow off, Light Probe Volume on, Transparent Shadows on, Displacement Bump Only, Pass Index 0.
+- Render: EEVEE, viewport samples 16, render samples 64, Temporal Reprojection on.
+- UV ops used: Straighten X, Align Horizontally, Unwrap, UV Rip Move, Select Linked Pick, Move (for example X -0.71007, Y 0.17947), Resize (0.799).
+- Objects: Body, Hair1, Hair2.
+
+### Not visible in the frames
+
+- Image resolution and how the image was created (it already existed with the skin fill at the start).
+- Exact RGB/hex values of any colour.
+- The Principled BSDF values and the Color Ramp stops on the hair material, beyond Factor 0.925 on the Mix.
+- Whether the viewport in Texture Paint was Solid with texture colour or Material Preview. Late shots look lit, while the body material itself is unlit.
+- Whether any external paint program was used. None appears in these frames.
+- Whether any line art or outline pass (inverted hull, Freestyle) was set up here. None was seen in this chapter.
+- How the hair geometry's colours were planned: only the UV moves onto navy and red patches were seen.
+- Some of the small pieces (for example the off-white round island near the blush at 01:04:55): what they belong to is unclear.
 
 ## Gaps
-- **Texture painting** is the heart of the chapter and cannot be done the course's way: no scriptable paint brush.
-  `paint_points` plus `bake_emit` covers soft tone only, at mesh resolution. Sharp motifs (shirt print, tattoos,
-  freckles) need another route (a cropped picture with alpha placed by a `Mapping` node), which I did not build.
+- **Hand-drawn brush painting** still cannot be done the course's interactive way: `paint_points` plus `bake_emit`
+  covers soft procedural tone, and `project_paint` puts existing straight-on art onto the model; a motif drawn
+  freshly on the surface has no scripted route.
 - **Add-ons.** Node Wrangler: bundled, free; preview and setup shortcuts only, not needed from Python. Poly Haven
   add-on: paid, but the textures are free CC0 downloads from the site, so the built-in route is to download a set,
   `bpy.data.images.load` it, and pass it to `build_cloth(pbr=...)`. BlenderKit (free tier) and Ucupaint (free,

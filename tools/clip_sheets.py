@@ -80,16 +80,14 @@ def _sheet(video: Path, row: dict, dest: Path, ffmpeg_dir: str) -> bool:
     return True
 
 
-def planned_rows(dir: Path, video_id: str, min_s: float = 8.0, max_s: float = 30.0) -> list[dict]:
+def planned_rows(dir: Path, video_id: str, min_s: float = 8.0, max_s: float = 30.0, silent: bool = False) -> list[dict]:
     import make_clips as mc
+    dir = Path(dir)
     info = json.loads((dir / f"{video_id}.info.json").read_text(encoding="utf-8"))
-    vtts = sorted(dir.glob(f"{video_id}.en*.vtt"))
-    if not vtts: raise FileNotFoundError(f"{video_id}: no English captions")
-    preferred = dir / f"{video_id}.en.vtt"
-    lines = cg.parse_vtt((preferred if preferred.exists() else vtts[0]).read_text(encoding="utf-8", errors="replace"))
+    lines = cg.read_lines(dir, video_id, silent)
     chaps = cg.chapters_from_info(info)
     rows = []
-    for s in mc.segments(cg.split_by_chapter(lines, chaps), chaps, min_s, max_s):
+    for s in mc.segments(cg.split_by_chapter(lines, chaps), chaps, min_s, max_s, cover_silent=silent):
         rows.append({"id": f"{video_id}-{s['chapter_n']:02d}-{cg.hhmmss(s['start'])}", "video_id": video_id,
                      "chapter_n": s["chapter_n"], "chapter": s["chapter"], "stage": s["stage"], "start": s["start"],
                      "end": s["end"], "duration": round(s["end"] - s["start"], 3), "text": s["text"],
@@ -97,14 +95,15 @@ def planned_rows(dir: Path, video_id: str, min_s: float = 8.0, max_s: float = 30
     return rows
 
 
-def make_sheets(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters: str | None = None, workers: int = 6) -> int:
+def make_sheets(dir: Path, video_id: str, ffmpeg_dir: str | None, chapters: str | None = None, workers: int = 6,
+                silent: bool = False) -> int:
     dir = Path(dir)
     if not ffmpeg_dir: raise RuntimeError("ffmpeg not found: pass --ffmpeg DIR or put ffmpeg on PATH")
     manifest = dir / "clips" / "manifest.jsonl"
     if manifest.exists():
         rows = [json.loads(l) for l in manifest.read_text(encoding="utf-8").splitlines() if l.strip()]
     else:                      # clips not cut yet: work out the same segments make_clips.py will use
-        rows = planned_rows(dir, video_id)
+        rows = planned_rows(dir, video_id, silent=silent)
     if chapters:
         keep = cg._parse_chapter_selection(chapters, [{"n": r["chapter_n"]} for r in rows])
         rows = [r for r in rows if r["chapter_n"] in keep]
@@ -133,9 +132,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("dir"); ap.add_argument("--chapters", default=None)
     ap.add_argument("--workers", type=int, default=6); ap.add_argument("--ffmpeg", default=None)
+    ap.add_argument("--silent", action="store_true", help="no narration: plan equal clips per chapter")
     a = ap.parse_args(argv)
     d = Path(a.dir)
-    return make_sheets(d, d.name, a.ffmpeg or cg.find_ffmpeg_dir(), a.chapters, a.workers)
+    return make_sheets(d, d.name, a.ffmpeg or cg.find_ffmpeg_dir(), a.chapters, a.workers, a.silent)
 
 
 if __name__ == "__main__":

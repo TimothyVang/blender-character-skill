@@ -185,3 +185,167 @@ def test_studio_vertical_gradient_and_tight_crop_are_accepted(tmp_path):
     split_im.save(sp)
     with pytest.raises(ValueError, match="not plain"):
         ol.reference_mask(str(sp))
+
+
+def _character_ref_and_captures(tmp_path, *, banded_clay: bool = False, blank_material: bool = False):
+    """Build a synthetic 512x512 character reference with crisp interior features (hairline, belt, skirt)
+    plus matching/defective model captures to test visual_score and banding_ratio."""
+    h, w = 512, 512
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    yy, xx = np.mgrid[:h, :w]
+    mask = ((xx - 256) / 96.0) ** 2 + ((yy - 256) / 210.0) ** 2 <= 1.0
+    rgba[mask, 3] = 255
+    # Distinct Ghibli-like bands: dark brown hair top, warm peach face, cream shirt, navy skirt
+    rgb = np.zeros((h, w, 3), dtype=np.uint8)
+    rgb[mask & (yy < 130)] = (55, 35, 25)
+    rgb[mask & (yy >= 130) & (yy < 200)] = (235, 195, 170)
+    rgb[mask & (yy >= 200) & (yy < 295)] = (235, 228, 205)
+    rgb[mask & (yy >= 295) & (yy < 318)] = (120, 65, 35)
+    rgb[mask & (yy >= 318)] = (30, 60, 105)
+    rgba[:, :, :3] = rgb
+    ref_path = tmp_path / "char_ref.png"
+    Image.fromarray(rgba).save(ref_path)
+
+    mat_rgb = np.full((h, w, 3), 185, dtype=np.uint8) if blank_material else rgb.copy()
+    mat_rgb[~mask] = 0
+
+    # Smooth hemisphere clay vs horizontal lathe-ring banded clay
+    nx = (xx - 256) / 100.0
+    ny = (yy - 256) / 215.0
+    nz = np.sqrt(np.clip(1.0 - nx * nx - ny * ny, 0.0, 1.0))
+    clay = np.clip(45.0 + 185.0 * nz, 0, 255)
+    if banded_clay:
+        clay = np.clip(clay + 28.0 * np.sin(yy * np.pi / 2.0), 0, 255)
+    clay_u8 = clay.astype(np.uint8)
+    clay_u8[~mask] = 0
+    return str(ref_path), mask, mat_rgb, clay_u8
+
+
+def test_visual_score_passes_smooth_textured_match_and_rejects_banded_or_blank(tmp_path):
+    ref_p, mod_mask, mat_ok, clay_ok = _character_ref_and_captures(tmp_path)
+    rm = {"FRONT": ol.reference_mask(ref_p)}
+    rc = {"FRONT": ol.reference_rgb(ref_p)}
+
+    good = ol.visual_score(rc, rm, {"FRONT": mat_ok}, {"FRONT": clay_ok}, {"FRONT": mod_mask}, ["FRONT", "LEFT"])
+    assert good["views"]["FRONT"]["status"] == "passed"
+    assert good["views"]["FRONT"]["failed_checks"] == []
+    assert good["views"]["FRONT"]["iou"] >= 0.99
+    assert good["views"]["FRONT"]["ssim"] >= 0.95
+    assert good["views"]["FRONT"]["interior_edge_f1"] >= 0.90
+    assert good["views"]["FRONT"]["clay_banding_ratio"] < 1.0
+    assert good["views"]["LEFT"]["status"] == "not_run"
+    assert good["all_measured_passed"] is True
+    assert good["all_views_passed"] is False
+
+    # Projected texture on horizontally banded clay geometry MUST fail clay_banding_ratio despite 0.99 IoU & 0.99 SSIM!
+    _, _, mat_b, clay_banded = _character_ref_and_captures(tmp_path, banded_clay=True)
+    banded = ol.visual_score(rc, rm, {"FRONT": mat_b}, {"FRONT": clay_banded}, {"FRONT": mod_mask}, ["FRONT"])
+    assert banded["views"]["FRONT"]["status"] == "failed"
+    assert banded["views"]["FRONT"]["iou"] >= 0.99
+    assert "clay_banding_ratio" in banded["views"]["FRONT"]["failed_checks"]
+
+    # Smooth clay geometry with blank/untextured interior MUST fail interior_edge_f1 and the colour proof despite 0.99 IoU!
+    _, _, mat_blank, clay_smooth = _character_ref_and_captures(tmp_path, blank_material=True)
+    blank = ol.visual_score(rc, rm, {"FRONT": mat_blank}, {"FRONT": clay_smooth}, {"FRONT": mod_mask}, ["FRONT"])
+    assert blank["views"]["FRONT"]["status"] == "failed"
+    assert blank["views"]["FRONT"]["iou"] >= 0.99
+    assert "interior_edge_f1" in blank["views"]["FRONT"]["failed_checks"]
+    assert "delta_e" in blank["views"]["FRONT"]["failed_checks"]
+
+
+def test_delta_e00_matches_published_cie_test_pairs():
+    # Sharma, Wu & Dalal (2005) CIEDE2000 test data, pairs 1, 7 and 17.
+    lab1 = np.array([[50.0, 2.6772, -79.7751], [50.0, 0.0, 0.0], [50.0, 2.5, 0.0]])
+    lab2 = np.array([[50.0, 0.0, -82.7485], [50.0, -1.0, 2.0], [73.0, 25.0, -18.0]])
+    np.testing.assert_allclose(ol.delta_e00(lab1, lab2), [2.0425, 2.3669, 27.1492], atol=1e-3)
+
+
+def test_colour_proof_reports_inks_and_flags_a_wrong_colour():
+    ref = np.zeros((64, 64, 3), np.uint8); ref[:, :32] = (200, 40, 40); ref[:, 32:] = (40, 60, 160)
+    region = np.ones((64, 64), bool)
+    same = ol.colour_proof(ref, ref.copy(), region)
+    assert same["delta_e_mean"] < 0.5 and same["within_de5_pct"] > 99
+    assert {r["ref_hex"] for r in same["inks"]} >= {"#c82828", "#283ca0"}
+    wrong = ref.copy(); wrong[:, 32:] = (40, 160, 60)
+    off = ol.colour_proof(ref, wrong, region)
+    blue = next(r for r in off["inks"] if r["ref_hex"] == "#283ca0")
+    assert blue["model_hex"] == "#28a03c" and blue["delta_e"] > 30 and off["delta_e_mean"] > 10
+
+
+def test_banding_ignores_single_hems_but_catches_repeated_rings():
+    yy, xx = np.mgrid[:512, :512]
+    mask = ((xx - 256) / 100.0) ** 2 + ((yy - 256) / 215.0) ** 2 <= 1.0
+    nz = np.sqrt(np.clip(1 - ((xx - 256) / 100.0) ** 2 - ((yy - 256) / 215.0) ** 2, 0, 1))
+    smooth = 45 + 185 * nz
+    hems = smooth + 25 * (((yy > 200) & (yy < 203)) | ((yy > 330) & (yy < 333)))
+    rings = smooth + 20 * np.sin(yy * 2 * np.pi / 10)
+    score = lambda lum: ol.banding_ratio((np.clip(lum, 0, 255) * mask).astype(np.uint8), mask)
+    assert score(smooth) < 1.0 and score(hems) < 1.6 < score(rings)
+
+
+def test_registration_recovers_a_shifted_outline_and_reports_it():
+    ref = np.zeros((512, 512), bool); ref[100:400, 150:350] = True
+    moved = np.roll(np.roll(ref, 3, axis=0), -2, axis=1)
+    reg = ol.register(ref, moved)
+    assert (reg["dx"], reg["dy"], reg["scale"]) == (2, -3, 1.0) and reg["iou"] == 1.0
+    assert ol.transform(moved, reg).tolist() == ref.tolist()
+
+
+def test_reference_pairs_reports_pictures_that_disagree():
+    a = np.zeros((300, 200), bool); a[50:250, 60:140] = True
+    b_ok = a[:, ::-1].copy()
+    b_wide = np.zeros_like(a); b_wide[50:250, 40:160] = True
+    assert ol.reference_pairs({"FRONT": a, "BACK": b_ok})["FRONT/BACK"] > 0.99
+    assert ol.reference_pairs({"FRONT": a, "BACK": b_wide})["FRONT/BACK"] < 0.9
+    assert ol.reference_pairs({"FRONT": a}) == {}
+
+
+def test_model_coverage_cuts_at_half_coverage_in_standard_srgb():
+    grey = np.zeros((40, 40), np.uint8); grey[10:30, 10:30] = 255
+    grey[10:30, 9] = 188; grey[10:30, 30] = 128         # ~50% and ~22% covered edge columns
+    m = ol.model_mask(grey, "FRONT")
+    assert m[15, 9] and not m[15, 30]
+    assert abs(ol.model_coverage(grey, "FRONT")[15, 9] - 0.5) < 0.02
+
+
+def test_orbit_score_flags_banding_and_missing_texture():
+    yy, xx = np.mgrid[:400, :400]
+    disk = ((xx - 200) / 80.0) ** 2 + ((yy - 200) / 160.0) ** 2 <= 1
+    sil = (disk * 255).astype(np.uint8)
+    nz = np.sqrt(np.clip(1 - ((xx - 200) / 80.0) ** 2 - ((yy - 200) / 160.0) ** 2, 0, 1))
+    clay = ((45 + 185 * nz) * disk).astype(np.uint8)
+    ringed = (np.clip(45 + 185 * nz + 25 * np.sin(yy * np.pi / 2), 0, 255) * disk).astype(np.uint8)
+    mat = np.zeros((400, 400, 3), np.uint8); mat[disk] = (120, 90, 60)
+    pink = mat.copy(); pink[disk] = (255, 0, 255)
+    res = ol.orbit_score([{"azimuth": 0.0, "elevation": 0.0, "sil": sil, "clay": clay, "mat": mat},
+                          {"azimuth": 90.0, "elevation": 0.0, "sil": sil, "clay": ringed, "mat": pink}])
+    a, b = res["angles"]
+    assert a["status"] == "passed" and res["passed"] == 1 and res["failed"] == 1
+    assert b["failed_checks"] == ["clay_banding_ratio", "missing_texture"]
+
+
+def _figure(size=600):
+    """A standing figure 400 px tall: silhouette and a skin-coloured render painted everywhere."""
+    sil = np.zeros((size, size), np.uint8); sil[100:500, 225:375] = 255
+    mat = np.full((size, size, 3), 60, np.uint8); mat[sil > 0] = (235, 205, 180)
+    return sil, mat
+
+
+def test_three_quarter_consistency_fails_only_where_two_pictures_put_a_feature_on_different_surfaces():
+    sil, a = _figure()
+    b = a.copy()
+    assert ol.consistency_score(a, b, sil, "same")["status"] == "passed"
+    a[120:160, 240:280] = (20, 20, 30)            # the eye where picture A puts it
+    b[120:160, 320:360] = (20, 20, 30)            # picture B puts it on the cheek
+    res = ol.consistency_score(a, b, sil, "moved eye")
+    assert res["failed_gates"] == ["head.delta_e"]
+    assert res["regions"]["body"]["status"] == "passed" and res["regions"]["legs"]["status"] == "passed"
+    assert res["regions"]["head"]["conflict_pct"] > 20
+
+
+def test_three_quarter_region_only_one_picture_paints_is_not_covered_not_passed():
+    sil, a = _figure()
+    b = a.copy(); b[380:500] = (255, 0, 255)       # picture B paints nothing on the legs
+    res = ol.consistency_score(a, b, sil, "legs unpainted")
+    assert res["regions"]["legs"]["status"] == "not covered"
+    assert res["status"] == "passed"

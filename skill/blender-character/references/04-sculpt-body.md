@@ -472,6 +472,117 @@ The course says voxel size depends on scene scale and to go higher or lower as n
    say so plainly instead of matching a posed picture.
 5. `save_file` under a new numbered name.
 
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Note: in this video the "sculpt body" stage is done by box/poly modelling, not with sculpt brushes. These steps come from chapter 6 (Chest Modeling, 00:13:58 to 00:16:22) and chapter 8 (Hand Modeling, 00:28:32 to 00:33:20). At chapter 6 the outliner already holds Cube (body), Cube.001, Cube.002, Cube.003; by chapter 8 it holds Cube to Cube.006 plus the new hand Cube.007.
+
+Order of work:
+1. [NQ 00:14:01 to 00:14:16] Body "Cube" in Edit Mode, Front Orthographic, X-ray. Loop cut (Ctrl R) across the upper torso, Move X -0.007316 m. Side check in Right Orthographic. Key overlay "X", "Z"; vertex count drops 216 -> 215 (one vertex removed). Mirror Clipping is on, Merge 0.001 m.
+2. [NQ 00:14:23] A low-poly UV sphere is added inside the body mesh; it appears on both sides because of the mirror. Mirror Clipping is switched off. Verts 273, Faces 267.
+3. [NQ 00:14:30] The back half of the sphere is removed; the remaining dome (25 verts, 25 faces selected) is scaled 0.874 and moved onto the chest in Right Orthographic. Overlay "G", "S", "Alt". Body is now Verts 240, Faces 228.
+4. [NQ 00:14:37 to 00:14:52] Select Linked (Delimit Normal) picks each dome. Scaled/moved in front view. Shading pie (Wireframe / Solid / Material Preview / Rendered) is shown, view goes to wireframe, and border verts are moved (Move Y -0.0042 m, repeated x3).
+5. [NQ 00:14:59 to 00:15:13] The dome is connected into the chest surface: a new edge runs from the dome down the torso (x4 repeats). Verts 240, Edges 473, Faces 233. Object Mode check with smooth shading (scene Verts 1,465, Faces 1,314). Back in Edit Mode, Move X 0.017165 m. Verts 240, Faces 236.
+6. [NQ 00:15:20 to 00:15:49] Edge flow around the breast is tidied: side view X-ray check (x4), Move Y/Z 0.005443 m, Vertex Slide factor 0.355 (Clamp on, Correct UVs on), Shift-select under-breast edges, more cuts and slides ("b x2"). Verts 241 -> 243, Faces 238 -> 241.
+7. [NQ 00:15:56] Dissolve Edges between the breasts: Dissolve Vertices on, Face Split off. Verts 243, Faces 241.
+8. [NQ 00:16:04 to 00:16:22] Neck: Mirror Clipping is back on. In Right Orthographic the top ring is extruded up (Move Z 0.031935 m) and rotated -11.8 degrees (Orientation View). Vertex Slide factor 0.289 on the collarbone verts (x3). Result Verts 252, Edges 498, Faces 247, Tris 475 (half mesh).
+9. [NQ 00:28:35] Hand starts as a new separate cube "Cube.007" (no modifiers) in Front Orthographic; Tab, G. Verts 8, Faces 6.
+10. [NQ 00:28:42] The cube is flattened into a palm slab (Resize panel shows 3.248 on x, y, z) and loop cut (Ctrl R) into four finger columns. Verts 20, Faces 18.
+11. [NQ 00:28:50 to 00:28:57] One palm corner is moved to taper the palm. Bevel on the edges between finger columns at the front: Affect Edges, Width Type Offset, Width 0.00197 m, Segments 1, Shape 0.500, Loop Slide on, Clamp Overlap off, Harden Normals off, Miter Outer/Inner Sharp, Intersection Type Grid Fill, Face Strength None, Profile Superellipse. Verts 32, Faces 27.
+12. [NQ 00:29:04 to 00:29:33] Face select ("4" then "3" on the overlay). The palm is placed by the hip in Front Orthographic (Move X 0.039919 m). The finger root faces are shaped from the front (G x2, Move Y -0.001945 m, Z 0.007292 m) and extruded into four long finger boxes. Verts 48 -> 69, Faces 43 -> 64.
+13. [NQ 00:29:40 to 00:30:16] Finger tips scaled 0.5128 (S x9). Top Orthographic with X-ray: tips moved to set lengths (D -0.01872 m), fingers narrowed with Resize 0.7587 and 0.7449. Verts 69, Faces 64.
+14. [NQ 00:30:23 to 00:31:21] Knuckle loops: Ctrl R across the fingers, S x2 on the new loops; finger sections rounded by moving corner verts (Move Y 0.001963 m and -0.002607 m). Size check in Object Mode beside the thigh. More joint loops are added. Verts 69 -> 117 -> 213, Faces 64 -> 112 -> 208.
+15. [NQ 00:31:28 to 00:31:42] Object Mode, W menu, Shade Smooth. Ctrl R loop cut across the palm (Edge Slide 0.3160). Knife tool cuts on the palm side for the thumb base. Verts 216 -> 225, Faces 210 -> 220.
+16. [NQ 00:31:50 to 00:32:40] Thumb: faces on the palm side selected (Faces 4 selected), moved (Move Y -0.012285 m), extruded out (Move X 0.024978, Y -0.003142, Z -0.002637 m), rotated (R, header -13.74) in Right Orthographic, extruded again, tip scaled ("S", "1"), nudged (Move 0.000081, -0.000985, 0.003155 m). Verts 225 -> 261, Faces 228 -> 264.
+17. [NQ 00:32:47 to 00:33:02] All 261 verts selected, hand moved to the wrist and scaled 1.422 in Front Orthographic. Then Ctrl J joins Cube.007 into the body "Cube" (Tab x2). Object Mode count: Verts 2,950, Faces 2,780, Tris 5,402, Objects 1/9. The body's Mirror modifier (Clipping on, Merge 0.001 m) gives the second hand.
+18. [NQ 00:33:09 to 00:33:16] Ctrl S, status "Saved female_char1.blend". At 00:33:16 the outliner shows Empty, Empty.001 and a "Model" collection, and the status bar reads Verts 0, so the model parts were moved into a collection named Model (how is not shown).
+
+How it looks on screen:
+- All work is in Edit Mode on low-poly meshes with direct vertex moves, loop cuts, extrudes, slides and the knife. No sculpt brushes, no Subdivision modifier is visible in the modifier panel.
+- Front, Right and Top Orthographic for placement against the reference; User Orthographic for shape checks.
+- X-ray / wireframe is turned on when tracing or reaching hidden verts (14:01, 14:52, 15:20, 29:54) and off for shape checks.
+- Mirror Clipping is turned off while a loose part (the breast sphere) is added near the centre, and turned back on afterwards.
+- The hand is built as its own object without a mirror, then joined into the mirrored body so it is duplicated for free.
+- Short checks in Object Mode with Shade Smooth between edits.
+- Small move values (millimetres to a few centimetres) are typical; the model is roughly real-world scale.
+
+Python route:
+```python
+# not run in Blender
+import bpy, bmesh
+from math import radians
+from mathutils import Matrix, Vector
+
+body = bpy.data.objects["Cube"]
+mirror = body.modifiers["Mirror"]
+
+# step 2-3: breast dome inside the body mesh
+mirror.use_clip = False
+bm = bmesh.new(); bm.from_mesh(body.data)
+center = Vector((0.06, -0.08, 1.30))  # read from reference; not on screen
+ret = bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=0.05,
+                                matrix=Matrix.Translation(center))
+sphere = ret["verts"]
+back = [v for v in sphere if v.co.y > center.y + 1e-5]
+bmesh.ops.delete(bm, geom=back, context='VERTS')
+dome = [v for v in sphere if v.is_valid]
+bmesh.ops.scale(bm, vec=(0.874,)*3, space=Matrix.Translation(-center), verts=dome)
+bm.to_mesh(body.data); bm.free()
+# step 5: join the dome border to the chest with bmesh.ops.bridge_loops or connect_verts
+# step 7
+# bmesh.ops.dissolve_edges(bm, edges=extra_edges, use_verts=True, use_face_split=False)
+mirror.use_clip = True
+
+# step 8: neck
+# top = verts of the top ring; extrude then:
+# bmesh.ops.translate(bm, verts=neck, vec=(0, 0, 0.031935))
+# bmesh.ops.rotate(bm, verts=neck, cent=ring_center, matrix=Matrix.Rotation(radians(-11.8), 3, 'X'))
+
+# steps 9-11: hand slab with four finger columns
+bpy.ops.mesh.primitive_cube_add(size=1, location=(0.25, 0, 0.85))  # placement from reference
+hand = bpy.context.object; hand.name = "Cube.007"
+hand.scale = (0.09, 0.03, 0.012)  # flat palm; real values not visible
+bpy.ops.object.transform_apply(scale=True)
+bm = bmesh.new(); bm.from_mesh(hand.data)
+long_edges = [e for e in bm.edges
+              if abs((e.verts[0].co - e.verts[1].co).normalized().x) > 0.9]
+bmesh.ops.subdivide_edges(bm, edges=long_edges, cuts=3, use_grid_fill=True)
+# bevel the three column-separating edges at the front, width 0.00197, 1 segment
+# then extrude each front finger face separately:
+# r = bmesh.ops.extrude_discrete_faces(bm, faces=finger_faces)
+# translate each new face along the finger axis; scale tips by 0.5128
+bm.to_mesh(hand.data); bm.free()
+
+# step 17: scale and join into the mirrored body
+hand.scale = (1.422,)*3
+bpy.ops.object.transform_apply(scale=True)
+bpy.ops.object.select_all(action='DESELECT')
+hand.select_set(True); body.select_set(True)
+bpy.context.view_layer.objects.active = body
+bpy.ops.object.join()
+bpy.ops.wm.save_mainfile()
+```
+
+Settings read on screen:
+- Chest: Move X -0.007316 m; Resize 0.874; Select Linked Delimit Normal; Move Y -0.0042 m; Move X 0.017165 m; Move Y/Z 0.005443 m; Vertex Slide 0.355 (Clamp on, Correct UVs on); Dissolve Edges (Dissolve Vertices on, Face Split off); Neck Move Z 0.031935 m; Rotate -11.8 degrees, Orientation View; Vertex Slide 0.289
+- Mirror Clipping off from 00:14:23 to about 00:15:56, on again by 00:16:04
+- Chest counts (half mesh): 216 -> 215 -> 273 (sphere added) -> 240 -> 243 -> 252 verts; faces 207 -> 228 -> 241 -> 247
+- Hand: Resize 3.248; Bevel Edges, Offset, 0.00197 m, 1 segment, shape 0.5, Loop Slide on, Miter Sharp, Grid Fill, Superellipse; Move X 0.039919 m; Move Y -0.001945 / Z 0.007292 m; Resize 0.5128; D -0.01872 m; Resize 0.7587, 0.7449; Move Y 0.001963, -0.002607 m; Edge Slide 0.3160; thumb Move Y -0.012285 m, Move (0.024978, -0.003142, -0.002637) m, rotation -13.74; Move (0.000081, -0.000985, 0.003155) m; final Resize 1.422
+- Hand counts: 8 -> 20 -> 32 -> 48 -> 69 -> 117 -> 213 -> 216 -> 225 -> 261 verts; final 261 verts / 523 edges / 264 faces / 518 tris
+- After join: Verts 2,950, Faces 2,780, Tris 5,402 (Object Mode, mirror evaluated)
+- File name female_char1.blend
+
+Not visible in the frames:
+- The UV sphere's segment and ring counts and radius (only the 25-vertex dome after trimming is readable).
+- Exactly how the dome was connected to the torso (knife, J connect, or bridge); the frames only show the result.
+- What removed one vertex at 00:14:16.
+- The axis of the -13.74 thumb rotation and of the -11.8 degree neck rotation (the neck panel says Axis Z in View orientation, which in Right Orthographic is the screen-normal axis).
+- How the finger faces were extruded (individual faces or region); and the meaning of "I x2" / "b x2" overlay entries.
+- The thumb segment count beyond what the vertex count implies.
+- Whether a Subdivision Surface modifier was ever on; none appears in the modifier panel, and the Object Mode count at 00:15:06 (1,465 verts) is for the whole scene.
+- How the objects were moved into the "Model" collection at 00:33:16.
+
 ## Gaps
 
 - **Add-ons**: `Extra Mesh Objects` (free, Blender extensions) for the round cube; `quad_ball` replaces it.

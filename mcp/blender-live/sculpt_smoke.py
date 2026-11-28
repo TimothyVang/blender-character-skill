@@ -18,8 +18,8 @@ from PIL import Image
 
 out = os.path.abspath(sys.argv[1]); os.makedirs(out, exist_ok=True)
 HERE = os.path.dirname(os.path.abspath(__file__))
-TOOLS = ["reference_setup", "sculpt_begin", "sculpt_strokes", "sculpt_remesh", "sculpt_mask", "mesh_report", "turnaround_sheet",
-         "outline_match"]
+TOOLS = ["reference_setup", "sculpt_begin", "sculpt_strokes", "sculpt_remesh", "sculpt_relax", "sculpt_mask", "mesh_report",
+         "turnaround_sheet", "outline_match", "fit_outline", "project_paint", "visual_match", "orbit_check"]
 SPHERE = """
 import bpy
 if bpy.context.mode != 'OBJECT': bpy.ops.object.mode_set(mode='OBJECT')
@@ -323,6 +323,74 @@ async def main():
         m, _, mask_err = await run_raw("sculpt_mask", {"object": "SculptTest", "op": "box"})
         checks["box_mask_without_bounds_is_refused"] = mask_err and m.get("status") == "error" and "min and max" in m.get("detail", "")
         checks["bridge_errors_set_is_error"] = bool(remesh_err and unknown_err and mask_err)
+
+        # 1:1 tools ---------------------------------------------------------------------------------------------
+        RIPPLED = SPHERE.replace("result = len", "import math\nfor v in bpy.context.active_object.data.vertices:\n"
+                                 "    v.co *= 1.0 + 0.04 * math.sin(v.co.z * 40.0)\nresult = len")
+        RIPPLE = ("import bpy, math\nme = bpy.data.objects['SculptTest'].data\nrings = {}\n"
+                  "for v in me.vertices:\n    rings.setdefault(round(v.co.z, 4), []).append(math.hypot(v.co.x, v.co.y))\n"
+                  "zs = sorted(z for z in rings if abs(z) < 0.6); r = [sum(rings[z]) / len(rings[z]) for z in zs]\n"
+                  "result = sum(abs(r[i + 1] - 2 * r[i] + r[i - 1]) for i in range(1, len(r) - 1)) / (len(r) - 2)")
+        await py(RIPPLED); before = await py(RIPPLE)
+        m, _ = await run("sculpt_relax", {"object": "SculptTest", "iterations": 40, "method": "laplacian", "along": "Z"})
+        after = await py(RIPPLE)
+        checks["relax_along_z_irons_rings"] = m.get("moved_verts", 0) > 0 and after < 0.5 * before
+        await py(SPHERE)
+        m, _ = await run("sculpt_relax", {"object": "SculptTest", "iterations": 20})
+        size = await py("import bpy\nresult = bpy.data.objects['SculptTest'].dimensions.x")
+        checks["taubin_relax_keeps_size"] = abs(size - 2.0) < 0.02
+        m, _, relax_err = await run_raw("sculpt_relax", {"object": "SculptTest", "method": "taubin", "lam": 0.5, "mu": 0.2})
+        checks["relax_refuses_bad_taubin_factors"] = relax_err and "mu" in m.get("detail", "")
+
+        two_tone = os.path.join(out, "ref_two_tone.png"); im = Image.new("RGB", (600, 600), (255, 255, 255))
+        d = ImageDraw.Draw(im); d.pieslice((100, 100, 500, 500), 180, 360, fill=(200, 40, 40)); d.pieslice((100, 100, 500, 500), 0, 180, fill=(40, 60, 160))
+        im.save(two_tone)
+        ellipse = os.path.join(out, "ref_ellipse.png"); im = Image.new("RGB", (600, 600), (30, 30, 30))
+        ImageDraw.Draw(im).ellipse((140, 100, 460, 500), fill=(220, 200, 180)); im.save(ellipse)
+        await py(SPHERE)
+        m0, _ = await run("outline_match", {"object": "SculptTest", "references": {"FRONT": ellipse}})
+        m, _ = await run("fit_outline", {"object": "SculptTest", "references": {"FRONT": ellipse}, "strength": 1.0, "max_px": 40})
+        m1, _ = await run("outline_match", {"object": "SculptTest", "references": {"FRONT": ellipse}})
+        i0, i1 = (x.get("views", {}).get("FRONT", {}).get("iou", 0) for x in (m0, m1))
+        checks["fit_outline_moves_outline_toward_reference"] = m.get("status") == "fitted" and i1 > i0 + 0.03
+
+        await py(SPHERE)
+        m, _ = await run("project_paint", {"object": "SculptTest", "references": {"FRONT": two_tone}, "tex_size": 512})
+        painted = (m.get("painted") or [{}])[0]
+        # one FRONT picture paints the front half of a sphere, minus the rim it sees edge-on (cos < min_cos 0.12):
+        # at most (1 - 0.12) / 2 = 44 % of the surface
+        checks["project_paint_paints_every_mesh"] = m.get("status") == "painted" and painted.get("object") == "SculptTest" \
+            and 35 < painted.get("seen_pct", 0) <= 44.5 and painted.get("material") == "PROJ_SculptTest"
+        m, imgs = await run("visual_match", {"object": "SculptTest", "references": {"FRONT": two_tone}}, "visual.png")
+        f = m.get("views", {}).get("FRONT", {})
+        checks["visual_match_passes_painted_sphere"] = f.get("status") == "passed" and f.get("delta_e_mean", 99) < 5 and len(imgs) == 1
+        checks["visual_match_reports_inks_as_hex"] = any(r.get("ref_hex", "").startswith("#") for r in f.get("inks", []))
+        await py(RIPPLED)
+        m, _ = await run("project_paint", {"object": "SculptTest", "references": {"FRONT": two_tone}, "tex_size": 512})
+        m, _ = await run("visual_match", {"object": "SculptTest", "references": {"FRONT": two_tone}})
+        checks["visual_match_fails_rippled_clay_under_paint"] = "clay_banding_ratio" in m.get("views", {}).get("FRONT", {}).get("failed_checks", [])
+
+        await py(SPHERE)
+        m, _ = await run("project_paint", {"object": "SculptTest", "references": {"FRONT": two_tone}, "tex_size": 256})
+        m, imgs = await run("orbit_check", {"object": "SculptTest", "azimuth_step": 90, "elevations": [0, 30]}, "orbit.png")
+        checks["orbit_check_covers_every_angle"] = len(m.get("angles", [])) == 8 and m.get("failed") == 0 and len(imgs) == 1
+        await py("import bpy\nmat = bpy.data.materials['PROJ_SculptTest']\n"
+                 "tex = next(n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE')\n"
+                 "tex.image = bpy.data.images.new('smoke_missing', 4, 4); tex.image.source = 'FILE'; tex.image.filepath = '//missing.png'")
+        m, _ = await run("orbit_check", {"object": "SculptTest", "azimuth_step": 180, "elevations": [0]})
+        checks["orbit_check_flags_missing_texture"] = all("missing_texture" in a.get("failed_checks", []) for a in m.get("angles", [{}]))
+
+        swapped = os.path.join(out, "ref_two_tone_swapped.png"); im = Image.new("RGB", (600, 600), (255, 255, 255))
+        d = ImageDraw.Draw(im); d.pieslice((100, 100, 500, 500), 180, 360, fill=(40, 60, 160)); d.pieslice((100, 100, 500, 500), 0, 180, fill=(200, 40, 40))
+        im.save(swapped)
+        await py(SPHERE)
+        m, _ = await run("project_paint", {"object": "SculptTest", "references": {"FRONT": two_tone, "LEFT": two_tone}, "tex_size": 512})
+        tq = {"object": "SculptTest", "tex_size": 512, "px": 768}
+        m, imgs = await run("three_quarter_check", {**tq, "references": {"FRONT": two_tone, "LEFT": two_tone}}, "threequarter.png")
+        checks["three_quarter_check_passes_pictures_that_agree"] = m.get("failed") == 0 and len(m.get("pairs", [])) == 1 \
+            and m["pairs"][0].get("azimuth") == 315 and len(imgs) == 1
+        m, _ = await run("three_quarter_check", {**tq, "references": {"FRONT": two_tone, "LEFT": swapped}})
+        checks["three_quarter_check_fails_pictures_that_put_colours_on_different_surfaces"] = m.get("failed") == 1
 
     json.dump({"tools": listed, "checks": checks, "calls": report}, open(os.path.join(out, "sculpt_smoke.json"), "w"), indent=1)
     bad = [k for k, v in checks.items() if not v]

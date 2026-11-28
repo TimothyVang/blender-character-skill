@@ -127,6 +127,13 @@ meets all of these:
    their own bounding boxes before comparing, so an arm in a different place changes the whole score.
 6. Showing the same things the model contains. A clothed reference compared with a bare body will not
    reach 0.98; that is expected until the clothes exist.
+7. Sharp enough to paint from: the character at least 1,800 px tall in the picture (2K art, about 10 px per cm
+   on a 1.7 m character). `project_paint` copies the pictures onto the model, so the texture can never be sharper
+   than they are: a 512 x 1024 Midjourney grab leaves the face about 60 px wide, soft at any texture size.
+   Get a 2K source: from Midjourney, open the single image (not the 2 x 2 grid and not a crop of it), run
+   **Upscale (Subtle)**, and download the upscaled image (the `midjourney-moodboards` skill covers this); from
+   an artist, ask for 2K or larger. Enlarging a small picture in an image editor or in Blender only interpolates
+   pixels: it adds no detail.
 
 A view with no such picture can be looked at with `turnaround_sheet` but not measured. `outline_match`
 reports it as `not_run`. Report such a view as "looked at, not measured". Never report it as passed.
@@ -175,7 +182,8 @@ def check_reference(path):
     return {"measurable": True, "background": how, "image_px": [w, h],
             "subject_px": [box[2] - box[0] + 1, box[3] - box[1] + 1],
             "margin_px": {"left": box[0], "right": w - 1 - box[2], "bottom": box[1], "top": h - 1 - box[3]},
-            "cropped_tight": max(box[0], w - 1 - box[2], box[1], h - 1 - box[3]) <= 0.02 * max(w, h)}
+            "cropped_tight": max(box[0], w - 1 - box[2], box[1], h - 1 - box[3]) <= 0.02 * max(w, h),
+            "sharp_enough": box[3] - box[1] + 1 >= 1800}
 
 result = check_reference(r"C:\path\to\refs\front.png")
 ```
@@ -441,16 +449,69 @@ Before starting the blockout, all of these are true and written down:
 3. The ratio list from step 5, marked "measured from a straight-on picture" or "estimated by eye".
 4. `check_reference` has been run on every picture meant for measuring. For each of FRONT, BACK, LEFT,
    RIGHT, TOP the notes say one of: "measurable" (straight-on, plain or transparent background, cropped
-   tight, neutral pose) or "no picture: looked at, not measured".
+   tight, neutral pose, `sharp_enough`) or "no picture: looked at, not measured".
 5. `reference_setup` has been called for every measurable view with one shared `height`, and captures of
    supplied views show the pictures upright and facing the right way.
 6. The file is saved.
 
 What counts as failed: no concept; a picture intended for measuring that `check_reference` reports as not
-measurable; front and side pictures whose landmarks disagree by more than about 2% of height; a view listed
+measurable or not `sharp_enough` (get the 2K upscale before the blockout, while nothing depends on the picture);
+front and side pictures whose landmarks disagree by more than about 2% of height; a view listed
 as measurable that is really a three-quarter or posed drawing. Having fewer than two measurable views
 (FRONT plus one side) is not a failure of this stage; report which views can be tested and which cannot.
 The 0.98 target can still be tested independently for each eligible view, but not for missing views.
+
+## Low-poly game route (second course: Nhij Quang, Girl#01)
+
+Second source: Nhij Quang, [Blender 3D Quick Modeling Character For Game - Girl#01](https://www.youtube.com/watch?v=mlnR-Eyazh0), Blender 4.2.1 LTS, 1 h 15 min, no narration (music only). Everything here was read off the screen: the key-cast overlay, redo panels, modifier panels and status-bar counts, from 157 study sheets; labels are in `annotations/mlnR-Eyazh0/`. Times marked `NQ` point into that video, not the main course. Use this route instead of the sculpt route when the job is a low-poly game character (box/poly modelled, hand-painted, Mixamo-rigged); see "Two routes" in `SKILL.md`. Values that could not be read are listed as not visible, never guessed. Python blocks marked `# not run in Blender` were not executed.
+
+Order of work:
+1. [NQ 00:01:12 to 00:01:15] New scene. The concept sheet (front, side and back of the girl on one image) is added as an Image Empty named "Empty" and moved with G in Front Orthographic. Header delta while moving reads about Dx 0.8165 m, Dz 1.29 m.
+2. [NQ 00:01:15 to 00:01:23] The Empty's Object Data settings: Display As Image, Size 5 m, Offset X -0.50, Y -0.50, Depth Back, Side Front, Show In Orthographic on, Perspective on, Only Axis Aligned off, Opacity on at 0.300, image Color Space sRGB. Move redo panel: X 0.03798 m, Y 0 m, Z -0.028485 m. Result: the front figure's feet sit on the world origin.
+3. [NQ 00:01:23 to 00:01:36] A second copy "Empty.001" is made and moved X -5.2896 m. "Numpad 1" shows on the key overlay. At 00:01:28 the view is Right Orthographic with the sheet still visible. The Image Editor on the left is panned to the side view of the concept.
+
+How it looks on screen:
+- One reference image holds all three views; it is reused twice by duplicating the Empty and sliding it so the view you need is centred on the origin.
+- Reference is faint (opacity 0.3) and drawn behind the mesh (Depth Back).
+- A separate Image Editor on the left shows the full-colour concept the whole time.
+
+Python route:
+```python
+# not run in Blender
+import bpy
+img = bpy.data.images.load(r"C:/path/to/concept_sheet.png")
+def ref_empty(name, x_offset, rot_z=0.0):
+    e = bpy.data.objects.new(name, None)
+    e.empty_display_type = 'IMAGE'
+    e.data = img
+    e.empty_display_size = 5.0
+    e.empty_image_offset = (-0.5, -0.5)
+    e.empty_image_depth = 'BACK'
+    e.empty_image_side = 'FRONT'
+    e.show_empty_image_orthographic = True
+    e.show_empty_image_perspective = True
+    e.show_empty_image_only_axis_aligned = False
+    e.use_empty_image_alpha = True
+    e.color[3] = 0.3
+    e.rotation_euler = (1.5708, 0.0, rot_z)  # upright facing -Y; rotation values were not readable
+    e.location = (x_offset, 0.0, 0.0)
+    bpy.context.scene.collection.objects.link(e)
+    return e
+front = ref_empty("Empty", 0.03798)
+front.location.z -= 0.028485
+side = ref_empty("Empty.001", 0.03798 - 5.2896, rot_z=1.5708)  # side rotation inferred
+```
+
+Settings read on screen:
+- Empty: Display As Image, Size 5 m, Offset -0.50 / -0.50, Depth Back, Side Front, Show In Orthographic and Perspective on, Only Axis Aligned off, Opacity 0.300
+- Move X 0.03798 m, Z -0.028485 m (first Empty)
+- Move X -5.2896 m (second Empty)
+- Image Color Space sRGB, Source Single Image
+
+Not visible in the frames:
+- The rotation values of the Empties (the side Empty must face the Right view, but its rotation panel is not shown).
+- How the second Empty was made (Shift D is likely, not on the overlay in the frames).
+- The image's pixel size and file path beyond "...44449899121.png".
 
 ## Gaps
 

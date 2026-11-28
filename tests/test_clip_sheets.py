@@ -72,3 +72,10 @@ def test_frame_pipes_png_without_tempdir(course, monkeypatch):
 
     monkeypatch.setattr(cs.subprocess, "run", bad_ffmpeg)
     assert cs._frame(course / "clip.mp4", 5.0, FFMPEG) is None
+
+
+def test_planned_rows_for_a_silent_video(tmp_path):
+    d = tmp_path / "q"; d.mkdir()
+    (d / "q.info.json").write_text('{"id": "q", "duration": 60, "chapters": [{"start_time": 0, "end_time": 60, "title": "Head Modeling"}]}')
+    rows = cs.planned_rows(d, "q", silent=True)
+    assert len(rows) == 2 and rows[0]["stage"] == "03-sculpt-face" and rows[-1]["end"] == 60
