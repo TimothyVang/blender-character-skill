@@ -9,7 +9,6 @@ Five parts:
 |------|-------|--------------|
 | The skill | `skill/blender-character/` | A Claude skill: one entry file and one reference file per stage of the character pipeline. |
 | The MCP server | `mcp/blender-live/` | Drives a running Blender: run Python, capture the viewport, sculpt, remesh, mask, place references, and measure the model's outline against reference pictures. |
-| blender-mcp-plus | `mcp/blender-mcp-plus/` | A fork of the MIT [MCP for Blender](https://github.com/ahujasid/mcp-for-blender) with this repo's tools added: long commands that keep Blender responsive, the scene relay's verified actions, a `watch` view of the work beside the reference picture, and the likeness, paint and sculpt tools. No telemetry. See its README. |
 | The course grabber | `skill/blender-character/scripts/course_grab.py` | Turns a video course into a transcript per chapter plus the frames that go with it, for writing skills like this one. |
 | Visual study annotations | `annotations/qy-wwP-b9HY/` | 1,253 structured visual study labels across 11 stage JSONL files (`53` in stage 01 + `120` each in stages 02–11) backing the stage notes. |
 | Low-poly route annotations | `annotations/mlnR-Eyazh0/` | 366 labels read off the screen of a silent speed-model (157 study sheets, every one labelled), in 11 JSONL files (stages 01–05 and 07–11, plus `00-intro`), backing each stage file's "Low-poly game route" section. |
@@ -23,11 +22,6 @@ Five parts:
   `visual_match`, `orbit_check` and `three_quarter_check`).
 - **Outline and pixel measuring, projection helpers, MCP contracts, and course/sheet tools:** tested without Blender
   (`tests/`, 62 tests passing).
-- **blender-mcp-plus:** upstream's own suite passes on the fork (694 passed with no Blender on its port; the
-  4 tests of upstream's Claude plugin bundle, which the fork leaves out, were removed). Live over real MCP stdio
-  against Blender 4.5.16 (`mcp/blender-mcp-plus/plus_smoke.py`, 9 checks passing): upstream tools, relay select
-  confirmed and stale revision refused, `watch` moving the viewport beside the reference, `visual_match`, and
-  upstream's `get_scene_info` answering within 0.75 s while a 10 s `project_paint` ran (two runs: 0.56 s and 0.72 s).
 - **Skill stage files (Stages 01–11 E2E proof):** executed end to end in live Blender 4.5.16 through the `blender-live` MCP server from a real front concept image (`character_01_refs.blend` through `character_11_final.blend`): 13 blockout parts, sculpted face/body (`BLK_head` `symmetry_error=0.000385`, `symmetry_p95_error=0.001598`, `symmetry_max_error=0.004978`), clothes/cloak/hair/goggles, manifold retopo (`body_retopo` 6,060 faces, `non_manifold_edges=0`), 13 UV-unwrapped meshes, `hair_scalp` + 710 hair curves, 15 shaded renderables, Rigify 918-bone rig (`0` unweighted body vertices, `0.4618 m` verified pose deformation), and Cycles studio renders.
   - **Likeness measurement (`outline_match`, `threshold=0.98`):** `FRONT` measured `0.9055` IoU (`failed` at the strict `0.98` target; remaining gap comes from the reference's studio floor cast shadow, inter-boot shadow, and fine hair/cuff differences). `BACK`, `LEFT`, `RIGHT`, and `TOP` were `not_run` ("looked at, not measured", no reference pictures for those views).
   - **Limitations:** retopology in the scripted E2E run used voxel/clean-mesh lowpoly proxies rather than hand-placed edge-loop patches; hitting `>= 0.98` across multiple views still requires multi-view clean-cutout references and iterative sculpting/fitting. Bpy snippets in stage files carry explicit verification markers for Blender 4.5.16.

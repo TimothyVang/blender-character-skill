@@ -13,3 +13,6 @@ video-courses/
 *.vtt
 *.info.json
 blender_exe.txt
+
+# separate project, kept locally only
+mcp/blender-mcp-plus/
