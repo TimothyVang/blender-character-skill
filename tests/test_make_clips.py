@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill" / "blender-character" / "scripts"))
 import course_grab as cg  # noqa: E402
 import make_clips as mc  # noqa: E402
 

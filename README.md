@@ -10,11 +10,11 @@ Five parts:
 | The skill | `skill/blender-character/` | A Claude skill: one entry file and one reference file per stage of the character pipeline. |
 | The MCP server | `mcp/blender-live/` | Drives a running Blender: run Python, capture the viewport, sculpt, remesh, mask, place references, and measure the model's outline against reference pictures. |
 | blender-mcp-plus | `mcp/blender-mcp-plus/` | A fork of the MIT [MCP for Blender](https://github.com/ahujasid/mcp-for-blender) with this repo's tools added: long commands that keep Blender responsive, the scene relay's verified actions, a `watch` view of the work beside the reference picture, and the likeness, paint and sculpt tools. No telemetry. See its README. |
-| The course grabber | `tools/course_grab.py` | Turns a video course into a transcript per chapter plus the frames that go with it, for writing skills like this one. |
+| The course grabber | `skill/blender-character/scripts/course_grab.py` | Turns a video course into a transcript per chapter plus the frames that go with it, for writing skills like this one. |
 | Visual study annotations | `annotations/qy-wwP-b9HY/` | 1,253 structured visual study labels across 11 stage JSONL files (`53` in stage 01 + `120` each in stages 02–11) backing the stage notes. |
 | Low-poly route annotations | `annotations/mlnR-Eyazh0/` | 366 labels read off the screen of a silent speed-model (157 study sheets, every one labelled), in 11 JSONL files (stages 01–05 and 07–11, plus `00-intro`), backing each stage file's "Low-poly game route" section. |
 | Speed-sculpt annotations | `annotations/FGU0ZwYub-0/`, `umF8UhsczO4/`, `huJs2R7JckM/`, `Yq9Dzaw2f1k/`, `ainRAUwXMO4/` | 252 labels from five YanSculpts videos: the D.Va Short (30), two 22-minute timelapses (89 + 73, from 91 study sheets) and the Venom and Spider-Man Shorts (28 + 32, narration transcribed with Whisper), backing `references/speed-sculpt.md`. |
-| Speed-sculpt recipe | `mcp/blender-live/speed_sculpt.py` | That method as Python: an ordered plan of `blender-live` tool calls (spheres per part, face strokes, eyes before lids, brow/lash strips, hair locks, mask-extract clothes, vertex paint, toon material, rim lights). Tested without Blender in `tests/test_speed_sculpt.py`. |
+| Speed-sculpt recipe | `skill/blender-character/scripts/speed_sculpt.py` | That method as Python: an ordered plan of `blender-live` tool calls (spheres per part, face strokes, eyes before lids, brow/lash strips, hair locks, mask-extract clothes, vertex paint, toon material, rim lights). Tested without Blender in `tests/test_speed_sculpt.py`. |
 
 ## Status
 
@@ -97,8 +97,8 @@ Strokes do not depend on the viewport, repeat exactly, and each one reports how 
 ## Grab a course
 
 ```
-python tools/course_grab.py "https://www.youtube.com/watch?v=VIDEO_ID" --out references/video-courses
-python tools/course_grab.py urls.txt --chapters 3-6
+python skill/blender-character/scripts/course_grab.py "https://www.youtube.com/watch?v=VIDEO_ID" --out references/video-courses
+python skill/blender-character/scripts/course_grab.py urls.txt --chapters 3-6
 ```
 
 Per video it writes `chapters/NN-<slug>.md` (timed transcript), `frames/NN-<slug>/HHMMSS.jpg` (where the picture
@@ -110,9 +110,9 @@ frames with empty transcripts, and `make_clips.py` / `clip_sheets.py` cut every 
 panels.
 
 ```
-python tools/course_grab.py "https://www.youtube.com/watch?v=mlnR-Eyazh0" --silent
-python tools/make_clips.py references/video-courses/mlnR-Eyazh0 --silent
-python tools/clip_sheets.py references/video-courses/mlnR-Eyazh0 --silent
+python skill/blender-character/scripts/course_grab.py "https://www.youtube.com/watch?v=mlnR-Eyazh0" --silent
+python skill/blender-character/scripts/make_clips.py references/video-courses/mlnR-Eyazh0 --silent
+python skill/blender-character/scripts/clip_sheets.py references/video-courses/mlnR-Eyazh0 --silent
 ```
 
 If YouTube answers "Sign in to confirm you're not a bot" or HTTP 429, update yt-dlp first
@@ -121,8 +121,8 @@ If YouTube answers "Sign in to confirm you're not a bot" or HTTP 429, update yt-
 Then cut it into short captioned clips and make study sheets an agent can read:
 
 ```
-python tools/make_clips.py references/video-courses/VIDEO_ID           # 8-30 s clips + clips/manifest.jsonl
-python tools/clip_sheets.py references/video-courses/VIDEO_ID          # 2x2 full-resolution frames + transcript per clip
+python skill/blender-character/scripts/make_clips.py references/video-courses/VIDEO_ID           # 8-30 s clips + clips/manifest.jsonl
+python skill/blender-character/scripts/clip_sheets.py references/video-courses/VIDEO_ID          # 2x2 full-resolution frames + transcript per clip
 ```
 
 Each clip starts where the narrator starts a line, never crosses a chapter, and its manifest row carries the spoken

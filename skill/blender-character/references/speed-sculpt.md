@@ -130,14 +130,14 @@ The labels are 222 rows in `annotations/<video id>/`. What they add to the steps
   peach, orange and red-orange, placed for rims, with Scene Lights and Scene World on. No camera or final render is
   seen. He goes back to the face after lighting.
 
-## As Python: `mcp/blender-live/speed_sculpt.py`
+## As Python: `scripts/speed_sculpt.py`
 
 The method above as a replayable plan: an ordered list of `blender-live` tool calls (`exec_python`,
 `sculpt_remesh`, `sculpt_begin`, `sculpt_strokes`, `sculpt_mask`), each with the reason and the video time it comes
 from.
 
 ```
-python mcp/blender-live/speed_sculpt.py --height 1.6 --colors hair=#6b4a8a,top=#7a7a3a > plan.json
+python <skill>/scripts/speed_sculpt.py --height 1.6 --colors hair=#6b4a8a,top=#7a7a3a > plan.json
 ```
 
 Call each step's `tool` with its `args`, in order, and look (`viewport_capture`) after each part. The plan builds:
