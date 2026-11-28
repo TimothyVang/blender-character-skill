@@ -158,8 +158,28 @@ operation. The module is tested without Blender (`tests/test_speed_sculpt.py`):
 - every code block parses;
 - the steps keep his order.
 
-The generated `bpy` code has **not** been run in Blender here yet. Grease Pencil ink is not scripted. Use a thin
-dark paint dab along the line (`code_paint` with a small radius) or draw it by hand.
+**Run in Blender.** The whole plan was replayed in live Blender 4.5.16 over real MCP
+(`mcp/blender-live/speed_sculpt_smoke.py`). All 79 steps ran without error and all 12 checks pass:
+- every stroke moved vertices;
+- every part exists, and the one-sided parts are mirrored;
+- the brow and lash strips have the right modifier stack;
+- the top was extracted (3,710 verts);
+- paint reached vertices;
+- the toon material is on every part;
+- the 4 rim lights are in place;
+- the figure stands on the floor at the requested height.
+
+That run found and fixed three bugs:
+- raw 114-vert spheres were too sparse for strokes (a clavicle stroke moved 0 verts), so the torso and pelvis are
+  now remeshed coarsely first;
+- the arms, feet and hands floated apart;
+- the hair cap covered the forehead and brows.
+
+**What it makes:** a posed, painted *mannequin* in his structure, not a likeness. The face strokes are generic
+(bulging eyes, a rough mouth line), and the front hair locks come out as blobs on 12×6 spheres. Shape every part
+against the reference pictures with your own `sculpt_strokes` after each step, and look with `viewport_capture`.
+Grease Pencil ink is not scripted: use a thin dark paint dab along the line (`code_paint` with a small radius) or
+draw it by hand.
 
 ## What this route trades away
 
