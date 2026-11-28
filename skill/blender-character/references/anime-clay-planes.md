@@ -253,6 +253,9 @@ The flat almond is the socket.
 - If the concept has round eyes that bulge in profile, use stage 03's eyeball and lids instead.
 - If it is flat-drawn anime, use `almond_eye`, and from TOP check that the floor follows the face's turn (the
   fitted plane does this).
+- If the job is a 1:1 match to specific drawings, `almond_eye` is only the block. Replace it with stage 03's
+  drawn-eye carve (step 13, `scripts/face_draft_carve.py`), which traces the opening, lash rim and iris off the
+  registered 2K pictures. `03-sculpt-face.md`, "Which eye method", compares all three.
 
 ## Hair
 

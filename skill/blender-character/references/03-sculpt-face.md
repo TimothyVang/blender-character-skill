@@ -231,6 +231,34 @@ stroke that crosses X=0 stays symmetric.
     the lid path; `flatten` on the lid underside with radius `0.03*H`; `grab` the inner and outer corners by
     `+0.02*H` in Y; transition edge `{"brush":"crease",...,"radius":0.025*H,"strength":0.3}` one lid-thickness
     outside the rim. Look from `TOP` and three-quarter: lid ends must curve back round the ball.
+    **Drawn (anime/Ghibli) eyes, scripted route verified in 4.5.16** (`scripts/face_draft_carve.py`, a worked
+    example whose numbers are one character's; replace them with your own). An eyeball with spherical lids reads
+    as a marble on an egg next to a flat-drawn eye, so this route carves the eye into the face the way the
+    speed-sculpt shorts do: draw the eye on the clay, then cut along the drawing.
+    - **Draft first.** Register each drawing on the head silhouette (median centre offset of the drawing's head
+      band against the clay's, about 5 to 8 mm here: centring on the whole-figure box is off by up to 1 cm), then
+      crop the face on a millimetre grid in world units and read every landmark by eye: opening corners, lash
+      line top and thickness, iris box, brow arch and thickness, nostril dots, mouth line, profile depth per
+      height, jaw half-width per height, chin bottom in both views. Ink-detection by colour mislabels brows,
+      lids and hair strands; read the grid. Project the drawing's dark ink onto the clay as thin red curves
+      (`DRAFT_FRONT`, `DRAFT_LEFT`) so the viewer sees the draft on the surface before any carving.
+    - **Proportions on the coarse head** (before any subdivision): centre-line depth to the drawn profile with a
+      wide sideways falloff (no nose yet), chin bottom, jaw width per height, each smoothed over the mesh.
+      The same moves on a subdivided head leave horizontal bands; on the coarse head they come out smooth.
+    - **Subdivide** (level 3 from ~3.5k verts gives ~220k, ~0.75 mm edges), then fit the residual profile with a
+      narrow falloff at the nose (sigma about 1 cm) and a wide one elsewhere, smoothed over ~60 neighbour steps.
+    - **Eye.** Relax the eye zone (positions, not depth alone) into a smooth membrane so no blockout socket
+      survives. Build the drawn opening as a 2D outline in (|x|, z) and give every vertex a continuous signed
+      distance to it. Carve with smooth step profiles of that distance: inside pushed back 2.8 mm, lash rim
+      2.4 mm proud with a sharp lower edge (0.8 mm ramp), a crease groove above it, a soft lower lid, an outer
+      flick stroke. Hard masks or per-region targets tear the lids into pleats at 0.75 mm spacing. The eye
+      surface is a lens: the membrane inside the opening (+2.5 mm), 1.2 mm back; the iris disc sits on it, its
+      top tucked under the lash rim and its bottom on the opening's bottom edge.
+    - Brows as thin ridges projected along the drawn arch; nostrils as two dimples; the mouth as one groove at
+      the drawn height with a short lower-lip stroke under it, which is all a Ghibli drawing shows.
+    - Side hair that hides the cheek in profile: pack only the front edge of the side locks back behind the
+      drawn hair line (continuous in z, smoothed); the back of the hair does not move. Pulling the hair inward
+      under the ear punched a crater in the bob; showing the ear needs the side hair rebuilt behind it.
 
 14. **Second nose pass, brows, chin** [02:05:30]. With eyes in, the course sees its nose is too big: `Grab` it
     smaller and narrower from the front, give the bridge a concave curve into the forehead in profile, pull the
@@ -530,6 +558,16 @@ Reader: run the exit check: `outline_match` at `0.98` for real reference views o
   - `almond_eye` (a flat recessed almond with a lid ledge) in place of the eyeball and wrapped lids.
 
   Use the eyeball route above only when the concept's eyes bulge in profile.
+- **Which eye method.** There are three, and the later ones can replace the earlier:
+  - **Eyeball and wrapped lids** (steps 12-13 above): eyes that bulge in profile; semi-real faces.
+  - **`almond_eye`** (`anime-clay-planes.md`): a generic recessed almond with a lid ledge, made from a handful of
+    numbers. Use it on hard-plane anime heads, and to block any flat-drawn eye quickly while the head is still
+    being shaped.
+  - **The drawn-eye carve** (step 13, `scripts/face_draft_carve.py`): the eye traced off the registered 2K
+    drawings, with a lash rim, a lens and an iris disc. Use it when the job is a 1:1 match to specific pictures.
+    It needs those pictures registered, and it is judged by exit check 3b.
+  - **They chain.** The drawn-eye carve first relaxes the eye zone so no earlier socket survives, so an
+    `almond_eye` block can come first. Swap in the drawn carve once proportions are fixed and the job is 1:1.
 
 ## Exit check
 
@@ -541,6 +579,11 @@ Reader: run the exit check: `outline_match` at `0.98` for real reference views o
    brow line to nose base. Report each as a number with pass or fail.
 3. `turnaround_sheet(object="CHARACTER", references={...})` with the eyes, brows and ears visible. Look at `LEFT`: the
    profile must show brow, eye, nose and lips at different depths. This is looking, not measuring.
+3b. **Pixel-aligned overlay** of the drawing and the clay: an orthographic camera framed on exactly the drawing
+    crop's world window (registered as above), rendered in single-colour cavity clay, laid over the drawing at
+    50 %. Eyes, lash lines, brows, nose, mouth, jaw line and profile must sit on the drawn ones. Then a 6-view
+    close-up (front, both 3/4s, from below -35, 3/4 below, 3/4 above): front views hide carving faults
+    (pleated lids, sockets, iris showing under the lower lid) that the 3/4 and low views show.
 4. `outline_match(object="CHARACTER", references={...}, threshold=0.98)` for each view that has a real reference
    picture. This is the stage result. A view below 0.98 is failed: fix with `grab` where the overlay is red (model
    missing) or blue (model extra) and measure again. A view with no reference picture is `not_run`; report it as
