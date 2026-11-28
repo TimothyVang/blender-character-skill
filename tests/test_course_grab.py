@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill" / "blender-character" / "scripts"))
 import course_grab as cg  # noqa: E402
 
 FFMPEG = os.environ.get("FFMPEG_DIR") or cg.find_ffmpeg_dir()

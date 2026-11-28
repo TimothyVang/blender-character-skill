@@ -1,6 +1,6 @@
 """Turn a video course into study material: a transcript per chapter and the frames that go with it.
 
-  python tools/course_grab.py URL_OR_LIST_FILE [--out DIR] [--chapters 3-6] [--ffmpeg DIR]
+  python scripts/course_grab.py URL_OR_LIST_FILE [--out DIR] [--chapters 3-6] [--ffmpeg DIR]
 
 Per video, in OUT/<video-id>/:
   <id>.mp4, <id>.info.json, <id>.en.vtt     downloaded with yt-dlp (skipped when already there)

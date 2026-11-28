@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 LIVE = Path(__file__).resolve().parents[1] / "mcp" / "blender-live"
-sys.path.insert(0, str(LIVE))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill" / "blender-character" / "scripts"))
 import speed_sculpt as ss  # noqa: E402
 
 

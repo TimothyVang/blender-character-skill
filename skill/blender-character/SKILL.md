@@ -35,8 +35,24 @@ when you start that stage, not before. Each ends with an exit check; do the chec
   - Clothes are masked on the body and extracted; hair is a cap plus one sphere per lock.
   - Colour is painted on the vertices, with no UVs. A two-tone toon material and coloured rim lights finish it.
 
-  Read `references/speed-sculpt.md` instead of stages 02 to 09. `mcp/blender-live/speed_sculpt.py` writes the
+  Read `references/speed-sculpt.md` instead of stages 02 to 09. `scripts/speed_sculpt.py` writes the
   whole method as an ordered list of tool calls. Its exit checks are stage 11's, plus the likeness checks.
+
+## How the artists use Blender, and learning from more videos
+
+- `references/how-they-use-blender.md`: how each artist drives the program, each with the matching tool call or
+  `bpy`:
+  - Nhij Quang: keys, views, mirror and snapping habits, the texture-paint workflow;
+  - YanSculpts: brushes and their strengths, modifier stacks, Mask Extract, Paint in Sculpt Mode, Grease Pencil
+    ink, toon material and lights.
+
+  Read it with the route you are on.
+- `references/learn-from-a-video.md`: when you are asked to learn from a video or a channel, follow it. The steps
+  are download, frames, clips, study sheets, reading the screen, labels, then writing it into the skill. The scripts
+  are in `scripts/`:
+  - `course_grab.py`, `make_clips.py`, `clip_sheets.py` (with `--silent` for videos without narration);
+  - `transcribe.py`, for when captions are blocked;
+  - `speed_sculpt.py`, the speed-sculpt method as a plan.
 
 ## Before you start
 

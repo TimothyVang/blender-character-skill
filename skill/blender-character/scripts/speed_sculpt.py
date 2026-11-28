@@ -1,9 +1,9 @@
 """YanSculpts' speed-sculpt method as a replayable plan of blender-live MCP tool calls.
 
-  python mcp/blender-live/speed_sculpt.py [--height 1.6] [--colors hair=#6b4a8a,top=#7a7a3a] > plan.json
+  python <skill>/scripts/speed_sculpt.py [--height 1.6] [--colors hair=#6b4a8a,top=#7a7a3a] > plan.json
 
 Source: five YanSculpts videos studied frame by frame (annotations/FGU0ZwYub-0, umF8UhsczO4, huJs2R7JckM,
-Yq9Dzaw2f1k, ainRAUwXMO4; notes in skill/blender-character/references/speed-sculpt.md). What the method is, as seen:
+Yq9Dzaw2f1k, ainRAUwXMO4 in the source repository; notes in references/speed-sculpt.md). What the method is, as seen:
 
   * every part is its own low UV sphere: head, neck, torso, each limb segment, ears, eyeballs, hair cap, each hair
     lock. The next part usually starts as a copy of the nearest one (head -> neck -> torso, upper arm -> forearm)
