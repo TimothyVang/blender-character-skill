@@ -44,14 +44,26 @@ when you start that stage, not before. Each ends with an exit check; do the chec
   `bpy`:
   - Nhij Quang: keys, views, mirror and snapping habits, the texture-paint workflow;
   - YanSculpts: brushes and their strengths, modifier stacks, Mask Extract, Paint in Sculpt Mode, Grease Pencil
-    ink, toon material and lights.
+    ink, toon material and lights;
+  - MRScapsule (ZBrush, anime figures): planar cuts, DynaMesh raised by stage, Mask + Gizmo moves, low-poly lock
+    strips, each with its Blender equivalent.
 
   Read it with the route you are on.
+- `references/anime-clay-planes.md`: how to sculpt anime, manga or chibi clay, from MRScapsule's 48 Shorts. It
+  works with the sculpt route and replaces the soft-head start of stage 03 for those designs:
+  - cut a sphere into head planes, re-cut after the first remesh, and soften with `smooth`;
+  - a fused wedge nose;
+  - flat almond eyes with a lid ledge (no eyeball);
+  - grooved leaf hair locks;
+  - folds radiating from joints on separate clothing shells.
+
+  `scripts/anime_clay_check.py` runs its helpers in Blender.
 - `references/learn-from-a-video.md`: when you are asked to learn from a video or a channel, follow it. The steps
   are download, frames, clips, study sheets, reading the screen, labels, then writing it into the skill. The scripts
   are in `scripts/`:
   - `course_grab.py`, `make_clips.py`, `clip_sheets.py` (with `--silent` for videos without narration);
   - `transcribe.py`, for when captions are blocked;
+  - `short_grids.py`, to tile a channel of Shorts into frame grids;
   - `speed_sculpt.py`, the speed-sculpt method as a plan.
 
 ## Before you start

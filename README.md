@@ -13,6 +13,7 @@ Five parts:
 | Visual study annotations | `annotations/qy-wwP-b9HY/` | 1,253 structured visual study labels across 11 stage JSONL files (`53` in stage 01 + `120` each in stages 02–11) backing the stage notes. |
 | Low-poly route annotations | `annotations/mlnR-Eyazh0/` | 366 labels read off the screen of a silent speed-model (157 study sheets, every one labelled), in 11 JSONL files (stages 01–05 and 07–11, plus `00-intro`), backing each stage file's "Low-poly game route" section. |
 | Speed-sculpt annotations | `annotations/FGU0ZwYub-0/`, `umF8UhsczO4/`, `huJs2R7JckM/`, `Yq9Dzaw2f1k/`, `ainRAUwXMO4/` | 252 labels from five YanSculpts videos: the D.Va Short (30), two 22-minute timelapses (89 + 73, from 91 study sheets) and the Venom and Spider-Man Shorts (28 + 32, narration transcribed with Whisper), backing `references/speed-sculpt.md`. |
+| Anime clay annotations | `annotations/mrscapsule/` | 285 labels (200 seen, 85 inferred) read off the screens of all 48 MRScapsule Shorts (music only, ZBrush, filmed with a phone), one JSONL per Short, backing `references/anime-clay-planes.md`. |
 | Speed-sculpt recipe | `skill/blender-character/scripts/speed_sculpt.py` | That method as Python: an ordered plan of `blender-live` tool calls (spheres per part, face strokes, eyes before lids, brow/lash strips, hair locks, mask-extract clothes, vertex paint, toon material, rim lights). Tested without Blender in `tests/test_speed_sculpt.py`. |
 
 ## Status
@@ -161,3 +162,9 @@ correctives, cycle check, actions, bake) are our own, checked in Blender 4.5.16.
 [Venom in 1 minute](https://youtube.com/shorts/Yq9Dzaw2f1k) and
 [Spider-Man in 1 minute](https://youtube.com/shorts/ainRAUwXMO4) (his channel: https://www.youtube.com/@yansculpts);
 its timestamps are marked `YS`. Only the method is described; the characters and the videos are theirs.
+
+`references/anime-clay-planes.md` is our own notes on the 48 Shorts on
+[MRScapsule's channel](https://www.youtube.com/@MRScapsule/shorts), read from the screen (the Shorts are music
+only, sculpted in ZBrush); its timestamps are marked `MRS <video id>`. We translated the ZBrush steps to Blender and
+tested the helpers in Blender 4.5.16. The characters are their original creators', and the sculpts and videos are
+MRScapsule's; nothing from the videos is included here.

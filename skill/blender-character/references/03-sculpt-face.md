@@ -521,6 +521,15 @@ Reader: run the exit check: `outline_match` at `0.98` for real reference views o
 - Masks, helmets, hard-surface face parts: do not sculpt them into the head. Model them as separate objects in a
   later stage; sculpt only what the concept shows as skin.
 - Closed or stylised dot eyes: still place the eyeball to shape the socket and lid, then hide it.
+- Anime, manga and chibi heads with hard planes and flat-drawn eyes: replace steps 1 to 6 with
+  `anime-clay-planes.md` (MRScapsule, 48 Shorts). The steps there:
+  - planar cuts on a sphere;
+  - brow and mouth steps while still faceted;
+  - softening with `smooth` strokes;
+  - a fused `nose_wedge`;
+  - `almond_eye` (a flat recessed almond with a lid ledge) in place of the eyeball and wrapped lids.
+
+  Use the eyeball route above only when the concept's eyes bulge in profile.
 
 ## Exit check
 

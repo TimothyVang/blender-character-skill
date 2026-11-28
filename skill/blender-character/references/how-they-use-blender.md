@@ -4,16 +4,17 @@ The stage files say *what* each artist builds. This file says *how they use the 
 tool, which settings, which habits, read off their screens. Each section ends with the agent equivalent (you have
 no mouse or hotkeys: every action is a `blender-live` tool call or `exec_python`).
 
-Three sources:
+Four sources:
 
 | Artist | Route | Videos studied | How it was read |
 |---|---|---|---|
 | Kenny Praise | sculpt route (stages 01 to 11) | the 20-hour masterclass `qy-wwP-b9HY` | narration plus 1,253 frame labels |
 | Nhij Quang | low-poly game route | `mlnR-Eyazh0` (1 h 15 min, no narration) | key-cast overlay, redo panels, status bar: 157 sheets, 366 labels |
 | YanSculpts | speed-sculpt route | five videos: two 22-minute timelapses, three narrated Shorts | frames, his narration (Whisper), 252 labels |
+| MRScapsule | anime clay (`anime-clay-planes.md`) | all 48 Shorts on `@MRScapsule` (23 min, music only), in ZBrush | stroke overlay, DynaMesh field, brush shelf, before/after forms: 100 frame grids, 285 labels |
 
 Kenny Praise's screen habits are already in each stage file under "How the artist works on screen". The other
-two are here.
+three are here.
 
 ## Nhij Quang: box modelling in Edit Mode (low-poly game route)
 
@@ -120,6 +121,35 @@ Clothes have Mirror (X, Clipping, Merge 0.001 m).
 6. Paint the base colour per part, then the eyes, then refine the edges.
 7. Sketch emblems and webs rough first, then refine.
 8. "Continue refining till satisfied", add lights.
+
+## MRScapsule: planes in ZBrush (anime clay)
+
+**Set-up.**
+- ZBrush with a Spanish UI ("Resolución", "Intensidad Z", "Pre-procesar Actual") on an XP-Pen display, filmed
+  with a phone.
+- The 2D concept, or his own pose drawing in Clip Studio, sits on a second monitor
+  [MRS kXZh6oOuNXQ 0:01], [MRS pelkVBXpjmk 0:01].
+- A few Shorts are screen recordings with readable values (`mtQMrrS3EpY`, `whL56jhQImY`).
+
+**Brush palette** (read at [MRS ljcO0KMf0z4 0:28] and [MRS gNWARadhjOo 0:29]):
+
+| His brush or tool | What he uses it for | Agent equivalent |
+|---|---|---|
+| Slice / Trim / Clip curve ("SLICE Angle=…" overlay) | cutting a sphere into head planes, brow and mouth steps | `slice_flat` (02) / `anime_head_planes` |
+| DynaMesh, resolution raised by stage (64 → 368 → 1296 read) | even faces after each cut; more resolution only for finer work | `sculpt_remesh`, `h/90` → `h/220`; never coarser than `h/90` in Blender |
+| Move, very large (size 206, Intensidad Z 51 read) | the nose wedge, silhouettes | `grab`; for a pointed nose a fused `nose_wedge` block |
+| Smooth | rounding the plane breaks after a remesh | `smooth` strokes (not `sculpt_relax`, which keeps corners) |
+| Dam_Standard / ZSub strokes (Intensidad Z 14 to 50 read), LazyMouse | lid lines, iris rings, lock grooves, hatching | `crease` (`"subtract": true` for a ridge) |
+| ClayBuildup, ClayTubes, hPolish | muscle bulges, fold ridges, flat planes | `clay_strips`; `flatten` / `slice_flat` |
+| Inflat, SnakeHook | thickening; torn-hem points | `inflate`, `snake_hook` |
+| MaskPen / MaskLasso + Gizmo | moving or rotating a finished ear, mouth, hand or lock | `sculpt_mask` + `exec_python` transform of the masked verts; or separate objects |
+| ZModeler, polygroups | low-poly hair strips, clothing shells, chokers, swords | `bmesh` in `exec_python` (`hair_lock`, box-modelled shells) |
+
+**Habits.**
+- He changes the resolution far more often than he changes brushes: cut coarse, then refine.
+- Parts that might move (ears, locks, accessories, clothes) stay separate pieces until late.
+- He orbits under the chin and behind the head in almost every Short.
+- He finishes the face bald and zooms out to the whole bust after each detail pass.
 
 ## What carries over to an agent
 

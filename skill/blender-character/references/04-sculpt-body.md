@@ -436,6 +436,11 @@ The course says voxel size depends on scene scale and to go higher or lower as n
 
 ## What changes for a different character
 
+- Anime figures (`anime-clay-planes.md`, "Body, hands, clothes"), from MRScapsule's Shorts:
+  - Sculpt the anatomy even where clothes will cover it.
+  - Muscles are round bulges separated by creases.
+  - Hands start as a box palm and box fingers, posed by rotating finger groups about the knuckles. Deep finger
+    separations and light knuckle wrinkles go in last.
 - General: build digits as skinned edges with linked data, shape and remesh parts alone, join in groups from
   coarse to fine, blend each seam with build-up then smooth, crease last and lightly, check the outline often.
 - Specific to the course character (slim stylised woman, bare skin): narrow waist, strong S-curve, V-shaped

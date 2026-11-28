@@ -576,6 +576,14 @@ character's height: treat its metre values as proportions of its character, not 
 
 ## What changes for a different character
 
+Anime figures (`anime-clay-planes.md`, "Body, hands, clothes"), from MRScapsule's Shorts:
+- Garments are separate low-poly shells with Solidify thickness. Trims are flat, hard-edged bands.
+- Folds are a few long ridges radiating from tension points (shoulder, elbow, armpit), each tapering into a pinched
+  valley.
+- Torn cloth keeps its thickness.
+- Hard accessories are modelled, not sculpted.
+- For print, every garment is a closed shell, so the cuts fall on real seams.
+
 General, for any character: tension and compression as the causes of folds; few folds on anything animated;
 shape first, density second, folds last; one object per piece; thickness from `Solidify`, not from modelling
 both sides; garments overlap where one tucks into another; placeholder hair as three or four masses.

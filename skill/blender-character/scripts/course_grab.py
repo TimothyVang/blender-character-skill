@@ -322,9 +322,10 @@ def download(url: str, out_root: Path, ffmpeg_dir: str | None, silent: bool = Fa
     if have:
         print(f"{vid}: already downloaded", flush=True)
         return d, vid
-    cmd = ["yt-dlp", "--no-playlist", "-f", YT_FORMAT, "--merge-output-format", "mp4", "--write-auto-subs", "--write-subs",
-           "--sub-langs", SUB_LANGS, "--sub-format", "vtt", "--write-info-json", "--no-progress", "--no-overwrites",
-           "-o", str(d / "%(id)s.%(ext)s"), url]
+    # silent videos ignore captions, so never request them: the caption endpoint is what YouTube rate-limits (429)
+    subs = [] if silent else ["--write-auto-subs", "--write-subs", "--sub-langs", SUB_LANGS, "--sub-format", "vtt"]
+    cmd = ["yt-dlp", "--no-playlist", "-f", YT_FORMAT, "--merge-output-format", "mp4", *subs,
+           "--write-info-json", "--no-progress", "--no-overwrites", "-o", str(d / "%(id)s.%(ext)s"), url]
     if ffmpeg_dir:
         cmd[1:1] = ["--ffmpeg-location", ffmpeg_dir]
     subprocess.run(cmd, check=False, timeout=3600)

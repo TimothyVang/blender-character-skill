@@ -93,6 +93,13 @@ result = 'clay'
    names the next move each time.
 5. **Sculpt the forms**, face first, each checked from front, side, 3/4 and below. Then hands, hair and clothes
    (rules below).
+   - **Anime, manga or chibi designs:** follow `anime-clay-planes.md` (MRScapsule) for the head instead of a soft
+     start: cut planes, re-cut after the first remesh, soften with `smooth`, then add a wedge nose, flat almond
+     eyes and grooved leaf locks.
+   - A soft ball pushed toward an anime face never finds the face plane, the cheek corners and the V jaw again.
+   - Two Blender traps came out of testing it:
+     - a voxel remesh coarser than `h/90` turns plane edges into stair-steps;
+     - `sculpt_relax` evens a surface but never rounds a corner.
 6. **Close the last percent without wrecking the clay.** In order of preference:
    - **Fit each part to the pictures' own profile.** For each part, cut its region out of the 2K FRONT and side
      pictures by its colour (skirt navy, hair brown, bow red, shirt cream, boots brown), so an arm drawn over the

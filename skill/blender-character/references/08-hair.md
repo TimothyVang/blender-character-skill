@@ -621,6 +621,12 @@ Density is 10, which looks like "nothing happened".
 
 ## What changes for a different character
 
+Anime sculpted hair (clay, not strands): follow `anime-clay-planes.md`, "Hair".
+- Tight or slicked hair is one grooved mass with one graphic bang.
+- Everything else is separate `hair_lock` objects over a smooth cap: thick at the root, needle-sharp at the tip,
+  grooved, front bangs first.
+- Sink each root by its thickness plus 5 mm.
+
 General: one scalp per region; guides only where they add control; the four steps; masks to keep children where
 the guides are; clump then roughen; split the scalp for a parting; answer the two questions first.
 

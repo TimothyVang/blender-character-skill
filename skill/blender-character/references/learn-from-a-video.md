@@ -33,6 +33,8 @@ python scripts/course_grab.py URL [--silent] [--floor 30] [--scene 0.08] [--out 
   transcript, frames linked); `frames/NN-<slug>/HHMMSS.jpg` (scene changes, "right here" moments, at least one per
   `--floor` s); `index.json`.
 - **`--silent`** for music-only videos: chapters and frames are kept and transcripts left empty, instead of exiting 2.
+  It also skips caption downloads. YouTube rate-limits captions (HTTP 429) after a few videos, so pass it for a
+  whole channel of music-only Shorts.
 - **For a 1-minute Short:** `--floor 2 --scene 0.05` gives a frame every 2 s.
 - **"Sign in to confirm you're not a bot" or HTTP 429:** `python -m pip install -U "yt-dlp[default]"` first. If only
   the captions fail (429), download video and info without subtitles, then make the captions yourself:
@@ -50,8 +52,19 @@ python scripts/clip_sheets.py <out>/<id> [--silent]                       # 2x2 
 - **`--silent`:** each chapter is cut into equal clips of at most `--max` s.
 - **A sheet** is four 960x540 frames from the 1080p source, each stamped with its time, with the clip's narration
   underneath. You read sheets, not video.
-- **For a Short:** clips of `--min 4 --max 10`. Tiling the 2 s frames into grids of 15 to 25 is quicker to read than
-  sheets.
+- **For a Short:** clips of `--min 4 --max 10`. Tiling the 2 s frames into grids is quicker to read than sheets.
+  `python scripts/short_grids.py <out>` writes `<id>/grids/gridNN.jpg` for every video folder under `<out>`:
+  5 × 2 cells of 360 px wide, each stamped with its time. The cells are tall, which keeps a vertical Short's UI
+  readable. It also writes `<out>/grids_index.json`. For 48 Shorts this made 100 grids, split across six readers of
+  8 Shorts each.
+- **A phone filming a screen** (common in Shorts): header numbers are mostly unreadable. Read what survives:
+  - the stroke overlay (ZBrush shows the curve tool and its angle);
+  - the resolution field;
+  - the brush shelf names;
+  - the forms before and after.
+
+  Run `transcribe.py` on every Short anyway: Whisper turns music into fake lyrics, which tells you the video is
+  silent.
 
 ## 4. Read every sheet
 
