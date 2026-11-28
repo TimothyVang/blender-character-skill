@@ -15,6 +15,9 @@ The course works in three passes [14:27:50]: (1) blockout, a flat colour plus ro
 since uniform colour and roughness read as dull and a material should hint at wear or newness [14:30:52].
 
 ## Starting state
+- **The clay gate has passed** (`clay-first.md`): outline, 48-view clay pan, `orbit_check` and landmarks, all on
+  untextured clay. If it has not, stop and go back. Painting a wrong shape is the mistake that cost the 1:1 test
+  character a full restart.
 - Retopologised, UV-unwrapped meshes under `CHARACTER`: `body_retopo`, `Eye.L`, `Eye.R`, `Mouth` (teeth, gums,
   tongue in one object), `Shirt_retopo`, `Skirt_retopo`, `Boot.L_retopo`, `Boot.R_retopo`, `Hair.Band`. Clothes and
   boots may still have a `Multires` modifier holding sculpted folds (stage 06 kept it on purpose, for this stage's
